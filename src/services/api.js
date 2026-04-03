@@ -5,6 +5,7 @@ const API_BASE_URL =
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -27,6 +28,16 @@ const getHttpFallbackMessage = (status) => {
     return "Ошибка сервера. Попробуйте позже.";
   }
   return "Не удалось выполнить запрос.";
+};
+
+const getTransportErrorMessage = (error) => {
+  if (error?.code === "ECONNABORTED") {
+    return "Сервер отвечает слишком долго. Если backend на Render, он мог уснуть и сейчас просыпается.";
+  }
+  if (error?.message === "Network Error") {
+    return "Не удалось подключиться к серверу. Проверьте VITE_API_URL, CORS и доступность backend.";
+  }
+  return null;
 };
 
 export const courseAPI = {
@@ -59,17 +70,22 @@ export const scheduleAPI = {
 };
 
 export const authAPI = {
+  requestRegistrationCode: (email, role) =>
+    api
+      .post("/auth/request-registration-code", { email, role })
+      .then((response) => response.data),
   login: (email, password, role) =>
     api
       .post("/auth/login", { email, password, role })
       .then((response) => response.data),
-  register: (email, password, displayName, role) =>
+  register: (email, password, displayName, role, verificationCode) =>
     api
       .post("/auth/register", {
         email,
         password,
         displayName,
         role,
+        verificationCode,
       })
       .then((response) => response.data),
   logout: () => api.post("/auth/logout").then((response) => response.data),
@@ -107,9 +123,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const transportMessage = getTransportErrorMessage(error);
     const serverMessage = error?.response?.data?.error;
     const status = error?.response?.status;
-    const message = serverMessage || getHttpFallbackMessage(status);
+    const message =
+      transportMessage || serverMessage || getHttpFallbackMessage(status);
     return Promise.reject(new Error(message));
   },
 );

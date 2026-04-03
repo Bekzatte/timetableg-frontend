@@ -6,12 +6,15 @@ import { useTranslation } from "../hooks/useTranslation";
 export const RegisterPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { register, isLoading, error } = useAuth();
+  const { register, requestRegistrationCode, isLoading, error } = useAuth();
   const [selectedRole, setSelectedRole] = React.useState(ROLES.STUDENT);
   const [displayName, setDisplayName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [verificationCode, setVerificationCode] = React.useState("");
+  const [codeRequested, setCodeRequested] = React.useState(false);
+  const [infoMessage, setInfoMessage] = React.useState("");
   const [localError, setLocalError] = React.useState("");
 
   const roleOptions = [
@@ -24,6 +27,7 @@ export const RegisterPage = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setLocalError("");
+    setInfoMessage("");
 
     if (!displayName || !email || !password || !confirmPassword) {
       setLocalError(t("fillAllFields"));
@@ -41,11 +45,36 @@ export const RegisterPage = () => {
     }
 
     try {
-      await register(email, password, displayName, selectedRole);
+      if (!codeRequested) {
+        const result = await requestRegistrationCode(email, selectedRole);
+        setCodeRequested(true);
+        setInfoMessage(result.message || t("verificationCodeSent"));
+        return;
+      }
+
+      if (!verificationCode.trim()) {
+        setLocalError(t("verificationCodeRequired"));
+        return;
+      }
+
+      await register(
+        email,
+        password,
+        displayName,
+        selectedRole,
+        verificationCode.trim(),
+      );
       navigate("/");
     } catch (err) {
       setLocalError(err.message);
     }
+  };
+
+  const handleEditEmail = () => {
+    setCodeRequested(false);
+    setVerificationCode("");
+    setInfoMessage("");
+    setLocalError("");
   };
 
   return (
@@ -54,6 +83,12 @@ export const RegisterPage = () => {
         <h1 className="text-2xl font-bold mb-4 text-gray-900">
           {t("register")}
         </h1>
+
+        {infoMessage && (
+          <div className="mb-4 p-3 rounded bg-green-50 border border-green-200 text-green-700 text-sm">
+            {infoMessage}
+          </div>
+        )}
 
         {(localError || error) && (
           <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -71,6 +106,7 @@ export const RegisterPage = () => {
                 <button
                   key={option.value}
                   type="button"
+                  disabled={codeRequested}
                   onClick={() => setSelectedRole(option.value)}
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
                     selectedRole === option.value
@@ -94,6 +130,7 @@ export const RegisterPage = () => {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={t("enterFullName")}
+              disabled={codeRequested}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -107,6 +144,7 @@ export const RegisterPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={emailPlaceholder}
+              disabled={codeRequested}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -120,6 +158,7 @@ export const RegisterPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              disabled={codeRequested}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -133,6 +172,7 @@ export const RegisterPage = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
+              disabled={codeRequested}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -143,12 +183,41 @@ export const RegisterPage = () => {
             </p>
           )}
 
+          {codeRequested && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("verificationCode")}
+                </label>
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder={t("verificationCodePlaceholder")}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleEditEmail}
+                className="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-md transition font-medium cursor-pointer"
+              >
+                {t("changeEmail")}
+              </button>
+            </>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
             className="w-full bg-[#014531] hover:bg-[#02704e] disabled:opacity-50 text-white px-4 py-2 rounded-md transition font-medium cursor-pointer"
           >
-            {isLoading ? t("loading") : t("register")}
+            {isLoading
+              ? t("loading")
+              : codeRequested
+                ? t("confirmRegistration")
+                : t("sendVerificationCode")}
           </button>
         </form>
 

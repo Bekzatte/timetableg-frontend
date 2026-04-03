@@ -47,11 +47,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const requestRegistrationCode = async (email, role = ROLES.STUDENT) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      return await authAPI.requestRegistrationCode(email, role);
+    } catch (err) {
+      const errorMsg = getErrorMessage(err, "Ошибка при отправке кода");
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const register = async (
     email,
     password,
     displayName,
     role = ROLES.STUDENT,
+    verificationCode,
   ) => {
     setIsLoading(true);
     setError(null);
@@ -61,6 +76,7 @@ export const AuthProvider = ({ children }) => {
         password,
         displayName,
         role,
+        verificationCode,
       );
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
@@ -92,6 +108,7 @@ export const AuthProvider = ({ children }) => {
     isStudent: user?.role === ROLES.STUDENT,
     login,
     register,
+    requestRegistrationCode,
     logout,
   };
 
