@@ -10,6 +10,25 @@ const api = axios.create({
   },
 });
 
+const getHttpFallbackMessage = (status) => {
+  if (status === 400) {
+    return "Проверьте введённые данные.";
+  }
+  if (status === 401) {
+    return "Неверный логин или пароль.";
+  }
+  if (status === 403) {
+    return "Доступ запрещён или введены неверные данные для этой роли.";
+  }
+  if (status === 404) {
+    return "Сервис не найден.";
+  }
+  if (status >= 500) {
+    return "Ошибка сервера. Попробуйте позже.";
+  }
+  return "Не удалось выполнить запрос.";
+};
+
 export const courseAPI = {
   getAll: () => api.get("/courses"),
   create: (data) => api.post("/courses", data),
@@ -83,6 +102,16 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
+  },
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const serverMessage = error?.response?.data?.error;
+    const status = error?.response?.status;
+    const message = serverMessage || getHttpFallbackMessage(status);
+    return Promise.reject(new Error(message));
   },
 );
 
