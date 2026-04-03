@@ -1,0 +1,94 @@
+import React from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useTranslation } from "../hooks/useTranslation";
+
+export const LoginPage = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { login, isLoading, error } = useAuth();
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [localError, setLocalError] = React.useState("");
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLocalError("");
+
+    if (!email || !password) {
+      setLocalError(t("fillAllFields"));
+      return;
+    }
+
+    try {
+      await login(email, password);
+      navigate("/");
+    } catch (err) {
+      setLocalError(err.message);
+    }
+  };
+
+  return (
+    <div className="min-h-[70vh] flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-2xl font-bold mb-4 text-gray-900">{t("login")}</h1>
+
+        {(localError || error) && (
+          <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-700 text-sm">
+            {localError || error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              {t("email")}
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="example@university.kz"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              {t("password")}
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-[#014531] hover:bg-[#02704e] disabled:opacity-50 text-white px-4 py-2 rounded-md transition font-medium cursor-pointer"
+          >
+            {isLoading ? t("loading") : t("login")}
+          </button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <p className="text-gray-600 text-sm">
+            {t("noAccount")}{" "}
+            <Link
+              to="/register"
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              {t("registerHere")}
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
