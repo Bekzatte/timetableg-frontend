@@ -1,16 +1,17 @@
-import React from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ROLES, useAuth } from "../contexts/AuthContext";
+import { ROLES } from "../constants/roles";
+import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 
 export const LoginPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { login, isLoading, error } = useAuth();
-  const [selectedRole, setSelectedRole] = React.useState(ROLES.STUDENT);
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [localError, setLocalError] = React.useState("");
+  const [selectedRole, setSelectedRole] = useState(ROLES.STUDENT);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [localError, setLocalError] = useState("");
 
   const roleOptions = [
     { value: ROLES.ADMIN, label: t("adminLogin") },

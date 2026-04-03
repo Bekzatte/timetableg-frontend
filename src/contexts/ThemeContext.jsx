@@ -1,6 +1,4 @@
-import React, { createContext } from "react";
-
-export const ThemeContext = createContext();
+import { ThemeContext } from "./ThemeContextValue";
 
 export const ThemeProvider = ({ children }) => {
   // Always use light theme
@@ -9,12 +7,4 @@ export const ThemeProvider = ({ children }) => {
   return (
     <ThemeContext.Provider value={{ theme }}>{children}</ThemeContext.Provider>
   );
-};
-
-export const useTheme = () => {
-  const context = React.useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme must be used within ThemeProvider");
-  }
-  return context;
 };

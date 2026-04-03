@@ -92,6 +92,7 @@ export const translations = {
     teacher: "Оқытушы",
     student: "Студент",
     accessDenied: "Рұқсат жоқ",
+    accessDeniedDescription: "Бұл бетті көруге құқығыңыз жоқ.",
     adminOnly: "Бұл бет тек әкімші үшін қолжетімді.",
     submitPreference: "Таңдау жіберу",
     lastSubmittedPreferences: "Соңғы жіберілген таңдау",
@@ -122,6 +123,7 @@ export const translations = {
     errorNotFound: "Сұралған ресурс табылмады.",
     errorServer: "Сервер қатесі. Кейінірек қайталап көріңіз.",
     errorUnknown: "Сұрауды орындау мүмкін болмады.",
+    errorMethodNotAllowed: "Бұл әрекетке рұқсат жоқ.",
     errorTimeout:
       "Сервер тым ұзақ жауап беріп жатыр. Егер backend Render-де болса, ол ұйқыдан оянып жатқан болуы мүмкін.",
     errorNetwork:
@@ -203,6 +205,7 @@ export const translations = {
 
     // UI
     close: "Жабу",
+    selectOption: "Таңдаңыз",
   },
 
   ru: {
@@ -298,6 +301,7 @@ export const translations = {
     teacher: "Преподаватель",
     student: "Студент",
     accessDenied: "Доступ запрещён",
+    accessDeniedDescription: "У вас нет прав для просмотра этой страницы.",
     adminOnly: "Эта страница доступна только администратору.",
     submitPreference: "Отправить предпочтения",
     lastSubmittedPreferences: "Последние отправленные предпочтения",
@@ -328,6 +332,7 @@ export const translations = {
     errorNotFound: "Запрошенный ресурс не найден.",
     errorServer: "Ошибка сервера. Попробуйте позже.",
     errorUnknown: "Не удалось выполнить запрос.",
+    errorMethodNotAllowed: "Этот метод не поддерживается.",
     errorTimeout:
       "Сервер отвечает слишком долго. Если backend на Render, он мог уснуть и сейчас просыпается.",
     errorNetwork:
@@ -410,6 +415,7 @@ export const translations = {
 
     // UI
     close: "Закрыть",
+    selectOption: "Выберите значение",
   },
 
   en: {
@@ -504,6 +510,7 @@ export const translations = {
     teacher: "Teacher",
     student: "Student",
     accessDenied: "Access denied",
+    accessDeniedDescription: "You do not have permission to view this page.",
     adminOnly: "This page is available for admin only.",
     submitPreference: "Submit preferences",
     lastSubmittedPreferences: "Last submitted preferences",
@@ -534,6 +541,7 @@ export const translations = {
     errorNotFound: "Requested resource was not found.",
     errorServer: "Server error. Try again later.",
     errorUnknown: "The request could not be completed.",
+    errorMethodNotAllowed: "This method is not supported.",
     errorTimeout:
       "The server is responding too slowly. If the backend is on Render, it may be waking up from sleep.",
     errorNetwork:
@@ -615,6 +623,7 @@ export const translations = {
 
     // UI
     close: "Close",
+    selectOption: "Select an option",
   },
 };
 

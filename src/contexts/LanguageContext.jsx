@@ -1,6 +1,5 @@
-import React, { createContext, useState, useEffect } from "react";
-
-export const LanguageContext = createContext();
+import { useEffect, useState } from "react";
+import { LanguageContext } from "./LanguageContextValue";
 
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(() => {
@@ -16,12 +15,4 @@ export const LanguageProvider = ({ children }) => {
       {children}
     </LanguageContext.Provider>
   );
-};
-
-export const useLanguage = () => {
-  const context = React.useContext(LanguageContext);
-  if (!context) {
-    throw new Error("useLanguage must be used within LanguageProvider");
-  }
-  return context;
 };

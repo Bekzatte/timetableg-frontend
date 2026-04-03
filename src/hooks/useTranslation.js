@@ -1,4 +1,4 @@
-import { useLanguage } from "../contexts/LanguageContext";
+import { useLanguage } from "./useLanguage";
 import { getTranslation } from "../i18n/translations";
 
 export const useTranslation = () => {

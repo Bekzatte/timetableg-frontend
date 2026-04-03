@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Plus, RotateCw } from "lucide-react";
 import TimetableGrid from "../components/timetable/TimetableGrid";
 import Modal from "../components/ui/Modal";
 import Form from "../components/ui/Form";
 import { scheduleAPI } from "../services/api";
 import { useFetch } from "../hooks/useAPI";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 
 export const SchedulePage = () => {
@@ -19,7 +19,6 @@ export const SchedulePage = () => {
   const [preferenceResult, setPreferenceResult] = useState(null);
   const {
     data,
-    isLoading: dataLoading,
     execute,
   } = useFetch(scheduleAPI.getAll);
 
@@ -31,7 +30,7 @@ export const SchedulePage = () => {
 
   useEffect(() => {
     execute();
-  }, []);
+  }, [execute]);
 
   const handleGenerateSchedule = async (formData, setErrors) => {
     try {

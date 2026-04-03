@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import { roomAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -11,20 +11,15 @@ import { useTranslation } from "../../hooks/useTranslation";
 export const RoomManager = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
-  const [rooms, setRooms] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const { data, isLoading, execute } = useFetch(roomAPI.getAll);
 
   useEffect(() => {
-    if (data) {
-      setRooms(Array.isArray(data) ? [...data] : []);
-    }
-  }, [data]);
-
-  useEffect(() => {
     execute();
-  }, []);
+  }, [execute]);
+
+  const rooms = Array.isArray(data) ? data : [];
 
   const handleAddRoom = () => {
     setEditingRoom(null);
@@ -42,31 +37,27 @@ export const RoomManager = () => {
     ) {
       try {
         await roomAPI.delete(room.id);
-        setRooms(rooms.filter((r) => r.id !== room.id));
+        await execute();
       } catch (error) {
         console.error(t("errorDeleteRoom"), error);
       }
     }
   };
 
-  const handleSubmit = async (formData) => {
+  const handleSubmit = async (formData, setErrors) => {
     try {
       if (editingRoom) {
-        const response = await roomAPI.update(editingRoom.id, formData);
-        setRooms(
-          rooms.map((r) =>
-            r.id === editingRoom.id
-              ? response.data || { ...formData, id: editingRoom.id }
-              : r,
-          ),
-        );
+        await roomAPI.update(editingRoom.id, formData);
       } else {
-        const response = await roomAPI.create(formData);
-        setRooms([...rooms, response.data || formData]);
+        await roomAPI.create(formData);
       }
+      await execute();
       setIsModalOpen(false);
     } catch (error) {
-      console.error(t("errorSaveRoom"), error);
+      setErrors((prev) => ({
+        ...prev,
+        error: error.message,
+      }));
     }
   };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,13 +14,15 @@ import RoomsPage from "./pages/RoomsPage";
 import SchedulePage from "./pages/SchedulePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import { useLanguage } from "./contexts/LanguageContext";
+import { useLanguage } from "./hooks/useLanguage";
 import { useTranslation } from "./hooks/useTranslation";
-import { useAuth, ROLES } from "./contexts/AuthContext";
+import { ROLES } from "./constants/roles";
+import { useAuth } from "./hooks/useAuth";
 import "./index.css";
 
 const RequireAuth = ({ children, allowedRoles = [] }) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -29,8 +31,8 @@ const RequireAuth = ({ children, allowedRoles = [] }) => {
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     return (
       <div className="py-20 text-center text-red-600">
-        <p className="text-xl font-semibold mb-2">{"Доступ запрещён"}</p>
-        <p>{"У вас нет прав для просмотра этой страницы."}</p>
+        <p className="text-xl font-semibold mb-2">{t("accessDenied")}</p>
+        <p>{t("accessDeniedDescription")}</p>
       </div>
     );
   }
@@ -39,10 +41,10 @@ const RequireAuth = ({ children, allowedRoles = [] }) => {
 };
 
 export default function App() {
-  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
-  const { user, isAdmin, isTeacher, isStudent, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
 
   const navItems = [
     { label: t("home"), path: "/" },
@@ -60,6 +62,11 @@ export default function App() {
     { code: "ru", name: "РУС" },
     { code: "en", name: "ENG" },
   ];
+  const roleLabels = {
+    [ROLES.ADMIN]: t("admin"),
+    [ROLES.TEACHER]: t("teacher"),
+    [ROLES.STUDENT]: t("student"),
+  };
 
   return (
     <Router>
@@ -117,7 +124,7 @@ export default function App() {
               {user ? (
                 <div className="hidden sm:flex items-center gap-2">
                   <span className="px-3 py-1.5 rounded-2xl border-[0.4px] border-white bg-[#014531] text-white text-[14px] whitespace-nowrap">
-                    {`${user.displayName} (${user.role})`}
+                    {`${user.displayName} (${roleLabels[user.role] || user.role})`}
                   </span>
                   <button
                     onClick={logout}
@@ -294,30 +301,16 @@ export default function App() {
                   {t("navigate")}
                 </h3>
                 <ul className="space-y-1 sm:space-y-2">
-                  <li>
-                    <Link
-                      to="/courses"
-                      className="text-sm sm:text-base text-gray-200 hover:text-yellow-300 transition"
-                    >
-                      {t("courses")}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/teachers"
-                      className="text-sm sm:text-base text-gray-200 hover:text-yellow-300 transition"
-                    >
-                      {t("teachers")}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/rooms"
-                      className="text-sm sm:text-base text-gray-200 hover:text-yellow-300 transition"
-                    >
-                      {t("rooms")}
-                    </Link>
-                  </li>
+                  {navItems.map((item) => (
+                    <li key={`footer-${item.path}`}>
+                      <Link
+                        to={item.path}
+                        className="text-sm sm:text-base text-gray-200 hover:text-yellow-300 transition"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
 

@@ -1,18 +1,19 @@
-import React from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ROLES, useAuth } from "../contexts/AuthContext";
+import { ROLES } from "../constants/roles";
+import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 
 export const RegisterPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { register, isLoading, error } = useAuth();
-  const [selectedRole, setSelectedRole] = React.useState(ROLES.STUDENT);
-  const [displayName, setDisplayName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [localError, setLocalError] = React.useState("");
+  const [selectedRole, setSelectedRole] = useState(ROLES.STUDENT);
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [localError, setLocalError] = useState("");
 
   const roleOptions = [
     { value: ROLES.STUDENT, label: t("student") },

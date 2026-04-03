@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import { courseAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -11,20 +11,15 @@ import { useTranslation } from "../../hooks/useTranslation";
 export const CourseManager = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
-  const [courses, setCourses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
   const { data, isLoading, execute } = useFetch(courseAPI.getAll);
 
   useEffect(() => {
-    if (data) {
-      setCourses(Array.isArray(data) ? [...data] : []);
-    }
-  }, [data]);
-
-  useEffect(() => {
     execute();
-  }, []);
+  }, [execute]);
+
+  const courses = Array.isArray(data) ? data : [];
 
   const handleAddCourse = () => {
     setEditingCourse(null);
@@ -40,31 +35,27 @@ export const CourseManager = () => {
     if (window.confirm(`${t("deleteCourse")}?`)) {
       try {
         await courseAPI.delete(course.id);
-        setCourses(courses.filter((c) => c.id !== course.id));
+        await execute();
       } catch (error) {
         console.error("Error deleting course:", error);
       }
     }
   };
 
-  const handleSubmit = async (formData) => {
+  const handleSubmit = async (formData, setErrors) => {
     try {
       if (editingCourse) {
-        const response = await courseAPI.update(editingCourse.id, formData);
-        setCourses(
-          courses.map((c) =>
-            c.id === editingCourse.id
-              ? response.data || { ...formData, id: editingCourse.id }
-              : c,
-          ),
-        );
+        await courseAPI.update(editingCourse.id, formData);
       } else {
-        const response = await courseAPI.create(formData);
-        setCourses([...courses, response.data || formData]);
+        await courseAPI.create(formData);
       }
+      await execute();
       setIsModalOpen(false);
     } catch (error) {
-      console.error("Error saving course:", error);
+      setErrors((prev) => ({
+        ...prev,
+        error: error.message,
+      }));
     }
   };
 
@@ -130,15 +121,13 @@ export const CourseManager = () => {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <DataTable
-          columns={columns}
-          data={courses}
-          onEdit={handleEditCourse}
-          onDelete={handleDeleteCourse}
-          isLoading={isLoading}
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={courses}
+        onEdit={handleEditCourse}
+        onDelete={handleDeleteCourse}
+        isLoading={isLoading}
+      />
 
       <Modal
         isOpen={isModalOpen}

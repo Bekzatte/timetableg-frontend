@@ -35,6 +35,8 @@ const ERROR_CODE_TRANSLATION_KEYS = {
   record_not_found: "errorRecordNotFound",
   forbidden: "errorForbidden",
   not_found: "errorNotFound",
+  bad_request: "errorBadRequest",
+  method_not_allowed: "errorMethodNotAllowed",
   unsupported_collection: "errorBadRequest",
 };
 
@@ -68,6 +70,7 @@ const RAW_ERROR_TRANSLATION_KEYS = {
   "Для генерации расписания нужны курсы, преподаватели и аудитории.":
     "errorScheduleGenerationRequiresData",
   "Not found": "errorNotFound",
+  "Method not allowed": "errorMethodNotAllowed",
 };
 
 const getHttpFallbackMessage = (status) => {

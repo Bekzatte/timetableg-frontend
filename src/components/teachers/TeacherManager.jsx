@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import { teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -11,20 +11,15 @@ import { useTranslation } from "../../hooks/useTranslation";
 export const TeacherManager = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
-  const [teachers, setTeachers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
   const { data, isLoading, execute } = useFetch(teacherAPI.getAll);
 
   useEffect(() => {
-    if (data) {
-      setTeachers(Array.isArray(data) ? [...data] : []);
-    }
-  }, [data]);
-
-  useEffect(() => {
     execute();
-  }, []);
+  }, [execute]);
+
+  const teachers = Array.isArray(data) ? data : [];
 
   const handleAddTeacher = () => {
     setEditingTeacher(null);
@@ -42,31 +37,27 @@ export const TeacherManager = () => {
     ) {
       try {
         await teacherAPI.delete(teacher.id);
-        setTeachers(teachers.filter((t) => t.id !== teacher.id));
+        await execute();
       } catch (error) {
         console.error(t("errorDeleteTeacher"), error);
       }
     }
   };
 
-  const handleSubmit = async (formData) => {
+  const handleSubmit = async (formData, setErrors) => {
     try {
       if (editingTeacher) {
-        const response = await teacherAPI.update(editingTeacher.id, formData);
-        setTeachers(
-          teachers.map((t) =>
-            t.id === editingTeacher.id
-              ? response.data || { ...formData, id: editingTeacher.id }
-              : t,
-          ),
-        );
+        await teacherAPI.update(editingTeacher.id, formData);
       } else {
-        const response = await teacherAPI.create(formData);
-        setTeachers([...teachers, response.data || formData]);
+        await teacherAPI.create(formData);
       }
+      await execute();
       setIsModalOpen(false);
     } catch (error) {
-      console.error(t("errorSaveTeacher"), error);
+      setErrors((prev) => ({
+        ...prev,
+        error: error.message,
+      }));
     }
   };
 

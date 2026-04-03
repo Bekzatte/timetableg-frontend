@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
 import { format, addDays, startOfWeek } from "date-fns";
-import { ru, enUS, kk } from "date-fns/locale";
+import { ru, enUS } from "date-fns/locale";
 import { useTranslation } from "../../hooks/useTranslation";
 
 export const TimetableGrid = ({ schedule = [], week = new Date() }) => {
