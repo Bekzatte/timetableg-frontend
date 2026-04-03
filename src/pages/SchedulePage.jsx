@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, RotateCw } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import TimetableGrid from "../components/timetable/TimetableGrid";
 import Modal from "../components/ui/Modal";
 import Form from "../components/ui/Form";
@@ -10,17 +10,11 @@ import { useTranslation } from "../hooks/useTranslation";
 
 export const SchedulePage = () => {
   const { t } = useTranslation();
-  const { isAdmin, isTeacher } = useAuth();
+  const { isAdmin } = useAuth();
   const [schedule, setSchedule] = useState([]);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
-  const [isPreferenceOpen, setIsPreferenceOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPrefLoading, setIsPrefLoading] = useState(false);
-  const [preferenceResult, setPreferenceResult] = useState(null);
-  const {
-    data,
-    execute,
-  } = useFetch(scheduleAPI.getAll);
+  const { data, execute } = useFetch(scheduleAPI.getAll);
 
   useEffect(() => {
     if (data) {
@@ -46,24 +40,6 @@ export const SchedulePage = () => {
       }));
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handlePreferenceSubmit = async (formData, setErrors) => {
-    try {
-      setIsPrefLoading(true);
-      // Здесь могла бы быть вызвана реальная API: scheduleAPI.submitPreferences
-      // Пока работает имитация отправки
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setPreferenceResult(formData);
-      setIsPreferenceOpen(false);
-    } catch (error) {
-      setErrors((prev) => ({
-        ...prev,
-        error: error.message || t("error"),
-      }));
-    } finally {
-      setIsPrefLoading(false);
     }
   };
 
@@ -100,36 +76,17 @@ export const SchedulePage = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("scheduleMgmt")}
         </h1>
-        <div className="flex gap-2 flex-wrap">
-          {isAdmin && (
-            <button
-              onClick={() => setIsGenerateOpen(true)}
-              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-            >
-              <RotateCw size={20} /> {t("generateNewSchedule")}
-            </button>
-          )}
-          {isTeacher && (
-            <button
-              onClick={() => setIsPreferenceOpen(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-            >
-              <Plus size={20} /> {t("submitPreference")}
-            </button>
-          )}
-        </div>
+        {isAdmin && (
+          <button
+            onClick={() => setIsGenerateOpen(true)}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+          >
+            <RotateCw size={20} /> {t("generateNewSchedule")}
+          </button>
+        )}
       </div>
 
       <div className="rounded-lg shadow-md p-6 bg-white">
-        {isTeacher && preferenceResult && (
-          <div className="mb-4 p-3 border border-blue-200 rounded bg-blue-50 text-blue-900">
-            <h3 className="font-semibold">{t("lastSubmittedPreferences")}</h3>
-            <pre className="text-xs whitespace-pre-wrap mt-1">
-              {JSON.stringify(preferenceResult, null, 2)}
-            </pre>
-          </div>
-        )}
-
         {schedule.length > 0 ? (
           <TimetableGrid schedule={schedule} />
         ) : (
@@ -150,33 +107,6 @@ export const SchedulePage = () => {
           onSubmit={handleGenerateSchedule}
           submitText={t("generateSchedule")}
           isLoading={isLoading}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={isPreferenceOpen}
-        onClose={() => setIsPreferenceOpen(false)}
-        title={t("submitPreference")}
-      >
-        <Form
-          fields={[
-            {
-              name: "preferred_days",
-              label: t("preferredDays"),
-              type: "textarea",
-              placeholder: t("preferredDaysPlaceholder"),
-              required: true,
-            },
-            {
-              name: "notes",
-              label: t("notes"),
-              type: "textarea",
-              placeholder: t("preferenceNotesPlaceholder"),
-            },
-          ]}
-          onSubmit={handlePreferenceSubmit}
-          submitText={t("submit")}
-          isLoading={isPrefLoading}
         />
       </Modal>
     </div>
