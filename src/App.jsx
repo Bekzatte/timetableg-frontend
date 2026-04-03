@@ -61,14 +61,6 @@ export default function App() {
     { code: "en", name: "ENG" },
   ];
 
-  const mobileNavItems = [
-    { label: t("home"), path: "/", enabled: true },
-    { label: t("courses"), path: "/courses", enabled: isAdmin },
-    { label: t("teachers"), path: "/teachers", enabled: isAdmin },
-    { label: t("rooms"), path: "/rooms", enabled: isAdmin },
-    { label: t("schedule"), path: "/schedule", enabled: true },
-  ];
-
   return (
     <Router>
       <div className="flex flex-col min-h-screen bg-white">
@@ -165,39 +157,16 @@ export default function App() {
           {menuOpen && (
             <div className="lg:hidden bg-[#014531] border-t border-green-900">
               <div className="px-4 py-3 space-y-2 max-h-80 overflow-y-auto">
-                <div className="overflow-hidden rounded-2xl border border-green-800 bg-white/10 backdrop-blur-sm">
-                  {mobileNavItems.map((item, index) =>
-                    item.enabled ? (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`flex items-center justify-between px-4 py-3 text-white font-medium transition hover:bg-white/10 ${
-                          index !== mobileNavItems.length - 1
-                            ? "border-b border-green-800"
-                            : ""
-                        }`}
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <span>{item.label}</span>
-                        <span className="text-yellow-300">{">"}</span>
-                      </Link>
-                    ) : (
-                      <div
-                        key={item.path}
-                        className={`flex items-center justify-between px-4 py-3 text-white/50 font-medium ${
-                          index !== mobileNavItems.length - 1
-                            ? "border-b border-green-800"
-                            : ""
-                        }`}
-                      >
-                        <span>{item.label}</span>
-                        <span className="text-xs uppercase tracking-wide text-white/40">
-                          admin
-                        </span>
-                      </div>
-                    ),
-                  )}
-                </div>
+                {navItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className="block text-white hover:text-yellow-300 transition py-2 px-3 font-medium rounded"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
 
                 {/* Mobile Language Selector */}
                 <div className="flex gap-2 pt-3 mt-3 border-t border-green-900">

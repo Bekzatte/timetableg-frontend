@@ -73,19 +73,19 @@ export const Dashboard = () => {
                 className="no-underline h-full"
               >
                 <div
-                  className={`${feature.bgClass} rounded-lg shadow-lg hover:shadow-2xl transition-all duration-1000 transform hover:-translate-y-1 p-4 sm:p-6 text-center cursor-pointer border border-white h-full flex flex-col items-center justify-center min-h-60`}
+                  className={`${feature.bgClass} rounded-lg shadow-lg hover:shadow-2xl transition-all duration-1000 transform hover:-translate-y-1 p-4 sm:p-6 text-left sm:text-center cursor-pointer border border-white h-full flex flex-col items-start sm:items-center justify-start sm:justify-center min-h-[180px] sm:min-h-60`}
                 >
                   <div
-                    className={`${feature.iconBgClass} w-12 sm:w-14 h-12 sm:h-14 rounded-full flex items-center justify-center mx-auto mb-4`}
+                    className={`${feature.iconBgClass} w-12 sm:w-14 h-12 sm:h-14 rounded-full flex items-center justify-center mb-4 sm:mx-auto`}
                   >
                     <IconComponent
                       className={`${feature.textClass} w-6 sm:w-7 h-6 sm:h-7`}
                     />
                   </div>
-                  <h2 className="text-base sm:text-lg font-semibold mb-2 text-gray-900">
+                  <h2 className="text-base sm:text-lg font-semibold mb-2 text-gray-900 break-words w-full">
                     {feature.title}
                   </h2>
-                  <p className="text-gray-700 text-xs sm:text-sm">
+                  <p className="text-gray-700 text-xs sm:text-sm break-words w-full">
                     {feature.description}
                   </p>
                 </div>
