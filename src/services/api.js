@@ -70,22 +70,17 @@ export const scheduleAPI = {
 };
 
 export const authAPI = {
-  requestRegistrationCode: (email, role) =>
-    api
-      .post("/auth/request-registration-code", { email, role })
-      .then((response) => response.data),
   login: (email, password, role) =>
     api
       .post("/auth/login", { email, password, role })
       .then((response) => response.data),
-  register: (email, password, displayName, role, verificationCode) =>
+  register: (email, password, displayName, role) =>
     api
       .post("/auth/register", {
         email,
         password,
         displayName,
         role,
-        verificationCode,
       })
       .then((response) => response.data),
   logout: () => api.post("/auth/logout").then((response) => response.data),
