@@ -17,6 +17,10 @@ export const LoginPage = () => {
     { value: ROLES.TEACHER, label: t("teacher") },
     { value: ROLES.STUDENT, label: t("student") },
   ];
+  const emailPlaceholder =
+    selectedRole === ROLES.TEACHER || selectedRole === ROLES.ADMIN
+      ? "name@kazatu.edu.kz"
+      : "name@example.com";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -77,7 +81,7 @@ export const LoginPage = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@university.kz"
+              placeholder={emailPlaceholder}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

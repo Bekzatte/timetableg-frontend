@@ -18,6 +18,8 @@ export const RegisterPage = () => {
     { value: ROLES.STUDENT, label: t("student") },
     { value: ROLES.TEACHER, label: t("teacher") },
   ];
+  const emailPlaceholder =
+    selectedRole === ROLES.TEACHER ? "name@kazatu.edu.kz" : "name@example.com";
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -104,7 +106,7 @@ export const RegisterPage = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@university.kz"
+              placeholder={emailPlaceholder}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
