@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getTranslation } from "../i18n/translations";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
@@ -11,33 +12,73 @@ const api = axios.create({
   },
 });
 
+const getCurrentLanguage = () => localStorage.getItem("language") || "ru";
+
+const getLocalized = (key) => getTranslation(getCurrentLanguage(), key);
+
+const ERROR_CODE_TRANSLATION_KEYS = {
+  fill_required_fields: "errorFillRequiredFields",
+  invalid_registration_role: "errorInvalidRegistrationRole",
+  email_already_exists: "errorEmailAlreadyExists",
+  invalid_role: "errorInvalidRole",
+  invalid_credentials: "errorInvalidCredentials",
+  role_mismatch: "errorRoleMismatch",
+  teacher_email_domain_required: "errorTeacherEmailDomainRequired",
+  teacher_account_email_domain_required: "errorTeacherAccountEmailDomainRequired",
+  auth_required: "errorAuthRequired",
+  invalid_token: "errorInvalidToken",
+  invalid_json: "errorInvalidJson",
+  database_error: "errorDatabase",
+  internal_server_error: "errorInternalServer",
+  schedule_generation_requires_data: "errorScheduleGenerationRequiresData",
+  invalid_id: "errorInvalidId",
+  record_not_found: "errorRecordNotFound",
+  forbidden: "errorForbidden",
+  not_found: "errorNotFound",
+  unsupported_collection: "errorBadRequest",
+};
+
 const getHttpFallbackMessage = (status) => {
   if (status === 400) {
-    return "Проверьте введённые данные.";
+    return getLocalized("errorBadRequest");
   }
   if (status === 401) {
-    return "Неверный логин или пароль.";
+    return getLocalized("errorUnauthorized");
   }
   if (status === 403) {
-    return "Доступ запрещён или введены неверные данные для этой роли.";
+    return getLocalized("errorForbidden");
   }
   if (status === 404) {
-    return "Сервис не найден.";
+    return getLocalized("errorNotFound");
   }
   if (status >= 500) {
-    return "Ошибка сервера. Попробуйте позже.";
+    return getLocalized("errorServer");
   }
-  return "Не удалось выполнить запрос.";
+  return getLocalized("errorUnknown");
 };
 
 const getTransportErrorMessage = (error) => {
   if (error?.code === "ECONNABORTED") {
-    return "Сервер отвечает слишком долго. Если backend на Render, он мог уснуть и сейчас просыпается.";
+    return getLocalized("errorTimeout");
   }
   if (error?.message === "Network Error") {
-    return "Не удалось подключиться к серверу. Проверьте VITE_API_URL, CORS и доступность backend.";
+    return getLocalized("errorNetwork");
   }
   return null;
+};
+
+const getApiErrorMessage = (payload, status) => {
+  const errorCode = payload?.errorCode;
+  const translationKey = errorCode ? ERROR_CODE_TRANSLATION_KEYS[errorCode] : null;
+
+  if (translationKey) {
+    if (errorCode === "fill_required_fields" && payload?.details?.fields?.length) {
+      return `${getLocalized(translationKey)}: ${payload.details.fields.join(", ")}`;
+    }
+    return getLocalized(translationKey);
+  }
+
+  return payload?.error || getHttpFallbackMessage(status);
 };
 
 export const courseAPI = {
@@ -119,10 +160,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const transportMessage = getTransportErrorMessage(error);
-    const serverMessage = error?.response?.data?.error;
+    const responseData = error?.response?.data;
     const status = error?.response?.status;
     const message =
-      transportMessage || serverMessage || getHttpFallbackMessage(status);
+      transportMessage || getApiErrorMessage(responseData, status);
     return Promise.reject(new Error(message));
   },
 );

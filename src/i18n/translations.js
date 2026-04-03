@@ -116,6 +116,36 @@ export const translations = {
     adminRegistrationDisabled: "Админ аккаунтын тек жүйе ішінде қолмен береміз.",
     teacherEmailHint:
       "Оқытушы ретінде тіркелу үшін email @kazatu.edu.kz доменімен аяқталуы керек.",
+    errorBadRequest: "Енгізілген деректерді тексеріңіз.",
+    errorUnauthorized: "Қате логин немесе пароль.",
+    errorForbidden: "Қол жеткізуге рұқсат жоқ.",
+    errorNotFound: "Сұралған ресурс табылмады.",
+    errorServer: "Сервер қатесі. Кейінірек қайталап көріңіз.",
+    errorUnknown: "Сұрауды орындау мүмкін болмады.",
+    errorTimeout:
+      "Сервер тым ұзақ жауап беріп жатыр. Егер backend Render-де болса, ол ұйқыдан оянып жатқан болуы мүмкін.",
+    errorNetwork:
+      "Серверге қосылу мүмкін болмады. VITE_API_URL, CORS және backend қолжетімділігін тексеріңіз.",
+    errorFillRequiredFields: "Міндетті өрістерді толтырыңыз.",
+    errorInvalidRegistrationRole:
+      "Тіркелу тек студент немесе оқытушы ретінде қолжетімді.",
+    errorEmailAlreadyExists: "Мұндай email-пен пайдаланушы бұрыннан бар.",
+    errorInvalidRole: "Рөл қате таңдалған.",
+    errorInvalidCredentials: "Қате email немесе пароль.",
+    errorRoleMismatch: "Бұл аккаунт басқа рөлмен тіркелген.",
+    errorTeacherEmailDomainRequired:
+      "Оқытушы үшін email @kazatu.edu.kz доменімен аяқталуы керек.",
+    errorTeacherAccountEmailDomainRequired:
+      "Оқытушы аккаунтында @kazatu.edu.kz email болуы керек.",
+    errorAuthRequired: "Жүйеге кіру қажет.",
+    errorInvalidToken: "Сессия жарамсыз. Қайта кіріңіз.",
+    errorInvalidJson: "Қате JSON жіберілді.",
+    errorDatabase: "Дерекқор қатесі орын алды.",
+    errorInternalServer: "Ішкі сервер қатесі орын алды.",
+    errorScheduleGenerationRequiresData:
+      "Кесте құру үшін курстар, оқытушылар және аудиториялар қажет.",
+    errorInvalidId: "ID сан болуы керек.",
+    errorRecordNotFound: "Жазба табылмады.",
 
     // Theme & Language
     theme: "Тема",
@@ -292,6 +322,36 @@ export const translations = {
     adminRegistrationDisabled: "Админ не регистрируется публично, аккаунт выдаётся вручную.",
     teacherEmailHint:
       "Чтобы зарегистрироваться как преподаватель, email должен оканчиваться на @kazatu.edu.kz.",
+    errorBadRequest: "Проверьте введённые данные.",
+    errorUnauthorized: "Неверный логин или пароль.",
+    errorForbidden: "Доступ запрещён.",
+    errorNotFound: "Запрошенный ресурс не найден.",
+    errorServer: "Ошибка сервера. Попробуйте позже.",
+    errorUnknown: "Не удалось выполнить запрос.",
+    errorTimeout:
+      "Сервер отвечает слишком долго. Если backend на Render, он мог уснуть и сейчас просыпается.",
+    errorNetwork:
+      "Не удалось подключиться к серверу. Проверьте VITE_API_URL, CORS и доступность backend.",
+    errorFillRequiredFields: "Заполните обязательные поля.",
+    errorInvalidRegistrationRole:
+      "Регистрация доступна только как студент или преподаватель.",
+    errorEmailAlreadyExists: "Пользователь с таким email уже существует.",
+    errorInvalidRole: "Выбрана некорректная роль.",
+    errorInvalidCredentials: "Неверный email или пароль.",
+    errorRoleMismatch: "Этот аккаунт зарегистрирован с другой ролью.",
+    errorTeacherEmailDomainRequired:
+      "Для преподавателя нужен email, оканчивающийся на @kazatu.edu.kz.",
+    errorTeacherAccountEmailDomainRequired:
+      "У аккаунта преподавателя должен быть email @kazatu.edu.kz.",
+    errorAuthRequired: "Требуется авторизация.",
+    errorInvalidToken: "Сессия недействительна. Войдите снова.",
+    errorInvalidJson: "Отправлен некорректный JSON.",
+    errorDatabase: "Произошла ошибка базы данных.",
+    errorInternalServer: "Произошла внутренняя ошибка сервера.",
+    errorScheduleGenerationRequiresData:
+      "Для генерации расписания нужны курсы, преподаватели и аудитории.",
+    errorInvalidId: "ID должен быть числом.",
+    errorRecordNotFound: "Запись не найдена.",
 
     // Theme & Language
     theme: "Тема",
@@ -468,6 +528,36 @@ export const translations = {
     adminRegistrationDisabled: "Admin accounts are created manually and are not publicly registered.",
     teacherEmailHint:
       "To register as a teacher, the email must end with @kazatu.edu.kz.",
+    errorBadRequest: "Check the entered data.",
+    errorUnauthorized: "Invalid login or password.",
+    errorForbidden: "Access denied.",
+    errorNotFound: "Requested resource was not found.",
+    errorServer: "Server error. Try again later.",
+    errorUnknown: "The request could not be completed.",
+    errorTimeout:
+      "The server is responding too slowly. If the backend is on Render, it may be waking up from sleep.",
+    errorNetwork:
+      "Could not connect to the server. Check VITE_API_URL, CORS, and backend availability.",
+    errorFillRequiredFields: "Fill in the required fields.",
+    errorInvalidRegistrationRole:
+      "Registration is only available as a student or teacher.",
+    errorEmailAlreadyExists: "A user with this email already exists.",
+    errorInvalidRole: "An invalid role was selected.",
+    errorInvalidCredentials: "Invalid email or password.",
+    errorRoleMismatch: "This account is registered with a different role.",
+    errorTeacherEmailDomainRequired:
+      "Teacher registration requires an email ending with @kazatu.edu.kz.",
+    errorTeacherAccountEmailDomainRequired:
+      "Teacher accounts must use an @kazatu.edu.kz email.",
+    errorAuthRequired: "Authentication is required.",
+    errorInvalidToken: "The session is invalid. Please sign in again.",
+    errorInvalidJson: "Invalid JSON was sent.",
+    errorDatabase: "A database error occurred.",
+    errorInternalServer: "An internal server error occurred.",
+    errorScheduleGenerationRequiresData:
+      "Courses, teachers, and rooms are required to generate a schedule.",
+    errorInvalidId: "ID must be a number.",
+    errorRecordNotFound: "Record not found.",
 
     // Theme & Language
     theme: "Theme",
