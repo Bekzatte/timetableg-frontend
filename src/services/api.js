@@ -40,11 +40,19 @@ export const scheduleAPI = {
 };
 
 export const authAPI = {
-  login: (email, password) =>
-    api.post("/auth/login", { email, password }).then((response) => response.data),
-  register: (email, password, displayName, role) =>
+  login: (email, password, role) =>
     api
-      .post("/auth/register", { email, password, displayName, role })
+      .post("/auth/login", { email, password, role })
+      .then((response) => response.data),
+  register: (email, password, displayName, role, teacherCode) =>
+    api
+      .post("/auth/register", {
+        email,
+        password,
+        displayName,
+        role,
+        teacherCode,
+      })
       .then((response) => response.data),
   logout: () => api.post("/auth/logout").then((response) => response.data),
 };

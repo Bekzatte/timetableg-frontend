@@ -1,17 +1,24 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { ROLES, useAuth } from "../contexts/AuthContext";
 import { useTranslation } from "../hooks/useTranslation";
 
 export const RegisterPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { register, isLoading, error } = useAuth();
+  const [selectedRole, setSelectedRole] = React.useState(ROLES.STUDENT);
   const [displayName, setDisplayName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [teacherCode, setTeacherCode] = React.useState("");
   const [localError, setLocalError] = React.useState("");
+
+  const roleOptions = [
+    { value: ROLES.STUDENT, label: t("student") },
+    { value: ROLES.TEACHER, label: t("teacher") },
+  ];
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -32,8 +39,19 @@ export const RegisterPage = () => {
       return;
     }
 
+    if (selectedRole === ROLES.TEACHER && !teacherCode.trim()) {
+      setLocalError(t("teacherCodeRequired"));
+      return;
+    }
+
     try {
-      await register(email, password, displayName, "student");
+      await register(
+        email,
+        password,
+        displayName,
+        selectedRole,
+        teacherCode.trim(),
+      );
       navigate("/");
     } catch (err) {
       setLocalError(err.message);
@@ -54,6 +72,29 @@ export const RegisterPage = () => {
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
+          <div>
+            <p className="block text-sm font-medium mb-2 text-gray-700">
+              {t("registerAs")}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {roleOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setSelectedRole(option.value)}
+                  className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                    selectedRole === option.value
+                      ? "border-[#014531] bg-[#014531] text-white"
+                      : "border-gray-300 bg-white text-gray-700 hover:border-[#014531]"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-gray-500">{t("adminRegistrationDisabled")}</p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">
               {t("fullName")}
@@ -105,6 +146,21 @@ export const RegisterPage = () => {
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {selectedRole === ROLES.TEACHER && (
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700">
+                {t("teacherCode")}
+              </label>
+              <input
+                type="text"
+                value={teacherCode}
+                onChange={(e) => setTeacherCode(e.target.value)}
+                placeholder={t("teacherCodePlaceholder")}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
 
           <button
             type="submit"

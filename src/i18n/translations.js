@@ -110,6 +110,13 @@ export const translations = {
     loginHere: "Мына жерде кіріңіз",
     register: "Тіркелу",
     enterFullName: "Толық атыңызды енгізіңіз",
+    loginAs: "Кіру түрі",
+    registerAs: "Тіркелу түрі",
+    adminLogin: "Админ",
+    adminRegistrationDisabled: "Админ аккаунтын тек жүйе ішінде қолмен береміз.",
+    teacherCode: "Оқытушы коды",
+    teacherCodePlaceholder: "Университет берген кодты енгізіңіз",
+    teacherCodeRequired: "Оқытушы коды міндетті",
 
     // Theme & Language
     theme: "Тема",
@@ -280,6 +287,13 @@ export const translations = {
     loginHere: "Войдите здесь",
     register: "Регистрация",
     enterFullName: "Введите ваше полное имя",
+    loginAs: "Войти как",
+    registerAs: "Зарегистрироваться как",
+    adminLogin: "Админ",
+    adminRegistrationDisabled: "Админ не регистрируется публично, аккаунт выдаётся вручную.",
+    teacherCode: "Код преподавателя",
+    teacherCodePlaceholder: "Введите код, выданный университетом",
+    teacherCodeRequired: "Для преподавателя нужен код",
 
     // Theme & Language
     theme: "Тема",
@@ -450,6 +464,13 @@ export const translations = {
     loginHere: "Login here",
     register: "Register",
     enterFullName: "Enter your full name",
+    loginAs: "Login as",
+    registerAs: "Register as",
+    adminLogin: "Admin",
+    adminRegistrationDisabled: "Admin accounts are created manually and are not publicly registered.",
+    teacherCode: "Teacher code",
+    teacherCodePlaceholder: "Enter the code issued by the university",
+    teacherCodeRequired: "Teacher code is required",
 
     // Theme & Language
     theme: "Theme",
