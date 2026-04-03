@@ -38,6 +38,38 @@ const ERROR_CODE_TRANSLATION_KEYS = {
   unsupported_collection: "errorBadRequest",
 };
 
+const RAW_ERROR_TRANSLATION_KEYS = {
+  "Пользователь с таким email уже существует.": "errorEmailAlreadyExists",
+  "Пользователь с таким email уже существует": "errorEmailAlreadyExists",
+  "Для преподавателя нужен email, оканчивающийся на @kazatu.edu.kz.":
+    "errorTeacherEmailDomainRequired",
+  "Для преподавателя нужен email, оканчивающийся на @kazatu.edu.kz":
+    "errorTeacherEmailDomainRequired",
+  "Неверный email или пароль.": "errorInvalidCredentials",
+  "Неверный email или пароль": "errorInvalidCredentials",
+  "Этот аккаунт зарегистрирован с другой ролью.": "errorRoleMismatch",
+  "Этот аккаунт зарегистрирован с другой ролью": "errorRoleMismatch",
+  "У аккаунта преподавателя должен быть email @kazatu.edu.kz.":
+    "errorTeacherAccountEmailDomainRequired",
+  "У аккаунта преподавателя должен быть email @kazatu.edu.kz":
+    "errorTeacherAccountEmailDomainRequired",
+  "Требуется авторизация.": "errorAuthRequired",
+  "Требуется авторизация": "errorAuthRequired",
+  "Недействительный токен.": "errorInvalidToken",
+  "Недействительный токен": "errorInvalidToken",
+  "Недостаточно прав.": "errorForbidden",
+  "Недостаточно прав": "errorForbidden",
+  "Некорректный JSON.": "errorInvalidJson",
+  "Некорректный JSON": "errorInvalidJson",
+  "Запись не найдена.": "errorRecordNotFound",
+  "Запись не найдена": "errorRecordNotFound",
+  "ID должен быть числом.": "errorInvalidId",
+  "ID должен быть числом": "errorInvalidId",
+  "Для генерации расписания нужны курсы, преподаватели и аудитории.":
+    "errorScheduleGenerationRequiresData",
+  "Not found": "errorNotFound",
+};
+
 const getHttpFallbackMessage = (status) => {
   if (status === 400) {
     return getLocalized("errorBadRequest");
@@ -70,12 +102,19 @@ const getTransportErrorMessage = (error) => {
 const getApiErrorMessage = (payload, status) => {
   const errorCode = payload?.errorCode;
   const translationKey = errorCode ? ERROR_CODE_TRANSLATION_KEYS[errorCode] : null;
+  const rawTranslationKey = payload?.error
+    ? RAW_ERROR_TRANSLATION_KEYS[payload.error]
+    : null;
 
   if (translationKey) {
     if (errorCode === "fill_required_fields" && payload?.details?.fields?.length) {
       return `${getLocalized(translationKey)}: ${payload.details.fields.join(", ")}`;
     }
     return getLocalized(translationKey);
+  }
+
+  if (rawTranslationKey) {
+    return getLocalized(rawTranslationKey);
   }
 
   return payload?.error || getHttpFallbackMessage(status);
