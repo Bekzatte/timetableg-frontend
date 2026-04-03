@@ -40,9 +40,9 @@ export const scheduleAPI = {
 };
 
 export const authAPI = {
-  login: (email, password, role) =>
+  login: (email, password, role, teacherCode) =>
     api
-      .post("/auth/login", { email, password, role })
+      .post("/auth/login", { email, password, role, teacherCode })
       .then((response) => response.data),
   register: (email, password, displayName, role, teacherCode) =>
     api

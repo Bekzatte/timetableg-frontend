@@ -26,11 +26,16 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (email, password, role = ROLES.STUDENT) => {
+  const login = async (
+    email,
+    password,
+    role = ROLES.STUDENT,
+    teacherCode = "",
+  ) => {
     setIsLoading(true);
     setError(null);
     try {
-      const userData = await authAPI.login(email, password, role);
+      const userData = await authAPI.login(email, password, role, teacherCode);
       const userWithRole = { ...userData, role: userData.role || role };
       setUser(userWithRole);
       localStorage.setItem("user", JSON.stringify(userWithRole));

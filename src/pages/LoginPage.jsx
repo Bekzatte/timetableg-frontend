@@ -10,12 +10,13 @@ export const LoginPage = () => {
   const [selectedRole, setSelectedRole] = React.useState(ROLES.STUDENT);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [teacherCode, setTeacherCode] = React.useState("");
   const [localError, setLocalError] = React.useState("");
 
   const roleOptions = [
-    { value: ROLES.STUDENT, label: t("student") },
-    { value: ROLES.TEACHER, label: t("teacher") },
     { value: ROLES.ADMIN, label: t("adminLogin") },
+    { value: ROLES.TEACHER, label: t("teacher") },
+    { value: ROLES.STUDENT, label: t("student") },
   ];
 
   const handleLogin = async (e) => {
@@ -27,8 +28,13 @@ export const LoginPage = () => {
       return;
     }
 
+    if (selectedRole === ROLES.TEACHER && !teacherCode.trim()) {
+      setLocalError(t("teacherCodeRequired"));
+      return;
+    }
+
     try {
-      await login(email, password, selectedRole);
+      await login(email, password, selectedRole, teacherCode.trim());
       navigate("/");
     } catch (err) {
       setLocalError(err.message);
@@ -51,7 +57,7 @@ export const LoginPage = () => {
             <p className="block text-sm font-medium mb-2 text-gray-700">
               {t("loginAs")}
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col gap-2">
               {roleOptions.map((option) => (
                 <button
                   key={option.value}
@@ -94,6 +100,21 @@ export const LoginPage = () => {
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {selectedRole === ROLES.TEACHER && (
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700">
+                {t("teacherCode")}
+              </label>
+              <input
+                type="text"
+                value={teacherCode}
+                onChange={(e) => setTeacherCode(e.target.value)}
+                placeholder={t("teacherCodePlaceholder")}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
