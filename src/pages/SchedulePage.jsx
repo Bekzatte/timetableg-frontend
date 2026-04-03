@@ -98,7 +98,7 @@ export const SchedulePage = () => {
   return (
     <div className="w-full px-6 py-6 sm:py-8">
       <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("scheduleMgmt")}
         </h1>
         <div className="flex gap-2 flex-wrap">
