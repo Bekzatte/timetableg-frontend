@@ -29,16 +29,11 @@ export const AuthProvider = ({ children }) => {
   const getErrorMessage = (err, fallback) =>
     err?.response?.data?.error || err?.message || fallback;
 
-  const login = async (
-    email,
-    password,
-    role = ROLES.STUDENT,
-    teacherCode = "",
-  ) => {
+  const login = async (email, password, role = ROLES.STUDENT) => {
     setIsLoading(true);
     setError(null);
     try {
-      const userData = await authAPI.login(email, password, role, teacherCode);
+      const userData = await authAPI.login(email, password, role);
       const userWithRole = { ...userData, role: userData.role || role };
       setUser(userWithRole);
       localStorage.setItem("user", JSON.stringify(userWithRole));
@@ -57,7 +52,6 @@ export const AuthProvider = ({ children }) => {
     password,
     displayName,
     role = ROLES.STUDENT,
-    teacherCode = "",
   ) => {
     setIsLoading(true);
     setError(null);
@@ -67,7 +61,6 @@ export const AuthProvider = ({ children }) => {
         password,
         displayName,
         role,
-        teacherCode,
       );
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));

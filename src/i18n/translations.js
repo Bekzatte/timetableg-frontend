@@ -114,9 +114,8 @@ export const translations = {
     registerAs: "Тіркелу түрі",
     adminLogin: "Админ",
     adminRegistrationDisabled: "Админ аккаунтын тек жүйе ішінде қолмен береміз.",
-    teacherCode: "Оқытушы коды",
-    teacherCodePlaceholder: "Университет берген кодты енгізіңіз",
-    teacherCodeRequired: "Оқытушы коды міндетті",
+    teacherEmailHint:
+      "Оқытушы ретінде тіркелу үшін email @kazatu.edu.kz доменімен аяқталуы керек.",
 
     // Theme & Language
     theme: "Тема",
@@ -291,9 +290,8 @@ export const translations = {
     registerAs: "Зарегистрироваться как",
     adminLogin: "Админ",
     adminRegistrationDisabled: "Админ не регистрируется публично, аккаунт выдаётся вручную.",
-    teacherCode: "Код преподавателя",
-    teacherCodePlaceholder: "Введите код, выданный университетом",
-    teacherCodeRequired: "Для преподавателя нужен код",
+    teacherEmailHint:
+      "Чтобы зарегистрироваться как преподаватель, email должен оканчиваться на @kazatu.edu.kz.",
 
     // Theme & Language
     theme: "Тема",
@@ -468,9 +466,8 @@ export const translations = {
     registerAs: "Register as",
     adminLogin: "Admin",
     adminRegistrationDisabled: "Admin accounts are created manually and are not publicly registered.",
-    teacherCode: "Teacher code",
-    teacherCodePlaceholder: "Enter the code issued by the university",
-    teacherCodeRequired: "Teacher code is required",
+    teacherEmailHint:
+      "To register as a teacher, the email must end with @kazatu.edu.kz.",
 
     // Theme & Language
     theme: "Theme",

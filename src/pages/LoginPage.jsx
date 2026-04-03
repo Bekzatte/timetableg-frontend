@@ -10,7 +10,6 @@ export const LoginPage = () => {
   const [selectedRole, setSelectedRole] = React.useState(ROLES.STUDENT);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [teacherCode, setTeacherCode] = React.useState("");
   const [localError, setLocalError] = React.useState("");
 
   const roleOptions = [
@@ -28,13 +27,8 @@ export const LoginPage = () => {
       return;
     }
 
-    if (selectedRole === ROLES.TEACHER && !teacherCode.trim()) {
-      setLocalError(t("teacherCodeRequired"));
-      return;
-    }
-
     try {
-      await login(email, password, selectedRole, teacherCode.trim());
+      await login(email, password, selectedRole);
       navigate("/");
     } catch (err) {
       setLocalError(err.message);
@@ -100,21 +94,6 @@ export const LoginPage = () => {
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          {selectedRole === ROLES.TEACHER && (
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">
-                {t("teacherCode")}
-              </label>
-              <input
-                type="text"
-                value={teacherCode}
-                onChange={(e) => setTeacherCode(e.target.value)}
-                placeholder={t("teacherCodePlaceholder")}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          )}
 
           <button
             type="submit"

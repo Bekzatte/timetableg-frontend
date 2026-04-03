@@ -59,18 +59,17 @@ export const scheduleAPI = {
 };
 
 export const authAPI = {
-  login: (email, password, role, teacherCode) =>
+  login: (email, password, role) =>
     api
-      .post("/auth/login", { email, password, role, teacherCode })
+      .post("/auth/login", { email, password, role })
       .then((response) => response.data),
-  register: (email, password, displayName, role, teacherCode) =>
+  register: (email, password, displayName, role) =>
     api
       .post("/auth/register", {
         email,
         password,
         displayName,
         role,
-        teacherCode,
       })
       .then((response) => response.data),
   logout: () => api.post("/auth/logout").then((response) => response.data),

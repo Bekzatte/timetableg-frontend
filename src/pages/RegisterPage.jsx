@@ -12,7 +12,6 @@ export const RegisterPage = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [teacherCode, setTeacherCode] = React.useState("");
   const [localError, setLocalError] = React.useState("");
 
   const roleOptions = [
@@ -39,19 +38,8 @@ export const RegisterPage = () => {
       return;
     }
 
-    if (selectedRole === ROLES.TEACHER && !teacherCode.trim()) {
-      setLocalError(t("teacherCodeRequired"));
-      return;
-    }
-
     try {
-      await register(
-        email,
-        password,
-        displayName,
-        selectedRole,
-        teacherCode.trim(),
-      );
+      await register(email, password, displayName, selectedRole);
       navigate("/");
     } catch (err) {
       setLocalError(err.message);
@@ -148,18 +136,9 @@ export const RegisterPage = () => {
           </div>
 
           {selectedRole === ROLES.TEACHER && (
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">
-                {t("teacherCode")}
-              </label>
-              <input
-                type="text"
-                value={teacherCode}
-                onChange={(e) => setTeacherCode(e.target.value)}
-                placeholder={t("teacherCodePlaceholder")}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {t("teacherEmailHint")}
+            </p>
           )}
 
           <button
