@@ -26,6 +26,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const getErrorMessage = (err, fallback) =>
+    err?.response?.data?.error || err?.message || fallback;
+
   const login = async (
     email,
     password,
@@ -41,7 +44,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(userWithRole));
       return userWithRole;
     } catch (err) {
-      const errorMsg = err.message || "Ошибка при входе";
+      const errorMsg = getErrorMessage(err, "Ошибка при входе");
       setError(errorMsg);
       throw new Error(errorMsg);
     } finally {
@@ -70,7 +73,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(userData));
       return userData;
     } catch (err) {
-      const errorMsg = err.message || "Ошибка при регистрации";
+      const errorMsg = getErrorMessage(err, "Ошибка при регистрации");
       setError(errorMsg);
       throw new Error(errorMsg);
     } finally {
