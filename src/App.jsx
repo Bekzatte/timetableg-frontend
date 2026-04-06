@@ -103,19 +103,21 @@ export default function App() {
       <div className="flex flex-col min-h-screen bg-white">
         {/* Header */}
         <header className="bg-[#014531] shadow-xl border-b border-green-900">
-          <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center">
+          <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
             {/* Logo */}
             <Link
               to="/"
-              className="flex items-center gap-2 text-lg sm:text-2xl font-bold text-white hover:opacity-80 transition"
+              className="hidden lg:flex items-center gap-2 text-2xl font-bold text-white hover:opacity-80 transition"
             >
               <img
                 src="https://kazatu.edu.kz/img/logo_official.svg"
                 alt="KazATU Logo"
                 className="h-8 sm:h-10 w-auto"
               />
-              <span className="hidden sm:inline">{t("title")}</span>
+              <span>{t("title")}</span>
             </Link>
+
+            <div className="lg:hidden min-w-0" />
 
             {/* Desktop menu */}
             <div className="hidden lg:flex gap-6 xl:gap-8">
@@ -195,7 +197,7 @@ export default function App() {
                   </button>
 
                   {profileMenuOpen ? (
-                    <div className="absolute right-0 top-[calc(100%+12px)] z-50 min-w-44 overflow-hidden rounded-2xl border border-green-900/20 bg-white shadow-2xl">
+                    <div className="absolute right-0 top-[calc(100%+10px)] z-50 min-w-44 overflow-hidden rounded-2xl border border-green-900/20 bg-white shadow-2xl">
                       <Link
                         to="/profile"
                         onClick={() => {
@@ -239,7 +241,7 @@ export default function App() {
 
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="lg:hidden text-white p-2 hover:bg-opacity-10 rounded transition"
+                className="rounded-full p-2 text-white transition hover:bg-white/10 lg:hidden"
               >
                 {menuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
@@ -372,6 +374,19 @@ export default function App() {
         {/* Footer */}
         <footer className="bg-[#014531] text-white py-6 sm:py-8 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-5 flex justify-center lg:hidden">
+              <Link
+                to="/"
+                className="flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-3 text-white transition hover:opacity-80"
+              >
+                <img
+                  src="https://kazatu.edu.kz/img/logo_official.svg"
+                  alt="KazATU Logo"
+                  className="h-10 w-auto"
+                />
+              </Link>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-6">
               {/* About */}
               <div className="text-center">
