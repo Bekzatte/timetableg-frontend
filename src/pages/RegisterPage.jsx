@@ -43,7 +43,7 @@ export const RegisterPage = () => {
 
     try {
       await register(email, password, displayName, selectedRole);
-      navigate("/profile");
+      navigate("/");
     } catch (err) {
       setLocalError(err.message);
     }
