@@ -14,11 +14,20 @@ import RoomsPage from "./pages/RoomsPage";
 import SchedulePage from "./pages/SchedulePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
 import { useLanguage } from "./hooks/useLanguage";
 import { useTranslation } from "./hooks/useTranslation";
 import { ROLES } from "./constants/roles";
 import { useAuth } from "./hooks/useAuth";
 import "./index.css";
+
+const getInitials = (displayName = "") =>
+  displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "?";
 
 const RequireAuth = ({ children, allowedRoles = [] }) => {
   const { user } = useAuth();
@@ -50,6 +59,10 @@ export default function App() {
     { label: t("home"), path: "/" },
     { label: t("schedule"), path: "/schedule" },
   ];
+
+  if (user) {
+    navItems.splice(1, 0, { label: t("profile"), path: "/profile" });
+  }
 
   if (isAdmin) {
     navItems.splice(1, 0, { label: t("courses"), path: "/courses" });
@@ -123,9 +136,25 @@ export default function App() {
               {/* Auth Buttons - Desktop */}
               {user ? (
                 <div className="hidden sm:flex items-center gap-2">
-                  <span className="px-3 py-1.5 rounded-2xl border-[0.4px] border-white bg-[#014531] text-white text-[14px] whitespace-nowrap">
-                    {`${user.displayName} (${roleLabels[user.role] || user.role})`}
-                  </span>
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 rounded-2xl border-[0.4px] border-white bg-[#014531] px-3 py-1.5 text-white transition hover:scale-105"
+                  >
+                    {user.avatarData ? (
+                      <img
+                        src={user.avatarData}
+                        alt={user.displayName}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-xs font-bold text-[#014531]">
+                        {getInitials(user.displayName)}
+                      </span>
+                    )}
+                    <span className="text-[14px] whitespace-nowrap">
+                      {`${user.displayName} (${roleLabels[user.role] || user.role})`}
+                    </span>
+                  </Link>
                   <button
                     onClick={logout}
                     className="px-3 py-1.5 rounded-2xl bg-red-500 text-white text-[14px] whitespace-nowrap hover:scale-105 transition"
@@ -197,15 +226,24 @@ export default function App() {
 
                 <div className="pt-3 mt-3 border-t border-green-900 space-y-2">
                   {user ? (
-                    <button
-                      onClick={() => {
-                        logout();
-                        setMenuOpen(false);
-                      }}
-                      className="w-full bg-red-600 text-white py-2 rounded-md"
-                    >
-                      {t("logout")}
-                    </button>
+                    <>
+                      <Link
+                        to="/profile"
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full inline-flex justify-center rounded-md border border-white text-white py-2"
+                      >
+                        {t("profile")}
+                      </Link>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setMenuOpen(false);
+                        }}
+                        className="w-full bg-red-600 text-white py-2 rounded-md"
+                      >
+                        {t("logout")}
+                      </button>
+                    </>
                   ) : (
                     <>
                       <Link
@@ -276,6 +314,16 @@ export default function App() {
                   allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
                 >
                   <SchedulePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth
+                  allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
+                >
+                  <ProfilePage />
                 </RequireAuth>
               }
             />

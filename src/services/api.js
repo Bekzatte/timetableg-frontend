@@ -1,11 +1,30 @@
 import axios from "axios";
 import { getTranslation } from "../i18n/translations";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const resolveApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL?.trim();
+  if (envUrl) {
+    return envUrl;
+  }
+
+  const hostname = window.location.hostname;
+  const isLocalHostname =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname.endsWith(".local");
+
+  if (isLocalHostname) {
+    return "http://127.0.0.1:8000/api";
+  }
+
+  return null;
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL || undefined,
   timeout: 20000,
   headers: {
     "Content-Type": "application/json",
@@ -93,6 +112,9 @@ const getHttpFallbackMessage = (status) => {
 };
 
 const getTransportErrorMessage = (error) => {
+  if (!API_BASE_URL) {
+    return `VITE_API_URL is not configured for this deployment (${window.location.origin}).`;
+  }
   if (error?.code === "ECONNABORTED") {
     return getLocalized("errorTimeout");
   }
@@ -169,17 +191,32 @@ export const authAPI = {
   logout: () => api.post("/auth/logout").then((response) => response.data),
 };
 
+export const profileAPI = {
+  getCurrent: () => api.get("/profile").then((response) => response.data),
+  uploadAvatar: (avatarData) =>
+    api.post("/profile/avatar", { avatarData }).then((response) => response.data),
+};
+
 export default {
   courseAPI,
   teacherAPI,
   roomAPI,
   scheduleAPI,
   authAPI,
+  profileAPI,
 };
 
 // Add auth token interceptor
 api.interceptors.request.use(
   (config) => {
+    if (!API_BASE_URL) {
+      return Promise.reject(
+        new Error(
+          `VITE_API_URL is not configured for this deployment (${window.location.origin}).`,
+        ),
+      );
+    }
+
     const user = localStorage.getItem("user");
     if (user) {
       try {

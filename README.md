@@ -63,6 +63,9 @@ VITE_API_URL=http://192.168.1.25:8000/api
 VITE_API_URL=https://your-backend.onrender.com/api
 ```
 
+Если frontend размещен на Vercel, `VITE_API_URL` нужно добавить в настройках проекта Vercel.
+Иначе production-сборка не сможет обращаться к backend на Render.
+
 ## Роли во frontend
 
 ### Admin

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authAPI } from "../services/api";
+import { authAPI, profileAPI } from "../services/api";
 import { ROLES } from "../constants/roles";
 import { AuthContext } from "./AuthContextValue";
 
@@ -8,12 +8,30 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const persistUser = (nextUser) => {
+    setUser(nextUser);
+    if (nextUser) {
+      localStorage.setItem("user", JSON.stringify(nextUser));
+      return;
+    }
+    localStorage.removeItem("user");
+  };
+
   // Загрузить данные из localStorage при инициализации
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        profileAPI
+          .getCurrent()
+          .then((profile) => {
+            persistUser({ ...parsedUser, ...profile });
+          })
+          .catch((err) => {
+            console.error("Error refreshing profile:", err);
+          });
       } catch (e) {
         console.error("Error loading user from localStorage:", e);
       }
@@ -29,8 +47,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const userData = await authAPI.login(email, password, role);
       const userWithRole = { ...userData, role: userData.role || role };
-      setUser(userWithRole);
-      localStorage.setItem("user", JSON.stringify(userWithRole));
+      persistUser(userWithRole);
       return userWithRole;
     } catch (err) {
       const errorMsg = getErrorMessage(err, "Ошибка при входе");
@@ -56,8 +73,7 @@ export const AuthProvider = ({ children }) => {
         displayName,
         role,
       );
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
+      persistUser(userData);
       return userData;
     } catch (err) {
       const errorMsg = getErrorMessage(err, "Ошибка при регистрации");
@@ -72,9 +88,41 @@ export const AuthProvider = ({ children }) => {
     authAPI.logout().catch((err) => {
       console.error("Logout request failed:", err);
     });
-    setUser(null);
-    localStorage.removeItem("user");
+    persistUser(null);
     setError(null);
+  };
+
+  const refreshProfile = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const profile = await profileAPI.getCurrent();
+      const nextUser = { ...user, ...profile };
+      persistUser(nextUser);
+      return nextUser;
+    } catch (err) {
+      const errorMsg = getErrorMessage(err, "Ошибка при загрузке профиля");
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const uploadAvatar = async (avatarData) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const nextUser = await profileAPI.uploadAvatar(avatarData);
+      persistUser(nextUser);
+      return nextUser;
+    } catch (err) {
+      const errorMsg = getErrorMessage(err, "Ошибка при загрузке фото");
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const value = {
@@ -87,6 +135,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    refreshProfile,
+    uploadAvatar,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

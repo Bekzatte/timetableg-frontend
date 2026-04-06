@@ -3,6 +3,7 @@ export const translations = {
     // Navigation
     navigate: "Навигация",
     home: "Басты бет",
+    profile: "Профиль",
     courses: "Курстар",
     teachers: "Оқытушылар",
     rooms: "Аудиториялар",
@@ -104,6 +105,19 @@ export const translations = {
     alreadyHaveAccount: "Іс портফельіңіз бар ма?",
     loginHere: "Мына жерде кіріңіз",
     register: "Тіркелу",
+    profileWelcome: "Жеке профиліңіз",
+    profileDescription:
+      "Мұнда тіркелген аккаунт туралы негізгі ақпарат көрсетіледі. Деректер тек көруге арналған, бірақ профиль фотосын жүктеуге болады.",
+    profileInfo: "Пайдаланушы ақпараты",
+    profileReadonly: "Бұл профильді өзгертуге болмайды. Тек фото жүктеу қолжетімді.",
+    profileUploadPhoto: "Профиль фотосын жүктеу",
+    profileUploadHint: "PNG, JPG, WEBP немесе GIF. Максимум 1 МБ.",
+    profileAvatarUpdated: "Профиль фотосы жаңартылды.",
+    profileImageTypeError: "Тек сурет файлын таңдаңыз.",
+    profileImageSizeError: "Файл көлемі 1 МБ-тан аспауы керек.",
+    profileImageReadError: "Суретті оқу мүмкін болмады.",
+    profileNoEditNotice:
+      "Қалған профиль өрістері әзірше тек оқу режимінде көрсетіледі.",
     enterFullName: "Толық атыңызды енгізіңіз",
     loginAs: "Кіру түрі",
     registerAs: "Тіркелу түрі",
@@ -206,6 +220,7 @@ export const translations = {
     // Navigation
     navigate: "Навигация",
     home: "Главная",
+    profile: "Профиль",
     courses: "Курсы",
     teachers: "Преподаватели",
     rooms: "Аудитории",
@@ -307,6 +322,20 @@ export const translations = {
     alreadyHaveAccount: "Уже есть аккаунт?",
     loginHere: "Войдите здесь",
     register: "Регистрация",
+    profileWelcome: "Ваш личный профиль",
+    profileDescription:
+      "Здесь отображается информация о зарегистрированном пользователе. Данные доступны только для просмотра, но фотографию профиля можно загрузить.",
+    profileInfo: "Информация о пользователе",
+    profileReadonly:
+      "Этот профиль нельзя редактировать. Доступна только загрузка фотографии.",
+    profileUploadPhoto: "Загрузить фото профиля",
+    profileUploadHint: "PNG, JPG, WEBP или GIF. Максимум 1 МБ.",
+    profileAvatarUpdated: "Фотография профиля обновлена.",
+    profileImageTypeError: "Выберите файл изображения.",
+    profileImageSizeError: "Размер файла не должен превышать 1 МБ.",
+    profileImageReadError: "Не удалось прочитать изображение.",
+    profileNoEditNotice:
+      "Остальные поля профиля пока доступны только для просмотра.",
     enterFullName: "Введите ваше полное имя",
     loginAs: "Войти как",
     registerAs: "Зарегистрироваться как",
@@ -410,6 +439,7 @@ export const translations = {
     // Navigation
     navigate: "Navigation",
     home: "Home",
+    profile: "Profile",
     courses: "Courses",
     teachers: "Teachers",
     rooms: "Rooms",
@@ -510,6 +540,20 @@ export const translations = {
     alreadyHaveAccount: "Already have an account?",
     loginHere: "Login here",
     register: "Register",
+    profileWelcome: "Your profile",
+    profileDescription:
+      "This page shows the registered user's information. The data is read-only, but a profile photo can be uploaded.",
+    profileInfo: "User information",
+    profileReadonly:
+      "This profile cannot be edited. Only profile photo upload is available.",
+    profileUploadPhoto: "Upload profile photo",
+    profileUploadHint: "PNG, JPG, WEBP, or GIF. Maximum 1 MB.",
+    profileAvatarUpdated: "Profile photo updated.",
+    profileImageTypeError: "Please choose an image file.",
+    profileImageSizeError: "The file must not exceed 1 MB.",
+    profileImageReadError: "Could not read the image.",
+    profileNoEditNotice:
+      "The rest of the profile fields are currently read-only.",
     enterFullName: "Enter your full name",
     loginAs: "Login as",
     registerAs: "Register as",
