@@ -220,7 +220,7 @@ export default function App() {
               {user ? (
                 <div
                   ref={desktopProfileMenuRef}
-                  className="relative hidden items-center sm:flex"
+                  className="relative hidden items-center lg:flex"
                 >
                   <button
                     type="button"
