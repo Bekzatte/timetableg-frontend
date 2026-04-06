@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -51,6 +51,8 @@ const RequireAuth = ({ children, allowedRoles = [] }) => {
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
   const { user, isAdmin, logout } = useAuth();
@@ -59,10 +61,6 @@ export default function App() {
     { label: t("home"), path: "/" },
     { label: t("schedule"), path: "/schedule" },
   ];
-
-  if (user) {
-    navItems.splice(1, 0, { label: t("profile"), path: "/profile" });
-  }
 
   if (isAdmin) {
     navItems.splice(1, 0, { label: t("courses"), path: "/courses" });
@@ -75,11 +73,30 @@ export default function App() {
     { code: "ru", name: "РУС" },
     { code: "en", name: "ENG" },
   ];
-  const roleLabels = {
-    [ROLES.ADMIN]: t("admin"),
-    [ROLES.TEACHER]: t("teacher"),
-    [ROLES.STUDENT]: t("student"),
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
 
   return (
     <Router>
@@ -135,32 +152,73 @@ export default function App() {
 
               {/* Auth Buttons - Desktop */}
               {user ? (
-                <div className="hidden sm:flex items-center gap-2">
-                  <Link
-                    to="/profile"
-                    className="flex items-center gap-2 rounded-2xl border-[0.4px] border-white bg-[#014531] px-3 py-1.5 text-white transition hover:scale-105"
+                <div
+                  ref={profileMenuRef}
+                  className="relative flex items-center"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setProfileMenuOpen((prev) => !prev)}
+                    className="hidden h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition hover:scale-105 sm:flex"
+                    aria-label={t("profile")}
                   >
                     {user.avatarData ? (
                       <img
                         src={user.avatarData}
                         alt={user.displayName}
-                        className="h-8 w-8 rounded-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-300 text-xs font-bold text-[#014531]">
+                      <span className="text-sm font-bold text-yellow-300">
                         {getInitials(user.displayName)}
                       </span>
                     )}
-                    <span className="text-[14px] whitespace-nowrap">
-                      {`${user.displayName} (${roleLabels[user.role] || user.role})`}
-                    </span>
-                  </Link>
-                  <button
-                    onClick={logout}
-                    className="px-3 py-1.5 rounded-2xl bg-red-500 text-white text-[14px] whitespace-nowrap hover:scale-105 transition"
-                  >
-                    {t("logout")}
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setProfileMenuOpen((prev) => !prev)}
+                    className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition sm:hidden"
+                    aria-label={t("profile")}
+                  >
+                    {user.avatarData ? (
+                      <img
+                        src={user.avatarData}
+                        alt={user.displayName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-bold text-yellow-300">
+                        {getInitials(user.displayName)}
+                      </span>
+                    )}
+                  </button>
+
+                  {profileMenuOpen ? (
+                    <div className="absolute right-0 top-[calc(100%+12px)] z-50 min-w-44 overflow-hidden rounded-2xl border border-green-900/20 bg-white shadow-2xl">
+                      <Link
+                        to="/profile"
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          setMenuOpen(false);
+                        }}
+                        className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
+                      >
+                        {t("profile")}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          logout();
+                          setProfileMenuOpen(false);
+                          setMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                      >
+                        {t("logout")}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-2">
@@ -179,7 +237,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Mobile menu button */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="lg:hidden text-white p-2 hover:bg-opacity-10 rounded transition"
@@ -225,26 +282,7 @@ export default function App() {
                 </div>
 
                 <div className="pt-3 mt-3 border-t border-green-900 space-y-2">
-                  {user ? (
-                    <>
-                      <Link
-                        to="/profile"
-                        onClick={() => setMenuOpen(false)}
-                        className="w-full inline-flex justify-center rounded-md border border-white text-white py-2"
-                      >
-                        {t("profile")}
-                      </Link>
-                      <button
-                        onClick={() => {
-                          logout();
-                          setMenuOpen(false);
-                        }}
-                        className="w-full bg-red-600 text-white py-2 rounded-md"
-                      >
-                        {t("logout")}
-                      </button>
-                    </>
-                  ) : (
+                  {user ? null : (
                     <>
                       <Link
                         to="/login"
