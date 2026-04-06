@@ -52,7 +52,8 @@ const RequireAuth = ({ children, allowedRoles = [] }) => {
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef(null);
+  const desktopProfileMenuRef = useRef(null);
+  const mobileProfileMenuRef = useRef(null);
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
   const { user, isAdmin, logout } = useAuth();
@@ -76,11 +77,20 @@ export default function App() {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target)
+        desktopProfileMenuRef.current &&
+        desktopProfileMenuRef.current.contains(event.target)
       ) {
-        setProfileMenuOpen(false);
+        return;
       }
+
+      if (
+        mobileProfileMenuRef.current &&
+        mobileProfileMenuRef.current.contains(event.target)
+      ) {
+        return;
+      }
+
+      setProfileMenuOpen(false);
     };
 
     const handleEscape = (event) => {
@@ -117,7 +127,61 @@ export default function App() {
               <span>{t("title")}</span>
             </Link>
 
-            <div className="lg:hidden min-w-0" />
+            <div className="flex min-w-0 items-center lg:hidden">
+              {user ? (
+                <div
+                  ref={mobileProfileMenuRef}
+                  className="relative flex items-center"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setProfileMenuOpen((prev) => !prev)}
+                    className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition"
+                    aria-label={t("profile")}
+                  >
+                    {user.avatarData ? (
+                      <img
+                        src={user.avatarData}
+                        alt={user.displayName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-bold text-yellow-300">
+                        {getInitials(user.displayName)}
+                      </span>
+                    )}
+                  </button>
+
+                  {profileMenuOpen ? (
+                    <div className="absolute left-0 top-[calc(100%+10px)] z-50 min-w-44 overflow-hidden rounded-2xl border border-green-900/20 bg-white shadow-2xl">
+                      <Link
+                        to="/profile"
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          setMenuOpen(false);
+                        }}
+                        className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
+                      >
+                        {t("profile")}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          logout();
+                          setProfileMenuOpen(false);
+                          setMenuOpen(false);
+                        }}
+                        className="block w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                      >
+                        {t("logout")}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="w-10" />
+              )}
+            </div>
 
             {/* Desktop menu */}
             <div className="hidden lg:flex gap-6 xl:gap-8">
@@ -155,13 +219,13 @@ export default function App() {
               {/* Auth Buttons - Desktop */}
               {user ? (
                 <div
-                  ref={profileMenuRef}
-                  className="relative flex items-center"
+                  ref={desktopProfileMenuRef}
+                  className="relative hidden items-center sm:flex"
                 >
                   <button
                     type="button"
                     onClick={() => setProfileMenuOpen((prev) => !prev)}
-                    className="hidden h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition hover:scale-105 sm:flex"
+                    className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition hover:scale-105"
                     aria-label={t("profile")}
                   >
                     {user.avatarData ? (
@@ -172,25 +236,6 @@ export default function App() {
                       />
                     ) : (
                       <span className="text-sm font-bold text-yellow-300">
-                        {getInitials(user.displayName)}
-                      </span>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setProfileMenuOpen((prev) => !prev)}
-                    className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition sm:hidden"
-                    aria-label={t("profile")}
-                  >
-                    {user.avatarData ? (
-                      <img
-                        src={user.avatarData}
-                        alt={user.displayName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-xs font-bold text-yellow-300">
                         {getInitials(user.displayName)}
                       </span>
                     )}
