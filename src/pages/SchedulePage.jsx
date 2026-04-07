@@ -3,7 +3,7 @@ import { RotateCw } from "lucide-react";
 import TimetableGrid from "../components/timetable/TimetableGrid";
 import Modal from "../components/ui/Modal";
 import Form from "../components/ui/Form";
-import { scheduleAPI } from "../services/api";
+import { adminAPI, scheduleAPI } from "../services/api";
 import { useFetch } from "../hooks/useAPI";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
@@ -14,6 +14,7 @@ export const SchedulePage = () => {
   const [schedule, setSchedule] = useState([]);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const { data, execute } = useFetch(scheduleAPI.getAll);
 
   useEffect(() => {
@@ -40,6 +41,23 @@ export const SchedulePage = () => {
       }));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResetSchedule = async () => {
+    if (!window.confirm(t("confirmResetSchedule"))) {
+      return;
+    }
+
+    try {
+      setIsResetting(true);
+      await adminAPI.clearCollection("schedules");
+      setSchedule([]);
+      await execute();
+    } catch (error) {
+      console.error(t("errorResetSchedule"), error);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -81,12 +99,21 @@ export const SchedulePage = () => {
           {t("scheduleMgmt")}
         </h1>
         {isAdmin && (
-          <button
-            onClick={() => setIsGenerateOpen(true)}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-          >
-            <RotateCw size={20} /> {t("generateNewSchedule")}
-          </button>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <button
+              onClick={handleResetSchedule}
+              disabled={isResetting}
+              className="rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isResetting ? t("loading") : t("resetSchedule")}
+            </button>
+            <button
+              onClick={() => setIsGenerateOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white transition hover:bg-green-700"
+            >
+              <RotateCw size={20} /> {t("generateNewSchedule")}
+            </button>
+          </div>
         )}
       </div>
 

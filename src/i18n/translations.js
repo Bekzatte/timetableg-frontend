@@ -216,6 +216,9 @@ export const translations = {
     scheduleNotCreated:
       "Кесте құрылмаған. Кестені құру үшін жоғарыдағы түймесін басыңыз.",
     generateNewSchedule: "Жаңа кесте құру",
+    resetSchedule: "Кестені тазалау",
+    confirmResetSchedule: "Кестені толық тазалау керек пе?",
+    errorResetSchedule: "Кестені тазалау қатесі",
     excelImportTitle: "Excel импорттау",
     excelImportDescription:
       "Бір .xlsx файл арқылы курстарды, оқытушыларды және аудиторияларды жаппай жүктей аласыз.",
@@ -483,6 +486,9 @@ export const translations = {
     scheduleNotCreated:
       "Расписание не создано. Нажмите кнопку выше для генерирования.",
     generateNewSchedule: "Сгенерировать новое расписание",
+    resetSchedule: "Сбросить расписание",
+    confirmResetSchedule: "Очистить всё расписание?",
+    errorResetSchedule: "Ошибка при очистке расписания",
     excelImportTitle: "Импорт Excel",
     excelImportDescription:
       "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей и аудитории.",
@@ -748,6 +754,9 @@ export const translations = {
     scheduleNotCreated:
       "No schedule created. Click the button above to generate one.",
     generateNewSchedule: "Generate New Schedule",
+    resetSchedule: "Reset Schedule",
+    confirmResetSchedule: "Clear the entire schedule?",
+    errorResetSchedule: "Error resetting schedule",
     excelImportTitle: "Excel Import",
     excelImportDescription:
       "Upload one .xlsx file to bulk import courses, teachers, and rooms.",

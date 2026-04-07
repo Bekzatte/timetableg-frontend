@@ -1,38 +1,23 @@
-import { format, addDays, startOfWeek } from "date-fns";
-import { ru, enUS } from "date-fns/locale";
 import { useTranslation } from "../../hooks/useTranslation";
 
-export const TimetableGrid = ({ schedule = [], week = new Date() }) => {
-  const { t, language } = useTranslation();
+export const TimetableGrid = ({ schedule = [] }) => {
+  const { t } = useTranslation();
 
-  // Get locale for date-fns
-  const localeMap = {
-    ru: ru,
-    en: enUS,
-    kk: ru, // Use Russian locale for Kazakh as fallback
-  };
-  const locale = localeMap[language] || ru;
-
-  // Days of week short names - use translated keys
   const days = [
     t("mondayShort"),
     t("tuesdayShort"),
     t("wednesdayShort"),
     t("thursdayShort"),
     t("fridayShort"),
-    t("saturdayShort"),
   ];
 
   const hours = Array.from({ length: 10 }, (_, i) => i + 8); // 8:00 - 17:00
 
-  const startDate = startOfWeek(week, { weekStartsOn: 1 });
-
   const getScheduleItem = (day, hour) => {
+    const weekday = day + 1;
     return schedule.find(
       (item) =>
-        new Date(item.day).toDateString() ===
-          new Date(addDays(startDate, day)).toDateString() &&
-        item.start_hour === hour,
+        new Date(item.day).getDay() === weekday && item.start_hour === hour,
     );
   };
 
@@ -56,9 +41,6 @@ export const TimetableGrid = ({ schedule = [], week = new Date() }) => {
                 className="px-3 py-2 text-center border-r font-semibold text-sm text-gray-900 border-gray-200"
               >
                 <div className="truncate">{day}</div>
-                <div className="text-xs text-gray-600">
-                  {format(addDays(startDate, idx), "d MMM", { locale })}
-                </div>
               </th>
             ))}
           </tr>
