@@ -13,17 +13,18 @@ export const TimetableGrid = ({ schedule = [] }) => {
 
   const hours = Array.from({ length: 10 }, (_, i) => i + 8); // 8:00 - 17:00
 
-  const getScheduleItem = (day, hour) => {
+  const getScheduleItems = (day, hour) => {
     const weekday = day + 1;
-    return schedule.find(
+    return schedule.filter(
       (item) =>
-        new Date(item.day).getDay() === weekday && item.start_hour === hour,
+        new Date(`${item.day}T12:00:00`).getDay() === weekday &&
+        Number(item.start_hour) === hour,
     );
   };
 
   return (
-    <div className="w-full overflow-x-auto border rounded-lg bg-white border-gray-200">
-      <table className="w-full border-collapse table-auto md:table-fixed">
+    <div className="w-full overflow-x-auto rounded-lg border border-gray-200 bg-white">
+      <table className="min-w-[860px] w-full border-collapse table-auto md:table-fixed">
         <colgroup>
           <col style={{ width: "120px" }} />
           {days.map((_, i) => (
@@ -52,19 +53,28 @@ export const TimetableGrid = ({ schedule = [] }) => {
                 {hour}:00 - {hour}:50
               </td>
               {days.map((_, dayIdx) => {
-                const item = getScheduleItem(dayIdx, hour);
+                const items = getScheduleItems(dayIdx, hour);
                 return (
                   <td
                     key={`${hour}-${dayIdx}`}
-                    className="px-3 py-2 border-r text-sm min-h-12 align-top border-gray-200 overflow-hidden"
+                    className="min-h-12 overflow-hidden border-r border-gray-200 px-2 py-2 text-sm align-top sm:px-3"
                   >
-                    {item && (
-                      <div className="p-2 rounded text-xs border-l-4 bg-blue-100 text-blue-900 border-blue-500">
-                        <div className="font-semibold">{item.course_name}</div>
-                        <div>{item.teacher_name}</div>
-                        <div>{item.room_number}</div>
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      {items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded border-l-4 border-blue-500 bg-blue-100 p-2 text-xs text-blue-900"
+                        >
+                          <div className="font-semibold">{item.course_name}</div>
+                          <div>
+                            {item.group_name}
+                            {item.subgroup ? ` • ${item.subgroup}` : ""}
+                          </div>
+                          <div>{item.teacher_name}</div>
+                          <div>{item.room_number}</div>
+                        </div>
+                      ))}
+                    </div>
                   </td>
                 );
               })}

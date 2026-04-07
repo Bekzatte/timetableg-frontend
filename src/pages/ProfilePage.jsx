@@ -69,8 +69,8 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-[70vh]">
-      <div className="mx-auto max-w-4xl overflow-hidden rounded-[32px] border border-green-100 bg-gradient-to-br from-white via-[#f4fbf7] to-[#eef7f1] shadow-[0_24px_80px_rgba(1,69,49,0.12)]">
-        <div className="bg-[#014531] px-6 py-10 text-white sm:px-10">
+      <div className="mx-auto max-w-[1240px] overflow-hidden rounded-[28px] border border-green-100 bg-gradient-to-br from-white via-[#f4fbf7] to-[#eef7f1] shadow-[0_24px_80px_rgba(1,69,49,0.12)] sm:rounded-[32px]">
+        <div className="bg-[#014531] px-5 py-8 text-white sm:px-8 sm:py-10 lg:px-10">
           <p className="text-sm uppercase tracking-[0.3em] text-yellow-300">
             {t("profile")}
           </p>
@@ -82,7 +82,7 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        <div className="grid gap-8 px-6 py-8 sm:px-10 lg:grid-cols-[280px_1fr]">
+        <div className="grid gap-6 px-4 py-5 sm:px-8 sm:py-8 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-10">
           <section className="rounded-[28px] bg-[#0b5d43] p-6 text-white shadow-lg">
             <div className="flex flex-col items-center text-center">
               {user?.avatarData ? (
@@ -191,6 +191,26 @@ export default function ProfilePage() {
                     </p>
                     <p className="mt-2 text-lg font-semibold text-gray-900">
                       {user.programmeName}
+                    </p>
+                  </div>
+                ) : null}
+                {user?.groupName ? (
+                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      {t("groupNumber")}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {user.groupName}
+                    </p>
+                  </div>
+                ) : null}
+                {user?.subgroup ? (
+                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      {t("subgroup")}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {user.subgroup}
                     </p>
                   </div>
                 ) : null}

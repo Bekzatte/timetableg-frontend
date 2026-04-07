@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import CoursesPage from "./pages/CoursesPage";
 import TeachersPage from "./pages/TeachersPage";
 import RoomsPage from "./pages/RoomsPage";
+import GroupsPage from "./pages/GroupsPage";
 import SectionsPage from "./pages/SectionsPage";
 import SchedulePage from "./pages/SchedulePage";
 import LoginPage from "./pages/LoginPage";
@@ -75,6 +76,7 @@ export default function App() {
         { label: t("courses"), path: "/courses" },
         { label: t("teachers"), path: "/teachers" },
         { label: t("rooms"), path: "/rooms" },
+        { label: t("groups"), path: "/groups" },
         { label: t("sections"), path: "/sections" },
         { label: t("schedule"), path: "/schedule" },
       ]
@@ -126,7 +128,7 @@ export default function App() {
       <div className="flex flex-col min-h-screen bg-white">
         {/* Header */}
         <header className="bg-[#014531] shadow-xl border-b border-green-900">
-          <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+          <nav className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 py-3 sm:px-6 sm:py-4 xl:px-10">
             {/* Logo */}
             <Link
               to={homePath}
@@ -367,7 +369,7 @@ export default function App() {
         </header>
 
         {/* Main content */}
-        <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <main className="mx-auto flex-1 w-full max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 xl:px-10">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
@@ -406,6 +408,14 @@ export default function App() {
               }
             />
             <Route
+              path="/groups"
+              element={
+                <RequireAuth allowedRoles={[ROLES.ADMIN]}>
+                  <GroupsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
               path="/sections"
               element={
                 <RequireAuth allowedRoles={[ROLES.ADMIN]}>
@@ -439,7 +449,7 @@ export default function App() {
 
         {/* Footer */}
         <footer className="bg-[#014531] text-white py-6 sm:py-8 mt-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6 xl:px-10">
             <div className="mb-5 flex justify-center lg:hidden">
               <Link
                 to={homePath}

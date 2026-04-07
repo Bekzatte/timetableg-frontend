@@ -4,7 +4,7 @@ import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { courseAPI, sectionAPI } from "../../services/api";
+import { courseAPI, groupAPI, sectionAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 
@@ -19,14 +19,21 @@ export const SectionManager = () => {
     isLoading: isCoursesLoading,
     execute: executeCourses,
   } = useFetch(courseAPI.getAll);
+  const {
+    data: groupsData,
+    isLoading: isGroupsLoading,
+    execute: executeGroups,
+  } = useFetch(groupAPI.getAll);
 
   useEffect(() => {
     execute();
     executeCourses();
-  }, [execute, executeCourses]);
+    executeGroups();
+  }, [execute, executeCourses, executeGroups]);
 
   const sections = Array.isArray(data) ? data : [];
   const courses = Array.isArray(coursesData) ? coursesData : [];
+  const groups = Array.isArray(groupsData) ? groupsData : [];
   const coveredCoursesCount = new Set(
     sections
       .map((section) => section.course_id)
@@ -47,12 +54,17 @@ export const SectionManager = () => {
     const selectedCourse = courses.find(
       (course) => String(course.id) === String(formData.course_id),
     );
+    const selectedGroup = groups.find(
+      (group) => String(group.id) === String(formData.group_id),
+    );
 
     try {
       const payload = {
         ...formData,
         course_id: Number(formData.course_id),
+        group_id: Number(formData.group_id),
         course_name: selectedCourse?.name || "",
+        group_name: selectedGroup?.name || "",
       };
 
       if (editingSection) {
@@ -83,6 +95,7 @@ export const SectionManager = () => {
 
   const columns = [
     { key: "course_name", label: t("courseName") },
+    { key: "group_name", label: t("groupNumber") },
     { key: "class_count", label: t("classesCount") },
   ];
 
@@ -95,6 +108,17 @@ export const SectionManager = () => {
       options: courses.map((course) => ({
         value: course.id,
         label: `${course.code || course.name} - ${course.name}`,
+      })),
+      required: true,
+    },
+    {
+      name: "group_id",
+      label: t("groupNumber"),
+      type: "select",
+      placeholder: isGroupsLoading ? t("loading") : t("selectGroup"),
+      options: groups.map((group) => ({
+        value: group.id,
+        label: group.name,
       })),
       required: true,
     },
@@ -160,6 +184,7 @@ export const SectionManager = () => {
               ? {
                   ...editingSection,
                   course_id: editingSection.course_id || "",
+                  group_id: editingSection.group_id || "",
                 }
               : {}
           }

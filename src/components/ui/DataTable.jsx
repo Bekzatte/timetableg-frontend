@@ -69,7 +69,7 @@ export const DataTable = ({
         ))}
       </div>
       <div className="hidden max-h-[65vh] overflow-auto rounded-lg border border-gray-200 shadow-md md:block">
-        <table className="w-full border-collapse table-auto">
+        <table className="min-w-[860px] w-full border-collapse table-auto">
           <colgroup>
             {columns.map((_, i) => (
               <col key={`col-${i}`} />
@@ -102,9 +102,9 @@ export const DataTable = ({
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className="px-4 py-3 text-sm text-gray-900 overflow-hidden truncate"
+                    className="px-4 py-3 text-sm text-gray-900 align-top whitespace-normal break-words"
                   >
-                    {col.render ? col.render(row[col.key], row) : row[col.key]}
+                    {col.render ? col.render(row[col.key], row) : (row[col.key] ?? "-")}
                   </td>
                 ))}
                 {(onEdit || onDelete) && (

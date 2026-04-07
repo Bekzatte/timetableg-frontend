@@ -166,6 +166,14 @@ export const roomAPI = {
   delete: (id) => api.delete(`/rooms/${id}`),
 };
 
+export const groupAPI = {
+  getAll: () => api.get("/groups"),
+  getPublicList: () => api.get("/public/groups").then((response) => response.data),
+  create: (data) => api.post("/groups", data),
+  update: (id, data) => api.put(`/groups/${id}`, data),
+  delete: (id) => api.delete(`/groups/${id}`),
+};
+
 export const sectionAPI = {
   getAll: () => api.get("/sections"),
   create: (data) => api.post("/sections", data),
@@ -178,6 +186,8 @@ export const scheduleAPI = {
   update: (id, data) => api.put(`/schedules/${id}`, data),
   delete: (id) => api.delete(`/schedules/${id}`),
   generate: (data) => api.post("/schedules/generate", data),
+  exportExcel: () =>
+    api.get("/export/schedule", { responseType: "blob" }).then((response) => response.data),
 };
 
 export const authAPI = {
@@ -185,7 +195,7 @@ export const authAPI = {
     api
       .post("/auth/login", { email, password, role })
       .then((response) => response.data),
-  register: (email, password, displayName, role, department, programmeName) =>
+  register: (email, password, displayName, role, department, programmeName, groupId, subgroup) =>
     api
       .post("/auth/register", {
         email,
@@ -194,6 +204,8 @@ export const authAPI = {
         role,
         department,
         programmeName,
+        groupId,
+        subgroup,
       })
       .then((response) => response.data),
   logout: () => api.post("/auth/logout").then((response) => response.data),
@@ -224,6 +236,7 @@ export default {
   courseAPI,
   teacherAPI,
   roomAPI,
+  groupAPI,
   sectionAPI,
   scheduleAPI,
   authAPI,

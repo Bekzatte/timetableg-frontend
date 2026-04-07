@@ -7,6 +7,7 @@ export const translations = {
     courses: "Курстар",
     teachers: "Оқытушылар",
     rooms: "Аудиториялар",
+    groups: "Топтар",
     sections: "Секциялар",
     schedule: "Кесте",
 
@@ -23,9 +24,11 @@ export const translations = {
     coursesCount: "Барлық курстар",
     teachersCount: "Барлық оқытушылар",
     roomsCount: "Барлық аудиториялар",
+    groupsCount: "Барлық топтар",
     sectionsCount: "Барлық секциялар",
     schedulesCount: "Барлық кестелер",
     availableRooms: "Қолжетімді аудиториялар",
+    studentsCount: "Барлық студенттер",
     viewMore: "Толығымен қарау",
 
     // Courses
@@ -64,9 +67,15 @@ export const translations = {
     // Rooms
     roomMgmt: "Аудиториялар бөлімі",
     addRoom: "Жаңа аудитория қосу",
+    addGroup: "Жаңа топ қосу",
     editRoom: "Аудиторияны өндеу",
+    editGroup: "Топты өңдеу",
     deleteRoom: "Аудиторияны жою",
     roomNumber: "Аудитория нөмері",
+    groupNumber: "Топ нөмірі",
+    studentCount: "Студент саны",
+    subgroup: "Подтоп",
+    subgroups: "A / B топшалары",
     capacity: "Сыйымдылығы",
     building: "Ғимарат",
     type: "Түрі",
@@ -85,6 +94,8 @@ export const translations = {
     editSection: "Секцияны өзгерту",
     classesCount: "Сабақ саны",
     selectCourse: "Курсты таңдаңыз",
+    selectGroup: "Топты таңдаңыз",
+    selectSubgroup: "Подтопты таңдаңыз",
     generateSchedule: "Кесте құру",
     viewSchedule: "Кестені көру",
     algorithm: "Алгоритм",
@@ -173,7 +184,7 @@ export const translations = {
     errorDatabase: "Дерекқор қатесі орын алды.",
     errorInternalServer: "Ішкі сервер қатесі орын алды.",
     errorScheduleGenerationRequiresData:
-      "Кесте құру үшін курстар, оқытушылар және аудиториялар қажет.",
+      "Кесте құру үшін секциялар, оқытушылар, топтар және аудиториялар қажет.",
     errorInvalidId: "ID сан болуы керек.",
     errorRecordNotFound: "Жазба табылмады.",
 
@@ -216,12 +227,14 @@ export const translations = {
     scheduleNotCreated:
       "Кесте құрылмаған. Кестені құру үшін жоғарыдағы түймесін басыңыз.",
     generateNewSchedule: "Жаңа кесте құру",
+    exportSchedule: "Кестені Excel-ге экспорттау",
     resetSchedule: "Кестені тазалау",
     confirmResetSchedule: "Кестені толық тазалау керек пе?",
     errorResetSchedule: "Кестені тазалау қатесі",
+    errorExportSchedule: "Кестені экспорттау қатесі",
     excelImportTitle: "Excel импорттау",
     excelImportDescription:
-      "Бір .xlsx файл арқылы курстарды, оқытушыларды және аудиторияларды жаппай жүктей аласыз.",
+      "Бір .xlsx файл арқылы курстарды, оқытушыларды, аудиторияларды, топтарды және секцияларды жаппай жүктей аласыз.",
     excelImportSheetFormat: "Excel файлында мына парақтар болуы керек:",
     excelImportCoursesColumns:
       "Courses: code, name, study_year, semester, programme_name, department, instructor_name, description",
@@ -229,6 +242,8 @@ export const translations = {
       "Teachers: name, email, phone, faculty_institute",
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, department, is_available, equipment",
+    excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
+    excelImportSectionsColumns: "Sections: course_code, group_name, classes_count",
     excelImportButton: "Excel импорттау",
     excelTemplateButton: "Шаблонды жүктеу",
     excelImportSelectedFile: "Таңдалған файл",
@@ -241,11 +256,13 @@ export const translations = {
     clearCourses: "Курстарды тазалау",
     clearTeachers: "Оқытушыларды тазалау",
     clearRooms: "Аудиторияларды тазалау",
+    clearGroups: "Топтарды тазалау",
     confirmClearAllData:
-      "Барлық курстар, оқытушылар, аудиториялар және кестелер өшіріледі. Жалғастыру керек пе?",
+      "Барлық курстар, оқытушылар, аудиториялар, топтар, секциялар және кестелер өшіріледі. Жалғастыру керек пе?",
     confirmClearCourses: "Барлық курстарды өшіру керек пе?",
     confirmClearTeachers: "Барлық оқытушыларды өшіру керек пе?",
     confirmClearRooms: "Барлық аудиторияларды өшіру керек пе?",
+    confirmClearGroups: "Барлық топтарды өшіру керек пе?",
 
     // Timetable
     time: "Уақыт",
@@ -275,6 +292,7 @@ export const translations = {
     courses: "Курсы",
     teachers: "Преподаватели",
     rooms: "Аудитории",
+    groups: "Группы",
     sections: "Секции",
     schedule: "Расписание",
 
@@ -291,9 +309,11 @@ export const translations = {
     coursesCount: "Всего курсов",
     teachersCount: "Всего преподавателей",
     roomsCount: "Всего аудиторий",
+    groupsCount: "Всего групп",
     sectionsCount: "Всего секций",
     schedulesCount: "Всего расписаний",
     availableRooms: "Доступных аудиторий",
+    studentsCount: "Всего студентов",
     viewMore: "Посмотреть все",
 
     // Courses
@@ -332,9 +352,15 @@ export const translations = {
     // Rooms
     roomMgmt: "Управление аудиториями",
     addRoom: "Добавить новую аудиторию",
+    addGroup: "Добавить группу",
     editRoom: "Редактировать аудиторию",
+    editGroup: "Редактировать группу",
     deleteRoom: "Удалить аудиторию",
     roomNumber: "Номер аудитории",
+    groupNumber: "Номер группы",
+    studentCount: "Количество студентов",
+    subgroup: "Подгруппа",
+    subgroups: "Подгруппы",
     capacity: "Вместимость",
     building: "Здание",
     type: "Тип",
@@ -353,6 +379,8 @@ export const translations = {
     editSection: "Редактировать секцию",
     classesCount: "Количество занятий",
     selectCourse: "Выберите курс",
+    selectGroup: "Выберите группу",
+    selectSubgroup: "Выберите подгруппу",
     generateSchedule: "Создать расписание",
     viewSchedule: "Посмотреть расписание",
     algorithm: "Алгоритм",
@@ -442,7 +470,7 @@ export const translations = {
     errorDatabase: "Произошла ошибка базы данных.",
     errorInternalServer: "Произошла внутренняя ошибка сервера.",
     errorScheduleGenerationRequiresData:
-      "Для генерации расписания нужны курсы, преподаватели и аудитории.",
+      "Для генерации расписания нужны секции, преподаватели, группы и аудитории.",
     errorInvalidId: "ID должен быть числом.",
     errorRecordNotFound: "Запись не найдена.",
 
@@ -486,12 +514,14 @@ export const translations = {
     scheduleNotCreated:
       "Расписание не создано. Нажмите кнопку выше для генерирования.",
     generateNewSchedule: "Сгенерировать новое расписание",
+    exportSchedule: "Экспортировать расписание",
     resetSchedule: "Сбросить расписание",
     confirmResetSchedule: "Очистить всё расписание?",
     errorResetSchedule: "Ошибка при очистке расписания",
+    errorExportSchedule: "Ошибка при экспорте расписания",
     excelImportTitle: "Импорт Excel",
     excelImportDescription:
-      "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей и аудитории.",
+      "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей, аудитории, группы и секции.",
     excelImportSheetFormat: "В Excel должны быть листы:",
     excelImportCoursesColumns:
       "Courses: code, name, study_year, semester, programme_name, department, instructor_name, description",
@@ -499,6 +529,8 @@ export const translations = {
       "Teachers: name, email, phone, faculty_institute",
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, department, is_available, equipment",
+    excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
+    excelImportSectionsColumns: "Sections: course_code, group_name, classes_count",
     excelImportButton: "Импортировать Excel",
     excelTemplateButton: "Скачать шаблон",
     excelImportSelectedFile: "Выбранный файл",
@@ -511,11 +543,13 @@ export const translations = {
     clearCourses: "Очистить курсы",
     clearTeachers: "Очистить преподавателей",
     clearRooms: "Очистить аудитории",
+    clearGroups: "Очистить группы",
     confirmClearAllData:
-      "Будут удалены все курсы, преподаватели, аудитории и расписания. Продолжить?",
+      "Будут удалены все курсы, преподаватели, аудитории, группы, секции и расписания. Продолжить?",
     confirmClearCourses: "Удалить все курсы?",
     confirmClearTeachers: "Удалить всех преподавателей?",
     confirmClearRooms: "Удалить все аудитории?",
+    confirmClearGroups: "Удалить все группы?",
 
     // Timetable
     time: "Время",
@@ -545,6 +579,7 @@ export const translations = {
     courses: "Courses",
     teachers: "Teachers",
     rooms: "Rooms",
+    groups: "Groups",
     sections: "Sections",
     schedule: "Schedule",
 
@@ -560,9 +595,11 @@ export const translations = {
     coursesCount: "Total Courses",
     teachersCount: "Total Teachers",
     roomsCount: "Total Rooms",
+    groupsCount: "Total Groups",
     sectionsCount: "Total Sections",
     schedulesCount: "Total Schedules",
     availableRooms: "Available Rooms",
+    studentsCount: "Total Students",
     viewMore: "View All",
 
     // Courses
@@ -601,9 +638,15 @@ export const translations = {
     // Rooms
     roomMgmt: "Room Management",
     addRoom: "Add New Room",
+    addGroup: "Add Group",
     editRoom: "Edit Room",
+    editGroup: "Edit Group",
     deleteRoom: "Delete Room",
     roomNumber: "Room Number",
+    groupNumber: "Group Number",
+    studentCount: "Student Count",
+    subgroup: "Subgroup",
+    subgroups: "Subgroups",
     capacity: "Capacity",
     building: "Building",
     type: "Type",
@@ -622,6 +665,8 @@ export const translations = {
     editSection: "Edit Section",
     classesCount: "Number of Classes",
     selectCourse: "Select course",
+    selectGroup: "Select group",
+    selectSubgroup: "Select subgroup",
     generateSchedule: "Generate Schedule",
     viewSchedule: "View Schedule",
     algorithm: "Algorithm",
@@ -711,7 +756,7 @@ export const translations = {
     errorDatabase: "A database error occurred.",
     errorInternalServer: "An internal server error occurred.",
     errorScheduleGenerationRequiresData:
-      "Courses, teachers, and rooms are required to generate a schedule.",
+      "Sections, teachers, groups, and rooms are required to generate a schedule.",
     errorInvalidId: "ID must be a number.",
     errorRecordNotFound: "Record not found.",
 
@@ -754,12 +799,14 @@ export const translations = {
     scheduleNotCreated:
       "No schedule created. Click the button above to generate one.",
     generateNewSchedule: "Generate New Schedule",
+    exportSchedule: "Export Schedule",
     resetSchedule: "Reset Schedule",
     confirmResetSchedule: "Clear the entire schedule?",
     errorResetSchedule: "Error resetting schedule",
+    errorExportSchedule: "Error exporting schedule",
     excelImportTitle: "Excel Import",
     excelImportDescription:
-      "Upload one .xlsx file to bulk import courses, teachers, and rooms.",
+      "Upload one .xlsx file to bulk import courses, teachers, rooms, groups, and sections.",
     excelImportSheetFormat: "The Excel file must contain these sheets:",
     excelImportCoursesColumns:
       "Courses: code, name, study_year, semester, programme_name, department, instructor_name, description",
@@ -767,6 +814,8 @@ export const translations = {
       "Teachers: name, email, phone, faculty_institute",
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, department, is_available, equipment",
+    excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
+    excelImportSectionsColumns: "Sections: course_code, group_name, classes_count",
     excelImportButton: "Import Excel",
     excelTemplateButton: "Download Template",
     excelImportSelectedFile: "Selected file",
@@ -779,11 +828,13 @@ export const translations = {
     clearCourses: "Clear Courses",
     clearTeachers: "Clear Teachers",
     clearRooms: "Clear Rooms",
+    clearGroups: "Clear Groups",
     confirmClearAllData:
-      "This will delete all courses, teachers, rooms, and schedules. Continue?",
+      "This will delete all courses, teachers, rooms, groups, sections, and schedules. Continue?",
     confirmClearCourses: "Delete all courses?",
     confirmClearTeachers: "Delete all teachers?",
     confirmClearRooms: "Delete all rooms?",
+    confirmClearGroups: "Delete all groups?",
 
     // Timetable
     time: "Time",

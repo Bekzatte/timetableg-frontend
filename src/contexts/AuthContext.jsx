@@ -67,6 +67,8 @@ export const AuthProvider = ({ children }) => {
     role = ROLES.STUDENT,
     department = "",
     programmeName = "",
+    groupId = "",
+    subgroup = "",
   ) => {
     setIsLoading(true);
     setError(null);
@@ -78,6 +80,8 @@ export const AuthProvider = ({ children }) => {
         role,
         department,
         programmeName,
+        groupId,
+        subgroup,
       );
       persistUser(userData);
       return userData;

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Users, Home, Zap } from "lucide-react";
+import { BookOpen, Users, Home, Zap, UsersRound } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import {
   adminAPI,
   courseAPI,
   importAPI,
+  groupAPI,
   roomAPI,
   scheduleAPI,
   sectionAPI,
@@ -34,6 +35,7 @@ export const Dashboard = () => {
   const { data: coursesData, execute: executeCourses } = useFetch(courseAPI.getAll);
   const { data: teachersData, execute: executeTeachers } = useFetch(teacherAPI.getAll);
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
+  const { data: groupsData, execute: executeGroups } = useFetch(groupAPI.getAll);
   const { data: sectionsData, execute: executeSections } = useFetch(sectionAPI.getAll);
   const { data: schedulesData, execute: executeSchedules } = useFetch(scheduleAPI.getAll);
   const actionButtonClass =
@@ -44,19 +46,29 @@ export const Dashboard = () => {
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const teachers = Array.isArray(teachersData) ? teachersData : [];
   const rooms = Array.isArray(roomsData) ? roomsData : [];
+  const groups = Array.isArray(groupsData) ? groupsData : [];
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
   const schedules = Array.isArray(schedulesData) ? schedulesData : [];
+  const importSummaryLabels = {
+    courses: t("courses"),
+    teachers: t("teachers"),
+    rooms: t("rooms"),
+    groups: t("groups"),
+    sections: t("sections"),
+  };
 
   useEffect(() => {
     executeCourses();
     executeTeachers();
     executeRooms();
+    executeGroups();
     executeSections();
     executeSchedules();
   }, [
     executeCourses,
     executeTeachers,
     executeRooms,
+    executeGroups,
     executeSections,
     executeSchedules,
   ]);
@@ -94,6 +106,17 @@ export const Dashboard = () => {
       iconBgClass: "bg-purple-100",
       textClass: "text-purple-700",
       color: "purple",
+    },
+    {
+      title: t("groups"),
+      description: t("addGroup"),
+      icon: UsersRound,
+      link: "/groups",
+      count: groups.length,
+      bgClass: "from-cyan-100 to-cyan-50",
+      iconBgClass: "bg-cyan-100",
+      textClass: "text-cyan-700",
+      color: "cyan",
     },
     {
       title: t("sections"),
@@ -140,6 +163,7 @@ export const Dashboard = () => {
         executeCourses(),
         executeTeachers(),
         executeRooms(),
+        executeGroups(),
         executeSections(),
         executeSchedules(),
       ]);
@@ -188,6 +212,7 @@ export const Dashboard = () => {
         executeCourses(),
         executeTeachers(),
         executeRooms(),
+        executeGroups(),
         executeSections(),
         executeSchedules(),
       ]);
@@ -197,6 +222,8 @@ export const Dashboard = () => {
           courses: { inserted: 0, updated: 0 },
           teachers: { inserted: 0, updated: 0 },
           rooms: { inserted: 0, updated: 0 },
+          groups: { inserted: 0, updated: 0 },
+          sections: { inserted: 0, updated: 0 },
         },
         cleared: true,
       });
@@ -209,7 +236,7 @@ export const Dashboard = () => {
 
   return (
     <div className="w-full from-blue-50 to-indigo-100">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
+      <div className="mx-auto w-full max-w-[1440px] px-0 py-2 sm:py-4">
         <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-gray-900">
           {t("dashboard")}
         </h1>
@@ -218,7 +245,7 @@ export const Dashboard = () => {
         </p>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 sm:gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 sm:gap-6">
           {features.map((feature) => {
             const IconComponent = feature.icon;
 
@@ -229,7 +256,7 @@ export const Dashboard = () => {
                 className="no-underline h-full"
               >
                 <div
-                  className={`${feature.bgClass} relative rounded-lg shadow-lg hover:shadow-2xl transition-all duration-1000 transform hover:-translate-y-1 p-4 sm:p-6 text-left sm:text-center cursor-pointer border border-white h-full flex flex-row sm:flex-col items-start sm:items-center justify-start sm:justify-center gap-4 sm:gap-0 min-h-[132px] sm:min-h-60`}
+                  className={`${feature.bgClass} relative flex h-full min-h-[132px] cursor-pointer flex-row items-start justify-start gap-4 rounded-lg border border-white p-4 text-left shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl sm:min-h-[220px] sm:flex-col sm:items-center sm:justify-center sm:gap-0 sm:p-6 sm:text-center`}
                 >
                   {typeof feature.count === "number" ? (
                     <div className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm sm:right-4 sm:top-4">
@@ -292,6 +319,8 @@ export const Dashboard = () => {
                 <li>{t("excelImportCoursesColumns")}</li>
                 <li>{t("excelImportTeachersColumns")}</li>
                 <li>{t("excelImportRoomsColumns")}</li>
+                <li>{t("excelImportGroupsColumns")}</li>
+                <li>{t("excelImportSectionsColumns")}</li>
               </ul>
             </div>
 
@@ -358,15 +387,12 @@ export const Dashboard = () => {
                     {t("excelImportTotals")} {importResult.totals.inserted} / {importResult.totals.updated}
                   </p>
                   <ul className="mt-3 list-disc space-y-1 pl-5">
-                    <li>
-                      Courses: +{importResult.summary.courses.inserted}, ~{importResult.summary.courses.updated}
-                    </li>
-                    <li>
-                      Teachers: +{importResult.summary.teachers.inserted}, ~{importResult.summary.teachers.updated}
-                    </li>
-                    <li>
-                      Rooms: +{importResult.summary.rooms.inserted}, ~{importResult.summary.rooms.updated}
-                    </li>
+                    {Object.entries(importResult.summary || {}).map(([key, value]) => (
+                      <li key={key}>
+                        {importSummaryLabels[key] || key}: +{value?.inserted || 0}, ~
+                        {value?.updated || 0}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )

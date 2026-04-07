@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ROLES } from "../constants/roles";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { DEPARTMENTS } from "../constants/departments";
 import { PROGRAMMES } from "../constants/programmes";
+import { groupAPI } from "../services/api";
 
 export const RegisterPage = () => {
   const { t, language } = useTranslation();
@@ -17,6 +18,9 @@ export const RegisterPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [department, setDepartment] = useState("");
   const [programmeName, setProgrammeName] = useState("");
+  const [groupId, setGroupId] = useState("");
+  const [subgroup, setSubgroup] = useState("");
+  const [groups, setGroups] = useState([]);
   const [localError, setLocalError] = useState("");
 
   const roleOptions = [
@@ -25,6 +29,21 @@ export const RegisterPage = () => {
   ];
   const emailPlaceholder =
     selectedRole === ROLES.TEACHER ? "name@kazatu.edu.kz" : "name@example.com";
+  const selectedGroup = groups.find(
+    (group) => String(group.id) === String(groupId),
+  );
+  const requiresSubgroup = Boolean(selectedGroup?.has_subgroups);
+
+  useEffect(() => {
+    groupAPI
+      .getPublicList()
+      .then((response) => {
+        setGroups(Array.isArray(response) ? response : []);
+      })
+      .catch(() => {
+        setGroups([]);
+      });
+  }, []);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -35,7 +54,15 @@ export const RegisterPage = () => {
       return;
     }
 
-    if (selectedRole === ROLES.STUDENT && (!department || !programmeName)) {
+    if (
+      selectedRole === ROLES.STUDENT &&
+      (!department || !programmeName || !groupId)
+    ) {
+      setLocalError(t("fillAllFields"));
+      return;
+    }
+
+    if (selectedRole === ROLES.STUDENT && requiresSubgroup && !subgroup) {
       setLocalError(t("fillAllFields"));
       return;
     }
@@ -58,6 +85,8 @@ export const RegisterPage = () => {
         selectedRole,
         department,
         programmeName,
+        groupId,
+        subgroup,
       );
       navigate("/");
     } catch (err) {
@@ -67,7 +96,7 @@ export const RegisterPage = () => {
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-md">
         <h1 className="text-2xl font-bold mb-4 text-gray-900">
           {t("register")}
         </h1>
@@ -93,6 +122,8 @@ export const RegisterPage = () => {
                     if (option.value !== ROLES.STUDENT) {
                       setDepartment("");
                       setProgrammeName("");
+                      setGroupId("");
+                      setSubgroup("");
                     }
                   }}
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
@@ -171,6 +202,50 @@ export const RegisterPage = () => {
                   ))}
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("groupNumber")}
+                </label>
+                <select
+                  value={groupId}
+                  onChange={(e) => {
+                    const nextGroupId = e.target.value;
+                    const nextGroup = groups.find(
+                      (group) => String(group.id) === String(nextGroupId),
+                    );
+                    setGroupId(nextGroupId);
+                    if (!nextGroup?.has_subgroups) {
+                      setSubgroup("");
+                    }
+                  }}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">{t("selectGroup")}</option>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {requiresSubgroup ? (
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">
+                    {t("subgroup")}
+                  </label>
+                  <select
+                    value={subgroup}
+                    onChange={(e) => setSubgroup(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="">{t("selectSubgroup")}</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                  </select>
+                </div>
+              ) : null}
             </>
           )}
 
