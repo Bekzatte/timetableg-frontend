@@ -1,11 +1,25 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Users, Home, Zap } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
+import { importAPI } from "../services/api";
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
 
 export const Dashboard = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
+  const [importFile, setImportFile] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importResult, setImportResult] = useState(null);
 
   const features = [
     {
@@ -49,6 +63,33 @@ export const Dashboard = () => {
       color: "orange",
     },
   ];
+
+  const handleImport = async () => {
+    if (!importFile) {
+      setImportError(t("importSelectFileError"));
+      return;
+    }
+
+    if (!importFile.name.toLowerCase().endsWith(".xlsx")) {
+      setImportError(t("importFileTypeError"));
+      return;
+    }
+
+    setIsImporting(true);
+    setImportError("");
+    setImportResult(null);
+
+    try {
+      const fileContent = await readFileAsDataUrl(importFile);
+      const result = await importAPI.importExcel(importFile.name, fileContent);
+      setImportResult(result);
+      setImportFile(null);
+    } catch (error) {
+      setImportError(error.message || t("errorUnknown"));
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   return (
     <div className="w-full from-blue-50 to-indigo-100">
@@ -108,6 +149,81 @@ export const Dashboard = () => {
             <li className="text-sm sm:text-base">{t("scheduleMgmt")}</li>
           </ul>
         </div>
+
+        {isAdmin ? (
+          <div className="mt-8 rounded-lg border bg-white p-4 shadow-md sm:p-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {t("excelImportTitle")}
+                </h2>
+                <p className="mt-2 text-sm text-gray-600">
+                  {t("excelImportDescription")}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-lg bg-[#f4fbf7] p-4 text-sm text-gray-700">
+              <p className="font-semibold text-gray-900">
+                {t("excelImportSheetFormat")}
+              </p>
+              <ul className="mt-3 list-disc space-y-2 pl-5">
+                <li>{t("excelImportCoursesColumns")}</li>
+                <li>{t("excelImportTeachersColumns")}</li>
+                <li>{t("excelImportRoomsColumns")}</li>
+              </ul>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input
+                type="file"
+                accept=".xlsx"
+                onChange={(event) => setImportFile(event.target.files?.[0] || null)}
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#014531] file:px-3 file:py-2 file:font-medium file:text-white"
+              />
+              <button
+                type="button"
+                onClick={handleImport}
+                disabled={isImporting}
+                className="rounded-md bg-[#014531] px-4 py-2 font-medium text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isImporting ? t("loading") : t("excelImportButton")}
+              </button>
+            </div>
+
+            {importFile ? (
+              <p className="mt-3 text-sm text-gray-600">
+                {t("excelImportSelectedFile")}: <span className="font-medium">{importFile.name}</span>
+              </p>
+            ) : null}
+
+            {importError ? (
+              <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {importError}
+              </div>
+            ) : null}
+
+            {importResult ? (
+              <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                <p className="font-semibold">{t("excelImportSuccess")}</p>
+                <p className="mt-1">
+                  {t("excelImportTotals")} {importResult.totals.inserted} / {importResult.totals.updated}
+                </p>
+                <ul className="mt-3 list-disc space-y-1 pl-5">
+                  <li>
+                    Courses: +{importResult.summary.courses.inserted}, ~{importResult.summary.courses.updated}
+                  </li>
+                  <li>
+                    Teachers: +{importResult.summary.teachers.inserted}, ~{importResult.summary.teachers.updated}
+                  </li>
+                  <li>
+                    Rooms: +{importResult.summary.rooms.inserted}, ~{importResult.summary.rooms.updated}
+                  </li>
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

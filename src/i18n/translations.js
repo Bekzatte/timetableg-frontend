@@ -195,6 +195,22 @@ export const translations = {
     scheduleNotCreated:
       "Кесте құрылмаған. Кестені құру үшін жоғарыдағы түймесін басыңыз.",
     generateNewSchedule: "Жаңа кесте құру",
+    excelImportTitle: "Excel импорттау",
+    excelImportDescription:
+      "Бір .xlsx файл арқылы курстарды, оқытушыларды және аудиторияларды жаппай жүктей аласыз.",
+    excelImportSheetFormat: "Excel файлында мына парақтар болуы керек:",
+    excelImportCoursesColumns:
+      "Courses: name, code, credits, hours, description",
+    excelImportTeachersColumns:
+      "Teachers: name, email, phone, specialization, max_hours_per_week",
+    excelImportRoomsColumns:
+      "Rooms: number, capacity, building, type, equipment",
+    excelImportButton: "Excel импорттау",
+    excelImportSelectedFile: "Таңдалған файл",
+    excelImportSuccess: "Импорт сәтті аяқталды.",
+    excelImportTotals: "Қосылды / жаңартылды:",
+    importSelectFileError: "Алдымен .xlsx файлын таңдаңыз.",
+    importFileTypeError: "Тек .xlsx форматындағы Excel файлы қолдау табады.",
 
     // Timetable
     time: "Уақыт",
@@ -414,6 +430,22 @@ export const translations = {
     scheduleNotCreated:
       "Расписание не создано. Нажмите кнопку выше для генерирования.",
     generateNewSchedule: "Сгенерировать новое расписание",
+    excelImportTitle: "Импорт Excel",
+    excelImportDescription:
+      "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей и аудитории.",
+    excelImportSheetFormat: "В Excel должны быть листы:",
+    excelImportCoursesColumns:
+      "Courses: name, code, credits, hours, description",
+    excelImportTeachersColumns:
+      "Teachers: name, email, phone, specialization, max_hours_per_week",
+    excelImportRoomsColumns:
+      "Rooms: number, capacity, building, type, equipment",
+    excelImportButton: "Импортировать Excel",
+    excelImportSelectedFile: "Выбранный файл",
+    excelImportSuccess: "Импорт успешно завершён.",
+    excelImportTotals: "Добавлено / обновлено:",
+    importSelectFileError: "Сначала выберите .xlsx файл.",
+    importFileTypeError: "Поддерживаются только Excel файлы формата .xlsx.",
 
     // Timetable
     time: "Время",
@@ -631,6 +663,22 @@ export const translations = {
     scheduleNotCreated:
       "No schedule created. Click the button above to generate one.",
     generateNewSchedule: "Generate New Schedule",
+    excelImportTitle: "Excel Import",
+    excelImportDescription:
+      "Upload one .xlsx file to bulk import courses, teachers, and rooms.",
+    excelImportSheetFormat: "The Excel file must contain these sheets:",
+    excelImportCoursesColumns:
+      "Courses: name, code, credits, hours, description",
+    excelImportTeachersColumns:
+      "Teachers: name, email, phone, specialization, max_hours_per_week",
+    excelImportRoomsColumns:
+      "Rooms: number, capacity, building, type, equipment",
+    excelImportButton: "Import Excel",
+    excelImportSelectedFile: "Selected file",
+    excelImportSuccess: "Import completed successfully.",
+    excelImportTotals: "Inserted / updated:",
+    importSelectFileError: "Select a .xlsx file first.",
+    importFileTypeError: "Only .xlsx Excel files are supported.",
 
     // Timetable
     time: "Time",

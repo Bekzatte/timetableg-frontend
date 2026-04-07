@@ -197,6 +197,13 @@ export const profileAPI = {
     api.post("/profile/avatar", { avatarData }).then((response) => response.data),
 };
 
+export const importAPI = {
+  importExcel: (fileName, fileContent) =>
+    api
+      .post("/import/excel", { fileName, fileContent })
+      .then((response) => response.data),
+};
+
 export default {
   courseAPI,
   teacherAPI,
@@ -204,6 +211,7 @@ export default {
   scheduleAPI,
   authAPI,
   profileAPI,
+  importAPI,
 };
 
 // Add auth token interceptor
