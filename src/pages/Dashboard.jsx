@@ -111,7 +111,6 @@ export const Dashboard = () => {
       description: isAdmin ? t("generateSchedule") : t("viewSchedule"),
       icon: Zap,
       link: "/schedule",
-      count: schedules.length,
       bgClass: "from-orange-100 to-orange-50",
       iconBgClass: "bg-orange-100",
       textClass: "text-orange-700",
@@ -232,9 +231,11 @@ export const Dashboard = () => {
                 <div
                   className={`${feature.bgClass} relative rounded-lg shadow-lg hover:shadow-2xl transition-all duration-1000 transform hover:-translate-y-1 p-4 sm:p-6 text-left sm:text-center cursor-pointer border border-white h-full flex flex-row sm:flex-col items-start sm:items-center justify-start sm:justify-center gap-4 sm:gap-0 min-h-[132px] sm:min-h-60`}
                 >
-                  <div className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm sm:right-4 sm:top-4">
-                    {feature.count}
-                  </div>
+                  {typeof feature.count === "number" ? (
+                    <div className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm sm:right-4 sm:top-4">
+                      {feature.count}
+                    </div>
+                  ) : null}
                   <div
                     className={`${feature.iconBgClass} shrink-0 w-12 sm:w-14 h-12 sm:h-14 rounded-full flex items-center justify-center sm:mb-4 sm:mx-auto`}
                   >
