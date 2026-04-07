@@ -23,7 +23,7 @@ export const Dashboard = () => {
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
   const actionButtonClass =
-    "rounded-md px-4 py-2 font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
+    "rounded-md px-4 py-1 font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
   const outlineActionButtonClass = `${actionButtonClass} border border-[#014531] text-[#014531] hover:bg-[#f4fbf7]`;
   const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
