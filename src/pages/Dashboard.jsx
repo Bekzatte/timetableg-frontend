@@ -23,7 +23,7 @@ export const Dashboard = () => {
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
   const actionButtonClass =
-    "inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-1 text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-[190px] sm:flex-none";
+    "inline-flex h-[54px] w-full items-center justify-center rounded-md px-4 text-sm text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-[190px] sm:flex-none";
   const outlineActionButtonClass = `${actionButtonClass} border border-[#014531] text-[#014531] hover:bg-[#f4fbf7]`;
   const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
