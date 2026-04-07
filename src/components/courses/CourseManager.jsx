@@ -4,9 +4,10 @@ import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { adminAPI, courseAPI } from "../../services/api";
+import { adminAPI, courseAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
+import { DEPARTMENTS } from "../../constants/departments";
 
 export const CourseManager = () => {
   const { t } = useTranslation();
@@ -15,12 +16,19 @@ export const CourseManager = () => {
   const [editingCourse, setEditingCourse] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const { data, isLoading, execute } = useFetch(courseAPI.getAll);
+  const {
+    data: teachersData,
+    isLoading: isTeachersLoading,
+    execute: executeTeachers,
+  } = useFetch(teacherAPI.getAll);
 
   useEffect(() => {
     execute();
-  }, [execute]);
+    executeTeachers();
+  }, [execute, executeTeachers]);
 
   const courses = Array.isArray(data) ? data : [];
+  const teachers = Array.isArray(teachersData) ? teachersData : [];
 
   const handleAddCourse = () => {
     setEditingCourse(null);
@@ -60,11 +68,20 @@ export const CourseManager = () => {
   };
 
   const handleSubmit = async (formData, setErrors) => {
+    const selectedTeacher = teachers.find(
+      (teacher) => String(teacher.id) === String(formData.instructor_id),
+    );
+
     try {
+      const payload = {
+        ...formData,
+        instructor_id: formData.instructor_id ? Number(formData.instructor_id) : null,
+        instructor_name: selectedTeacher?.name || "",
+      };
       if (editingCourse) {
-        await courseAPI.update(editingCourse.id, formData);
+        await courseAPI.update(editingCourse.id, payload);
       } else {
-        await courseAPI.create(formData);
+        await courseAPI.create(payload);
       }
       await execute();
       setIsModalOpen(false);
@@ -88,44 +105,89 @@ export const CourseManager = () => {
   }
 
   const columns = [
-    { key: "name", label: t("courseName") },
-    { key: "code", label: t("courseCode") },
-    { key: "credits", label: t("credits") },
-    { key: "hours", label: t("hours") },
+    { key: "name", label: t("programmeName") },
+    { key: "study_year", label: t("year") },
+    { key: "semester", label: t("semester") },
+    { key: "department", label: t("facultyInstitute") },
+    { key: "instructor_name", label: t("instructor") },
   ];
 
   const formFields = [
     {
       name: "name",
-      label: t("courseName"),
-      placeholder: t("courseName"),
+      label: t("programmeName"),
+      type: "select",
+      placeholder: t("selectProgrammeName"),
+      options: [
+        "Программная инженерия (6B06101)",
+        "Бизнес-информатика (6B06102)",
+        "Компьютерная инженерия (6B06103)",
+        "DevOps инжиниринг (6B06104)",
+        "Цифровые агросистемы и комплексы (6B06115)",
+      ].map((programme) => ({ value: programme, label: programme })),
       required: true,
     },
     {
-      name: "code",
-      label: t("courseCode"),
-      placeholder: "CS101",
-      required: true,
-    },
-    {
-      name: "credits",
-      label: t("credits"),
+      name: "study_year",
+      label: t("year"),
       type: "number",
-      placeholder: "3",
+      placeholder: "1",
       required: true,
     },
     {
-      name: "hours",
-      label: t("hours"),
+      name: "semester",
+      label: t("semester"),
       type: "number",
-      placeholder: "36",
+      placeholder: "1",
       required: true,
     },
-    { name: "description", label: t("description"), type: "textarea" },
+    {
+      name: "department",
+      label: t("facultyInstitute"),
+      type: "select",
+      placeholder: t("selectFacultyInstitute"),
+      options: DEPARTMENTS.map((department) => ({
+        value: department,
+        label: department,
+      })),
+      required: true,
+    },
+    {
+      name: "instructor_id",
+      label: t("instructor"),
+      type: "select",
+      placeholder: isTeachersLoading
+        ? t("loading")
+        : t("selectInstructor"),
+      options: teachers.map((teacher) => ({
+        value: teacher.id,
+        label: teacher.name,
+      })),
+      required: true,
+    },
   ];
 
   return (
     <div className="p-4 sm:p-6 w-full bg-white">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+          <p className="text-sm font-medium text-blue-700">
+            {t("coursesCount")}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">
+            {courses.length}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+          <p className="text-sm font-medium text-emerald-700">
+            {t("totalDepartments")}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">
+            {DEPARTMENTS.length}
+          </p>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("courseMgmt")}
@@ -163,7 +225,14 @@ export const CourseManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
-          initialValues={editingCourse || {}}
+          initialValues={
+            editingCourse
+              ? {
+                  ...editingCourse,
+                  instructor_id: editingCourse.instructor_id || "",
+                }
+              : {}
+          }
           submitText={editingCourse ? t("save") : t("add")}
         />
       </Modal>

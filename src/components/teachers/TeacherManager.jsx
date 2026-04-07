@@ -7,6 +7,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
+import { DEPARTMENTS } from "../../constants/departments";
 
 export const TeacherManager = () => {
   const { t } = useTranslation();
@@ -82,7 +83,7 @@ export const TeacherManager = () => {
     { key: "name", label: t("fullName") },
     { key: "email", label: "Email" },
     { key: "phone", label: t("phone") },
-    { key: "specialization", label: t("specialization") },
+    { key: "specialization", label: t("facultyInstitute") },
   ];
 
   if (!isAdmin) {
@@ -113,8 +114,13 @@ export const TeacherManager = () => {
     { name: "phone", label: t("phone"), placeholder: t("phonePlaceholder") },
     {
       name: "specialization",
-      label: t("specialization"),
-      placeholder: t("specializationPlaceholder"),
+      label: t("facultyInstitute"),
+      type: "select",
+      placeholder: t("selectFacultyInstitute"),
+      options: DEPARTMENTS.map((department) => ({
+        value: department,
+        label: department,
+      })),
     },
     {
       name: "max_hours_per_week",
@@ -126,6 +132,25 @@ export const TeacherManager = () => {
 
   return (
     <div className="p-6 bg-white">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+          <p className="text-sm font-medium text-blue-700">
+            {t("totalInstructors")}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">
+            {teachers.length}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+          <p className="text-sm font-medium text-emerald-700">
+            {t("totalDepartments")}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">
+            {DEPARTMENTS.length}
+          </p>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t("teacherMgmt")}</h1>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
