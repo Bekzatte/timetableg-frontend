@@ -23,7 +23,7 @@ export const Dashboard = () => {
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
   const actionButtonClass =
-    "inline-flex h-[46px] w-full items-center justify-center rounded-md px-4 text-sm text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-[190px] sm:flex-none";
+    "inline-flex h-[46px] w-full items-center justify-center rounded-md px-4 text-sm text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
   const outlineActionButtonClass = `${actionButtonClass} border border-[#014531] text-[#014531] hover:bg-[#f4fbf7]`;
   const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
@@ -229,41 +229,43 @@ export const Dashboard = () => {
               </ul>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-6 space-y-3">
               <input
                 type="file"
                 accept=".xlsx"
                 onChange={(event) => setImportFile(event.target.files?.[0] || null)}
                 className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#014531] file:px-3 file:py-2 file:font-medium file:text-white"
               />
-              <button
-                type="button"
-                onClick={handleDownloadTemplate}
-                disabled={isDownloadingTemplate}
-                className={
-                  isDownloadingTemplate
-                    ? solidActionButtonClass
-                    : outlineActionButtonClass
-                }
-              >
-                {isDownloadingTemplate ? t("loading") : t("excelTemplateButton")}
-              </button>
-              <button
-                type="button"
-                onClick={handleImport}
-                disabled={isImporting}
-                className={solidActionButtonClass}
-              >
-                {isImporting ? t("loading") : t("excelImportButton")}
-              </button>
-              <button
-                type="button"
-                onClick={handleClearAllData}
-                disabled={isClearingAll}
-                className={dangerActionButtonClass}
-              >
-                {isClearingAll ? t("loading") : t("clearAllData")}
-              </button>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={handleDownloadTemplate}
+                  disabled={isDownloadingTemplate}
+                  className={
+                    isDownloadingTemplate
+                      ? solidActionButtonClass
+                      : outlineActionButtonClass
+                  }
+                >
+                  {isDownloadingTemplate ? t("loading") : t("excelTemplateButton")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleImport}
+                  disabled={isImporting}
+                  className={solidActionButtonClass}
+                >
+                  {isImporting ? t("loading") : t("excelImportButton")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearAllData}
+                  disabled={isClearingAll}
+                  className={dangerActionButtonClass}
+                >
+                  {isClearingAll ? t("loading") : t("clearAllData")}
+                </button>
+              </div>
             </div>
 
             {importFile ? (
