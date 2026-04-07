@@ -4,7 +4,7 @@ import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { roomAPI } from "../../services/api";
+import { adminAPI, roomAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 
@@ -13,6 +13,7 @@ export const RoomManager = () => {
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
+  const [isClearing, setIsClearing] = useState(false);
   const { data, isLoading, execute } = useFetch(roomAPI.getAll);
 
   useEffect(() => {
@@ -41,6 +42,22 @@ export const RoomManager = () => {
       } catch (error) {
         console.error(t("errorDeleteRoom"), error);
       }
+    }
+  };
+
+  const handleClearRooms = async () => {
+    if (!window.confirm(t("confirmClearRooms"))) {
+      return;
+    }
+
+    try {
+      setIsClearing(true);
+      await adminAPI.clearCollection("rooms");
+      await execute();
+    } catch (error) {
+      console.error("Error clearing rooms:", error);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -105,8 +122,6 @@ export const RoomManager = () => {
       options: [
         { value: "lecture", label: t("lectureHall") },
         { value: "practical", label: t("practicalRoom") },
-        { value: "lab", label: t("lab") },
-        { value: "seminar", label: t("seminar") },
       ],
     },
     {
@@ -121,12 +136,21 @@ export const RoomManager = () => {
     <div className="p-6 bg-white">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t("roomMgmt")}</h1>
-        <button
-          onClick={handleAddRoom}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto"
-        >
-          <Plus size={20} /> {t("addRoom")}
-        </button>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <button
+            onClick={handleAddRoom}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto"
+          >
+            <Plus size={20} /> {t("addRoom")}
+          </button>
+          <button
+            onClick={handleClearRooms}
+            disabled={isClearing}
+            className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {isClearing ? t("loading") : t("clearRooms")}
+          </button>
+        </div>
       </div>
 
       <DataTable

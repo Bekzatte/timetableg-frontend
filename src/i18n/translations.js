@@ -181,7 +181,7 @@ export const translations = {
     errorDeleteRoom: "Комнатаны өшіру қатесі",
     errorSaveRoom: "Комнатаны сақтау қатесі",
     lectureHall: "Лекция аудиториясы",
-    practicalRoom: "Практикалық бөлме",
+    practicalRoom: "Практикалық аудитория",
     equipmentPlaceholder: "Проектор, тақта және т.б.",
     mainBuildingPlaceholder: "Негізгі ғимарат",
 
@@ -212,6 +212,16 @@ export const translations = {
     excelImportTotals: "Қосылды / жаңартылды:",
     importSelectFileError: "Алдымен .xlsx файлын таңдаңыз.",
     importFileTypeError: "Тек .xlsx форматындағы Excel файлы қолдау табады.",
+    clearAllData: "Барлық деректерді тазалау",
+    clearAllDataSuccess: "Барлық деректер өшірілді.",
+    clearCourses: "Курстарды тазалау",
+    clearTeachers: "Оқытушыларды тазалау",
+    clearRooms: "Аудиторияларды тазалау",
+    confirmClearAllData:
+      "Барлық курстар, оқытушылар, аудиториялар және кестелер өшіріледі. Жалғастыру керек пе?",
+    confirmClearCourses: "Барлық курстарды өшіру керек пе?",
+    confirmClearTeachers: "Барлық оқытушыларды өшіру керек пе?",
+    confirmClearRooms: "Барлық аудиторияларды өшіру керек пе?",
 
     // Timetable
     time: "Уақыт",
@@ -417,7 +427,7 @@ export const translations = {
     errorDeleteRoom: "Ошибка при удалении комнаты",
     errorSaveRoom: "Ошибка при сохранении комнаты",
     lectureHall: "Лекционная аудитория",
-    practicalRoom: "Практическая комната",
+    practicalRoom: "Практическая аудитория",
     equipmentPlaceholder: "Проектор, доска и т.д.",
     mainBuildingPlaceholder: "Главное здание",
 
@@ -448,6 +458,16 @@ export const translations = {
     excelImportTotals: "Добавлено / обновлено:",
     importSelectFileError: "Сначала выберите .xlsx файл.",
     importFileTypeError: "Поддерживаются только Excel файлы формата .xlsx.",
+    clearAllData: "Очистить все данные",
+    clearAllDataSuccess: "Все данные удалены.",
+    clearCourses: "Очистить курсы",
+    clearTeachers: "Очистить преподавателей",
+    clearRooms: "Очистить аудитории",
+    confirmClearAllData:
+      "Будут удалены все курсы, преподаватели, аудитории и расписания. Продолжить?",
+    confirmClearCourses: "Удалить все курсы?",
+    confirmClearTeachers: "Удалить всех преподавателей?",
+    confirmClearRooms: "Удалить все аудитории?",
 
     // Timetable
     time: "Время",
@@ -682,6 +702,16 @@ export const translations = {
     excelImportTotals: "Inserted / updated:",
     importSelectFileError: "Select a .xlsx file first.",
     importFileTypeError: "Only .xlsx Excel files are supported.",
+    clearAllData: "Clear All Data",
+    clearAllDataSuccess: "All data has been removed.",
+    clearCourses: "Clear Courses",
+    clearTeachers: "Clear Teachers",
+    clearRooms: "Clear Rooms",
+    confirmClearAllData:
+      "This will delete all courses, teachers, rooms, and schedules. Continue?",
+    confirmClearCourses: "Delete all courses?",
+    confirmClearTeachers: "Delete all teachers?",
+    confirmClearRooms: "Delete all rooms?",
 
     // Timetable
     time: "Time",

@@ -206,6 +206,12 @@ export const importAPI = {
     api.get("/import/template", { responseType: "blob" }).then((response) => response.data),
 };
 
+export const adminAPI = {
+  clearAllData: () => api.post("/admin/clear-all").then((response) => response.data),
+  clearCollection: (collection) =>
+    api.post(`/admin/clear/${collection}`).then((response) => response.data),
+};
+
 export default {
   courseAPI,
   teacherAPI,
@@ -214,6 +220,7 @@ export default {
   authAPI,
   profileAPI,
   importAPI,
+  adminAPI,
 };
 
 // Add auth token interceptor

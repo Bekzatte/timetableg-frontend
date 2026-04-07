@@ -24,7 +24,7 @@ export const DataTable = ({
       {title && (
         <h2 className="text-xl font-bold mb-4 text-gray-900">{title}</h2>
       )}
-      <div className="space-y-3 md:hidden">
+      <div className="max-h-[65vh] space-y-3 overflow-y-auto pr-1 md:hidden">
         {data.map((row, rowIndex) => (
           <div
             key={row.id ?? rowIndex}
@@ -68,7 +68,7 @@ export const DataTable = ({
           </div>
         ))}
       </div>
-      <div className="hidden overflow-x-auto rounded-lg border border-gray-200 shadow-md md:block">
+      <div className="hidden max-h-[65vh] overflow-auto rounded-lg border border-gray-200 shadow-md md:block">
         <table className="w-full border-collapse table-auto">
           <colgroup>
             {columns.map((_, i) => (
@@ -77,7 +77,7 @@ export const DataTable = ({
             {(onEdit || onDelete) && <col style={{ width: "140px" }} />}
           </colgroup>
           <thead>
-            <tr className="bg-blue-50 border-b border-gray-200">
+            <tr className="sticky top-0 z-10 border-b border-gray-200 bg-blue-50">
               {columns.map((col) => (
                 <th
                   key={col.key}

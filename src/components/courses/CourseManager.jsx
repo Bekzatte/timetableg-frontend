@@ -4,7 +4,7 @@ import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { courseAPI } from "../../services/api";
+import { adminAPI, courseAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 
@@ -13,6 +13,7 @@ export const CourseManager = () => {
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [isClearing, setIsClearing] = useState(false);
   const { data, isLoading, execute } = useFetch(courseAPI.getAll);
 
   useEffect(() => {
@@ -39,6 +40,22 @@ export const CourseManager = () => {
       } catch (error) {
         console.error("Error deleting course:", error);
       }
+    }
+  };
+
+  const handleClearCourses = async () => {
+    if (!window.confirm(t("confirmClearCourses"))) {
+      return;
+    }
+
+    try {
+      setIsClearing(true);
+      await adminAPI.clearCollection("courses");
+      await execute();
+    } catch (error) {
+      console.error("Error clearing courses:", error);
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -113,12 +130,21 @@ export const CourseManager = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("courseMgmt")}
         </h1>
-        <button
-          onClick={handleAddCourse}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition w-full sm:w-auto justify-center"
-        >
-          <Plus size={20} /> {t("addCourse")}
-        </button>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <button
+            onClick={handleAddCourse}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition w-full sm:w-auto justify-center"
+          >
+            <Plus size={20} /> {t("addCourse")}
+          </button>
+          <button
+            onClick={handleClearCourses}
+            disabled={isClearing}
+            className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {isClearing ? t("loading") : t("clearCourses")}
+          </button>
+        </div>
       </div>
 
       <DataTable

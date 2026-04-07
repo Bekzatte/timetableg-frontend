@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { BookOpen, Users, Home, Zap } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
-import { importAPI } from "../services/api";
+import { adminAPI, importAPI } from "../services/api";
 
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
@@ -19,8 +19,14 @@ export const Dashboard = () => {
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
+  const [isClearingAll, setIsClearingAll] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
+  const actionButtonClass =
+    "rounded-md px-4 py-2 font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
+  const outlineActionButtonClass = `${actionButtonClass} border border-[#014531] text-[#014531] hover:bg-[#f4fbf7]`;
+  const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
+  const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
 
   const features = [
     {
@@ -110,6 +116,33 @@ export const Dashboard = () => {
       setImportError(error.message || t("errorUnknown"));
     } finally {
       setIsDownloadingTemplate(false);
+    }
+  };
+
+  const handleClearAllData = async () => {
+    if (!window.confirm(t("confirmClearAllData"))) {
+      return;
+    }
+
+    setIsClearingAll(true);
+    setImportError("");
+    setImportResult(null);
+
+    try {
+      await adminAPI.clearAllData();
+      setImportResult({
+        totals: { inserted: 0, updated: 0 },
+        summary: {
+          courses: { inserted: 0, updated: 0 },
+          teachers: { inserted: 0, updated: 0 },
+          rooms: { inserted: 0, updated: 0 },
+        },
+        cleared: true,
+      });
+    } catch (error) {
+      setImportError(error.message || t("errorUnknown"));
+    } finally {
+      setIsClearingAll(false);
     }
   };
 
@@ -207,7 +240,11 @@ export const Dashboard = () => {
                 type="button"
                 onClick={handleDownloadTemplate}
                 disabled={isDownloadingTemplate}
-                className="rounded-md border border-[#014531] px-4 py-2 font-medium text-[#014531] transition hover:bg-[#f4fbf7] disabled:cursor-not-allowed disabled:opacity-60"
+                className={
+                  isDownloadingTemplate
+                    ? solidActionButtonClass
+                    : outlineActionButtonClass
+                }
               >
                 {isDownloadingTemplate ? t("loading") : t("excelTemplateButton")}
               </button>
@@ -215,9 +252,17 @@ export const Dashboard = () => {
                 type="button"
                 onClick={handleImport}
                 disabled={isImporting}
-                className="rounded-md bg-[#014531] px-4 py-2 font-medium text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60"
+                className={solidActionButtonClass}
               >
                 {isImporting ? t("loading") : t("excelImportButton")}
+              </button>
+              <button
+                type="button"
+                onClick={handleClearAllData}
+                disabled={isClearingAll}
+                className={dangerActionButtonClass}
+              >
+                {isClearingAll ? t("loading") : t("clearAllData")}
               </button>
             </div>
 
@@ -234,23 +279,29 @@ export const Dashboard = () => {
             ) : null}
 
             {importResult ? (
-              <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                <p className="font-semibold">{t("excelImportSuccess")}</p>
-                <p className="mt-1">
-                  {t("excelImportTotals")} {importResult.totals.inserted} / {importResult.totals.updated}
-                </p>
-                <ul className="mt-3 list-disc space-y-1 pl-5">
-                  <li>
-                    Courses: +{importResult.summary.courses.inserted}, ~{importResult.summary.courses.updated}
-                  </li>
-                  <li>
-                    Teachers: +{importResult.summary.teachers.inserted}, ~{importResult.summary.teachers.updated}
-                  </li>
-                  <li>
-                    Rooms: +{importResult.summary.rooms.inserted}, ~{importResult.summary.rooms.updated}
-                  </li>
-                </ul>
-              </div>
+              importResult.cleared ? (
+                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                  <p className="font-semibold">{t("clearAllDataSuccess")}</p>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                  <p className="font-semibold">{t("excelImportSuccess")}</p>
+                  <p className="mt-1">
+                    {t("excelImportTotals")} {importResult.totals.inserted} / {importResult.totals.updated}
+                  </p>
+                  <ul className="mt-3 list-disc space-y-1 pl-5">
+                    <li>
+                      Courses: +{importResult.summary.courses.inserted}, ~{importResult.summary.courses.updated}
+                    </li>
+                    <li>
+                      Teachers: +{importResult.summary.teachers.inserted}, ~{importResult.summary.teachers.updated}
+                    </li>
+                    <li>
+                      Rooms: +{importResult.summary.rooms.inserted}, ~{importResult.summary.rooms.updated}
+                    </li>
+                  </ul>
+                </div>
+              )
             ) : null}
           </div>
         ) : null}
