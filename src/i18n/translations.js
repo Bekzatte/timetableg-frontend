@@ -23,7 +23,9 @@ export const translations = {
     coursesCount: "Барлық курстар",
     teachersCount: "Барлық оқытушылар",
     roomsCount: "Барлық аудиториялар",
+    sectionsCount: "Барлық секциялар",
     schedulesCount: "Барлық кестелер",
+    availableRooms: "Қолжетімді аудиториялар",
     viewMore: "Толығымен қарау",
 
     // Courses
@@ -219,11 +221,11 @@ export const translations = {
       "Бір .xlsx файл арқылы курстарды, оқытушыларды және аудиторияларды жаппай жүктей аласыз.",
     excelImportSheetFormat: "Excel файлында мына парақтар болуы керек:",
     excelImportCoursesColumns:
-      "Courses: name, code, credits, hours, description",
+      "Courses: code, name, study_year, semester, programme_name, department, instructor_name, description",
     excelImportTeachersColumns:
-      "Teachers: name, email, phone, specialization, max_hours_per_week",
+      "Teachers: name, email, phone, faculty_institute",
     excelImportRoomsColumns:
-      "Rooms: number, capacity, building, type, equipment",
+      "Rooms: number, capacity, building, type, department, is_available, equipment",
     excelImportButton: "Excel импорттау",
     excelTemplateButton: "Шаблонды жүктеу",
     excelImportSelectedFile: "Таңдалған файл",
@@ -286,7 +288,9 @@ export const translations = {
     coursesCount: "Всего курсов",
     teachersCount: "Всего преподавателей",
     roomsCount: "Всего аудиторий",
+    sectionsCount: "Всего секций",
     schedulesCount: "Всего расписаний",
+    availableRooms: "Доступных аудиторий",
     viewMore: "Посмотреть все",
 
     // Courses
@@ -484,11 +488,11 @@ export const translations = {
       "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей и аудитории.",
     excelImportSheetFormat: "В Excel должны быть листы:",
     excelImportCoursesColumns:
-      "Courses: name, code, credits, hours, description",
+      "Courses: code, name, study_year, semester, programme_name, department, instructor_name, description",
     excelImportTeachersColumns:
-      "Teachers: name, email, phone, specialization, max_hours_per_week",
+      "Teachers: name, email, phone, faculty_institute",
     excelImportRoomsColumns:
-      "Rooms: number, capacity, building, type, equipment",
+      "Rooms: number, capacity, building, type, department, is_available, equipment",
     excelImportButton: "Импортировать Excel",
     excelTemplateButton: "Скачать шаблон",
     excelImportSelectedFile: "Выбранный файл",
@@ -550,7 +554,9 @@ export const translations = {
     coursesCount: "Total Courses",
     teachersCount: "Total Teachers",
     roomsCount: "Total Rooms",
+    sectionsCount: "Total Sections",
     schedulesCount: "Total Schedules",
+    availableRooms: "Available Rooms",
     viewMore: "View All",
 
     // Courses
@@ -747,11 +753,11 @@ export const translations = {
       "Upload one .xlsx file to bulk import courses, teachers, and rooms.",
     excelImportSheetFormat: "The Excel file must contain these sheets:",
     excelImportCoursesColumns:
-      "Courses: name, code, credits, hours, description",
+      "Courses: code, name, study_year, semester, programme_name, department, instructor_name, description",
     excelImportTeachersColumns:
-      "Teachers: name, email, phone, specialization, max_hours_per_week",
+      "Teachers: name, email, phone, faculty_institute",
     excelImportRoomsColumns:
-      "Rooms: number, capacity, building, type, equipment",
+      "Rooms: number, capacity, building, type, department, is_available, equipment",
     excelImportButton: "Import Excel",
     excelTemplateButton: "Download Template",
     excelImportSelectedFile: "Selected file",

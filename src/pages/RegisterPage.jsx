@@ -3,9 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { ROLES } from "../constants/roles";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
+import { DEPARTMENTS } from "../constants/departments";
+import { PROGRAMMES } from "../constants/programmes";
 
 export const RegisterPage = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const { register, isLoading, error } = useAuth();
   const [selectedRole, setSelectedRole] = useState(ROLES.STUDENT);
@@ -13,6 +15,8 @@ export const RegisterPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [department, setDepartment] = useState("");
+  const [programmeName, setProgrammeName] = useState("");
   const [localError, setLocalError] = useState("");
 
   const roleOptions = [
@@ -31,6 +35,11 @@ export const RegisterPage = () => {
       return;
     }
 
+    if (selectedRole === ROLES.STUDENT && (!department || !programmeName)) {
+      setLocalError(t("fillAllFields"));
+      return;
+    }
+
     if (password !== confirmPassword) {
       setLocalError(t("passwordsNotMatch"));
       return;
@@ -42,7 +51,14 @@ export const RegisterPage = () => {
     }
 
     try {
-      await register(email, password, displayName, selectedRole);
+      await register(
+        email,
+        password,
+        displayName,
+        selectedRole,
+        department,
+        programmeName,
+      );
       navigate("/");
     } catch (err) {
       setLocalError(err.message);
@@ -72,7 +88,13 @@ export const RegisterPage = () => {
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setSelectedRole(option.value)}
+                  onClick={() => {
+                    setSelectedRole(option.value);
+                    if (option.value !== ROLES.STUDENT) {
+                      setDepartment("");
+                      setProgrammeName("");
+                    }
+                  }}
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
                     selectedRole === option.value
                       ? "border-[#014531] bg-[#014531] text-white"
@@ -111,6 +133,46 @@ export const RegisterPage = () => {
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {selectedRole === ROLES.STUDENT && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("facultyInstitute")}
+                </label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">{t("selectFacultyInstitute")}</option>
+                  {DEPARTMENTS.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("programmeName")}
+                </label>
+                <select
+                  value={programmeName}
+                  onChange={(e) => setProgrammeName(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">{t("selectProgrammeName")}</option>
+                  {PROGRAMMES.map((programme) => (
+                    <option key={programme.value} value={programme.labels.ru}>
+                      {programme.labels[language] || programme.labels.en}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
 
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">

@@ -185,13 +185,15 @@ export const authAPI = {
     api
       .post("/auth/login", { email, password, role })
       .then((response) => response.data),
-  register: (email, password, displayName, role) =>
+  register: (email, password, displayName, role, department, programmeName) =>
     api
       .post("/auth/register", {
         email,
         password,
         displayName,
         role,
+        department,
+        programmeName,
       })
       .then((response) => response.data),
   logout: () => api.post("/auth/logout").then((response) => response.data),

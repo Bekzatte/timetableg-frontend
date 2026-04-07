@@ -50,6 +50,16 @@ const RequireAuth = ({ children, allowedRoles = [] }) => {
   return children;
 };
 
+const RoleHome = () => {
+  const { isAdmin } = useAuth();
+
+  if (!isAdmin) {
+    return <Navigate to="/schedule" replace />;
+  }
+
+  return <Dashboard />;
+};
+
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -58,18 +68,19 @@ export default function App() {
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
   const { user, isAdmin, logout } = useAuth();
-
-  const navItems = [
-    { label: t("home"), path: "/" },
-    { label: t("schedule"), path: "/schedule" },
-  ];
-
-  if (isAdmin) {
-    navItems.splice(1, 0, { label: t("courses"), path: "/courses" });
-    navItems.splice(2, 0, { label: t("teachers"), path: "/teachers" });
-    navItems.splice(3, 0, { label: t("rooms"), path: "/rooms" });
-    navItems.splice(4, 0, { label: t("sections"), path: "/sections" });
-  }
+  const homePath = user && !isAdmin ? "/schedule" : "/";
+  const navItems = isAdmin
+    ? [
+        { label: t("home"), path: "/" },
+        { label: t("courses"), path: "/courses" },
+        { label: t("teachers"), path: "/teachers" },
+        { label: t("rooms"), path: "/rooms" },
+        { label: t("sections"), path: "/sections" },
+        { label: t("schedule"), path: "/schedule" },
+      ]
+    : user
+      ? [{ label: t("schedule"), path: "/schedule" }]
+      : [];
 
   const languages = [
     { code: "kk", name: "ҚАЗ" },
@@ -118,7 +129,7 @@ export default function App() {
           <nav className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
             {/* Logo */}
             <Link
-              to="/"
+              to={homePath}
               className="hidden lg:flex items-center gap-2 text-2xl font-bold text-white hover:opacity-80 transition"
             >
               <img
@@ -361,12 +372,12 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route
-              path="/"
+                  path="/"
               element={
                 <RequireAuth
                   allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
                 >
-                  <Dashboard />
+                  <RoleHome />
                 </RequireAuth>
               }
             />
@@ -431,7 +442,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-5 flex justify-center lg:hidden">
               <Link
-                to="/"
+                to={homePath}
                 className="flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-3 text-white transition hover:opacity-80"
               >
                 <img

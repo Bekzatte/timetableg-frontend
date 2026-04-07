@@ -182,6 +182,7 @@ export const TeacherManager = () => {
           fields={formFields}
           onSubmit={handleSubmit}
           initialValues={editingTeacher || {}}
+          submitText={editingTeacher ? t("save") : t("add")}
         />
       </Modal>
     </div>

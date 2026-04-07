@@ -47,8 +47,12 @@ export const SchedulePage = () => {
     {
       name: "semester",
       label: t("semester"),
-      type: "number",
-      placeholder: "1",
+      type: "select",
+      placeholder: t("semester"),
+      options: [
+        { value: 1, label: "1" },
+        { value: 2, label: "2" },
+      ],
       required: true,
     },
     {

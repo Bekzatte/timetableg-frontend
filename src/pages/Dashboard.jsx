@@ -1,9 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Users, Home, Zap } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
-import { adminAPI, importAPI } from "../services/api";
+import {
+  adminAPI,
+  courseAPI,
+  importAPI,
+  roomAPI,
+  scheduleAPI,
+  sectionAPI,
+  teacherAPI,
+} from "../services/api";
+import { useFetch } from "../hooks/useAPI";
 
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
@@ -22,11 +31,35 @@ export const Dashboard = () => {
   const [isClearingAll, setIsClearingAll] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
+  const { data: coursesData, execute: executeCourses } = useFetch(courseAPI.getAll);
+  const { data: teachersData, execute: executeTeachers } = useFetch(teacherAPI.getAll);
+  const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
+  const { data: sectionsData, execute: executeSections } = useFetch(sectionAPI.getAll);
+  const { data: schedulesData, execute: executeSchedules } = useFetch(scheduleAPI.getAll);
   const actionButtonClass =
     "inline-flex h-[46px] w-full items-center justify-center rounded-md px-4 text-sm text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
   const outlineActionButtonClass = `${actionButtonClass} border border-[#014531] text-[#014531] hover:bg-[#f4fbf7]`;
   const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
+  const courses = Array.isArray(coursesData) ? coursesData : [];
+  const teachers = Array.isArray(teachersData) ? teachersData : [];
+  const rooms = Array.isArray(roomsData) ? roomsData : [];
+  const sections = Array.isArray(sectionsData) ? sectionsData : [];
+  const schedules = Array.isArray(schedulesData) ? schedulesData : [];
+
+  useEffect(() => {
+    executeCourses();
+    executeTeachers();
+    executeRooms();
+    executeSections();
+    executeSchedules();
+  }, [
+    executeCourses,
+    executeTeachers,
+    executeRooms,
+    executeSections,
+    executeSchedules,
+  ]);
 
   const features = [
     {
@@ -34,6 +67,7 @@ export const Dashboard = () => {
       description: t("addCourse"),
       icon: BookOpen,
       link: "/courses",
+      count: courses.length,
       bgClass: "from-blue-100 to-blue-50",
       iconBgClass: "bg-blue-100",
       textClass: "text-blue-700",
@@ -44,6 +78,7 @@ export const Dashboard = () => {
       description: t("addTeacher"),
       icon: Users,
       link: "/teachers",
+      count: teachers.length,
       bgClass: "from-green-100 to-green-50",
       iconBgClass: "bg-green-100",
       textClass: "text-green-700",
@@ -54,16 +89,29 @@ export const Dashboard = () => {
       description: t("addRoom"),
       icon: Home,
       link: "/rooms",
+      count: rooms.length,
       bgClass: "from-purple-100 to-purple-50",
       iconBgClass: "bg-purple-100",
       textClass: "text-purple-700",
       color: "purple",
     },
     {
+      title: t("sections"),
+      description: t("addSection"),
+      icon: BookOpen,
+      link: "/sections",
+      count: sections.length,
+      bgClass: "from-amber-100 to-amber-50",
+      iconBgClass: "bg-amber-100",
+      textClass: "text-amber-700",
+      color: "amber",
+    },
+    {
       title: t("scheduleMgmt"),
       description: isAdmin ? t("generateSchedule") : t("viewSchedule"),
       icon: Zap,
       link: "/schedule",
+      count: schedules.length,
       bgClass: "from-orange-100 to-orange-50",
       iconBgClass: "bg-orange-100",
       textClass: "text-orange-700",
@@ -89,6 +137,13 @@ export const Dashboard = () => {
     try {
       const fileContent = await readFileAsDataUrl(importFile);
       const result = await importAPI.importExcel(importFile.name, fileContent);
+      await Promise.all([
+        executeCourses(),
+        executeTeachers(),
+        executeRooms(),
+        executeSections(),
+        executeSchedules(),
+      ]);
       setImportResult(result);
       setImportFile(null);
     } catch (error) {
@@ -130,6 +185,13 @@ export const Dashboard = () => {
 
     try {
       await adminAPI.clearAllData();
+      await Promise.all([
+        executeCourses(),
+        executeTeachers(),
+        executeRooms(),
+        executeSections(),
+        executeSchedules(),
+      ]);
       setImportResult({
         totals: { inserted: 0, updated: 0 },
         summary: {
@@ -157,7 +219,7 @@ export const Dashboard = () => {
         </p>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 sm:gap-6 mb-8">
           {features.map((feature) => {
             const IconComponent = feature.icon;
 
@@ -168,8 +230,11 @@ export const Dashboard = () => {
                 className="no-underline h-full"
               >
                 <div
-                  className={`${feature.bgClass} rounded-lg shadow-lg hover:shadow-2xl transition-all duration-1000 transform hover:-translate-y-1 p-4 sm:p-6 text-left sm:text-center cursor-pointer border border-white h-full flex flex-row sm:flex-col items-start sm:items-center justify-start sm:justify-center gap-4 sm:gap-0 min-h-[132px] sm:min-h-60`}
+                  className={`${feature.bgClass} relative rounded-lg shadow-lg hover:shadow-2xl transition-all duration-1000 transform hover:-translate-y-1 p-4 sm:p-6 text-left sm:text-center cursor-pointer border border-white h-full flex flex-row sm:flex-col items-start sm:items-center justify-start sm:justify-center gap-4 sm:gap-0 min-h-[132px] sm:min-h-60`}
                 >
+                  <div className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm sm:right-4 sm:top-4">
+                    {feature.count}
+                  </div>
                   <div
                     className={`${feature.iconBgClass} shrink-0 w-12 sm:w-14 h-12 sm:h-14 rounded-full flex items-center justify-center sm:mb-4 sm:mx-auto`}
                   >
