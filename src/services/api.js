@@ -202,6 +202,8 @@ export const importAPI = {
     api
       .post("/import/excel", { fileName, fileContent })
       .then((response) => response.data),
+  downloadTemplate: () =>
+    api.get("/import/template", { responseType: "blob" }).then((response) => response.data),
 };
 
 export default {

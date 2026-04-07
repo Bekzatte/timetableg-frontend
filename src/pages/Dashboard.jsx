@@ -18,6 +18,7 @@ export const Dashboard = () => {
   const { isAdmin } = useAuth();
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
 
@@ -88,6 +89,27 @@ export const Dashboard = () => {
       setImportError(error.message || t("errorUnknown"));
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    setIsDownloadingTemplate(true);
+    setImportError("");
+
+    try {
+      const blob = await importAPI.downloadTemplate();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "timetable-import-template.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      setImportError(error.message || t("errorUnknown"));
+    } finally {
+      setIsDownloadingTemplate(false);
     }
   };
 
@@ -181,6 +203,14 @@ export const Dashboard = () => {
                 onChange={(event) => setImportFile(event.target.files?.[0] || null)}
                 className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#014531] file:px-3 file:py-2 file:font-medium file:text-white"
               />
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                disabled={isDownloadingTemplate}
+                className="rounded-md border border-[#014531] px-4 py-2 font-medium text-[#014531] transition hover:bg-[#f4fbf7] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDownloadingTemplate ? t("loading") : t("excelTemplateButton")}
+              </button>
               <button
                 type="button"
                 onClick={handleImport}

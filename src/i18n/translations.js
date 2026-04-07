@@ -206,6 +206,7 @@ export const translations = {
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, equipment",
     excelImportButton: "Excel импорттау",
+    excelTemplateButton: "Шаблонды жүктеу",
     excelImportSelectedFile: "Таңдалған файл",
     excelImportSuccess: "Импорт сәтті аяқталды.",
     excelImportTotals: "Қосылды / жаңартылды:",
@@ -441,6 +442,7 @@ export const translations = {
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, equipment",
     excelImportButton: "Импортировать Excel",
+    excelTemplateButton: "Скачать шаблон",
     excelImportSelectedFile: "Выбранный файл",
     excelImportSuccess: "Импорт успешно завершён.",
     excelImportTotals: "Добавлено / обновлено:",
@@ -674,6 +676,7 @@ export const translations = {
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, equipment",
     excelImportButton: "Import Excel",
+    excelTemplateButton: "Download Template",
     excelImportSelectedFile: "Selected file",
     excelImportSuccess: "Import completed successfully.",
     excelImportTotals: "Inserted / updated:",
