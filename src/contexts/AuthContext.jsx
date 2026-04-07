@@ -31,9 +31,11 @@ export const AuthProvider = ({ children }) => {
           })
           .catch((err) => {
             console.error("Error refreshing profile:", err);
+            persistUser(null);
           });
       } catch (e) {
         console.error("Error loading user from localStorage:", e);
+        persistUser(null);
       }
     }
   }, []);
