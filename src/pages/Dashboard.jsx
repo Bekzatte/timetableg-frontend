@@ -27,8 +27,6 @@ export const Dashboard = () => {
   const outlineActionButtonClass = `${actionButtonClass} border border-[#014531] text-[#014531] hover:bg-[#f4fbf7]`;
   const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
-  const isAnyActionLoading =
-    isDownloadingTemplate || isImporting || isClearingAll;
 
   const features = [
     {
@@ -243,7 +241,7 @@ export const Dashboard = () => {
                 onClick={handleDownloadTemplate}
                 disabled={isDownloadingTemplate}
                 className={
-                  isAnyActionLoading
+                  isDownloadingTemplate
                     ? solidActionButtonClass
                     : outlineActionButtonClass
                 }
@@ -254,7 +252,7 @@ export const Dashboard = () => {
                 type="button"
                 onClick={handleImport}
                 disabled={isImporting}
-                className={isAnyActionLoading ? solidActionButtonClass : solidActionButtonClass}
+                className={solidActionButtonClass}
               >
                 {isImporting ? t("loading") : t("excelImportButton")}
               </button>
@@ -262,9 +260,7 @@ export const Dashboard = () => {
                 type="button"
                 onClick={handleClearAllData}
                 disabled={isClearingAll}
-                className={
-                  isAnyActionLoading ? solidActionButtonClass : dangerActionButtonClass
-                }
+                className={dangerActionButtonClass}
               >
                 {isClearingAll ? t("loading") : t("clearAllData")}
               </button>
