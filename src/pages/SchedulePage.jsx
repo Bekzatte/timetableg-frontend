@@ -161,7 +161,7 @@ export const SchedulePage = () => {
         isOpen={isGenerateOpen}
         onClose={() => setIsGenerateOpen(false)}
         title={t("generateNewSchedule")}
-        size="lg"
+        size="md"
       >
         <Form
           fields={formFields}

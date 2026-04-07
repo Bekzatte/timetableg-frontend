@@ -64,6 +64,14 @@ export const TeacherManager = () => {
 
   const handleSubmit = async (formData, setErrors) => {
     try {
+      if (!String(formData.email || "").trim().toLowerCase().endsWith("@kazatu.edu.kz")) {
+        setErrors((prev) => ({
+          ...prev,
+          error: t("errorTeacherEmailDomainRequired"),
+        }));
+        return;
+      }
+
       if (editingTeacher) {
         await teacherAPI.update(editingTeacher.id, formData);
       } else {
@@ -108,7 +116,7 @@ export const TeacherManager = () => {
       name: "email",
       label: "Email",
       type: "email",
-      placeholder: "email@example.com",
+      placeholder: "name@kazatu.edu.kz",
       required: true,
     },
     { name: "phone", label: t("phone"), placeholder: t("phonePlaceholder") },

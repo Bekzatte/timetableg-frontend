@@ -58,6 +58,19 @@ export const GroupManager = () => {
     }
   };
 
+  const handleDeleteGroup = async (group) => {
+    if (!window.confirm(`${t("delete")} "${group.name}"?`)) {
+      return;
+    }
+
+    try {
+      await groupAPI.delete(group.id);
+      await execute();
+    } catch (error) {
+      console.error("Error deleting group:", error);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="p-6 bg-white rounded-lg shadow-sm text-center">
@@ -139,6 +152,7 @@ export const GroupManager = () => {
         columns={columns}
         data={groups}
         isLoading={isLoading}
+        onDelete={handleDeleteGroup}
         onEdit={(group) => {
           setEditingGroup(group);
           setIsModalOpen(true);
