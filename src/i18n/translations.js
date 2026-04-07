@@ -182,6 +182,7 @@ export const translations = {
     errorSaveRoom: "Комнатаны сақтау қатесі",
     lectureHall: "Лекция аудиториясы",
     practicalRoom: "Практикалық аудитория",
+    labHall: "LAB аудитория",
     equipmentPlaceholder: "Проектор, тақта және т.б.",
     mainBuildingPlaceholder: "Негізгі ғимарат",
 
@@ -428,6 +429,7 @@ export const translations = {
     errorSaveRoom: "Ошибка при сохранении комнаты",
     lectureHall: "Лекционная аудитория",
     practicalRoom: "Практическая аудитория",
+    labHall: "LAB аудитория",
     equipmentPlaceholder: "Проектор, доска и т.д.",
     mainBuildingPlaceholder: "Главное здание",
 
@@ -672,6 +674,7 @@ export const translations = {
     errorSaveRoom: "Error saving room",
     lectureHall: "Lecture Hall",
     practicalRoom: "Practical Room",
+    labHall: "LAB Room",
     equipmentPlaceholder: "Projector, whiteboard, etc.",
     mainBuildingPlaceholder: "Main Building",
 

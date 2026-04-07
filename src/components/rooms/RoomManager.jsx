@@ -122,6 +122,7 @@ export const RoomManager = () => {
       options: [
         { value: "lecture", label: t("lectureHall") },
         { value: "practical", label: t("practicalRoom") },
+        { value: "lab", label: t("labHall") },
       ],
     },
     {
