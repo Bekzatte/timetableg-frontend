@@ -117,16 +117,11 @@ export const TeacherManager = () => {
       label: t("facultyInstitute"),
       type: "select",
       placeholder: t("selectFacultyInstitute"),
+      required: true,
       options: DEPARTMENTS.map((department) => ({
         value: department,
         label: department,
       })),
-    },
-    {
-      name: "max_hours_per_week",
-      label: t("maxHoursPerWeek"),
-      type: "number",
-      placeholder: "20",
     },
   ];
 
