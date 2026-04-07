@@ -166,6 +166,12 @@ export const roomAPI = {
   delete: (id) => api.delete(`/rooms/${id}`),
 };
 
+export const sectionAPI = {
+  getAll: () => api.get("/sections"),
+  create: (data) => api.post("/sections", data),
+  update: (id, data) => api.put(`/sections/${id}`, data),
+};
+
 export const scheduleAPI = {
   getAll: () => api.get("/schedules"),
   create: (data) => api.post("/schedules", data),
@@ -216,6 +222,7 @@ export default {
   courseAPI,
   teacherAPI,
   roomAPI,
+  sectionAPI,
   scheduleAPI,
   authAPI,
   profileAPI,

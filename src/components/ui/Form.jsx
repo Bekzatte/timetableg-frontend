@@ -72,6 +72,30 @@ export const Form = ({
                 </option>
               ))}
             </select>
+          ) : field.type === "toggle" ? (
+            <label className="flex items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3">
+              <span className="text-sm font-medium text-gray-700">
+                {formData[field.name] ? field.trueLabel || t("yes") : field.falseLabel || t("no")}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    [field.name]: prev[field.name] ? 0 : 1,
+                  }))
+                }
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
+                  formData[field.name] ? "bg-[#014531]" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+                    formData[field.name] ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </label>
           ) : (
             <input
               type={field.type || "text"}

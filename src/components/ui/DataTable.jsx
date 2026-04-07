@@ -40,7 +40,7 @@ export const DataTable = ({
                     {col.label}
                   </span>
                   <span className="min-w-0 text-right text-sm text-gray-900 break-words">
-                    {row[col.key] || "-"}
+                    {col.render ? col.render(row[col.key], row) : row[col.key] || "-"}
                   </span>
                 </div>
               ))}
@@ -104,7 +104,7 @@ export const DataTable = ({
                     key={col.key}
                     className="px-4 py-3 text-sm text-gray-900 overflow-hidden truncate"
                   >
-                    {row[col.key]}
+                    {col.render ? col.render(row[col.key], row) : row[col.key]}
                   </td>
                 ))}
                 {(onEdit || onDelete) && (

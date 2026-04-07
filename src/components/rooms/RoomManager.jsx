@@ -7,6 +7,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, roomAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
+import { DEPARTMENTS } from "../../constants/departments";
 
 export const RoomManager = () => {
   const { t } = useTranslation();
@@ -63,10 +64,14 @@ export const RoomManager = () => {
 
   const handleSubmit = async (formData, setErrors) => {
     try {
+      const payload = {
+        ...formData,
+        is_available: formData.is_available ? 1 : 0,
+      };
       if (editingRoom) {
-        await roomAPI.update(editingRoom.id, formData);
+        await roomAPI.update(editingRoom.id, payload);
       } else {
-        await roomAPI.create(formData);
+        await roomAPI.create(payload);
       }
       await execute();
       setIsModalOpen(false);
@@ -92,8 +97,13 @@ export const RoomManager = () => {
   const columns = [
     { key: "number", label: t("roomNumberHeader") },
     { key: "capacity", label: t("capacity") },
-    { key: "building", label: t("building") },
+    { key: "department", label: t("facultyInstitute") },
     { key: "type", label: t("type") },
+    {
+      key: "is_available",
+      label: t("available"),
+      render: (value) => (value ? t("yes") : t("no")),
+    },
   ];
 
   const formFields = [
@@ -124,6 +134,24 @@ export const RoomManager = () => {
         { value: "practical", label: t("practicalRoom") },
         { value: "lab", label: t("labHall") },
       ],
+    },
+    {
+      name: "department",
+      label: t("facultyInstitute"),
+      type: "select",
+      placeholder: t("selectFacultyInstitute"),
+      options: DEPARTMENTS.map((department) => ({
+        value: department,
+        label: department,
+      })),
+      required: true,
+    },
+    {
+      name: "is_available",
+      label: t("available"),
+      type: "toggle",
+      trueLabel: t("yes"),
+      falseLabel: t("no"),
     },
     {
       name: "equipment",
@@ -170,7 +198,10 @@ export const RoomManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
-          initialValues={editingRoom || {}}
+          initialValues={{
+            is_available: 1,
+            ...(editingRoom || {}),
+          }}
         />
       </Modal>
     </div>

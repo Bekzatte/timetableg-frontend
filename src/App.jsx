@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import CoursesPage from "./pages/CoursesPage";
 import TeachersPage from "./pages/TeachersPage";
 import RoomsPage from "./pages/RoomsPage";
+import SectionsPage from "./pages/SectionsPage";
 import SchedulePage from "./pages/SchedulePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -67,6 +68,7 @@ export default function App() {
     navItems.splice(1, 0, { label: t("courses"), path: "/courses" });
     navItems.splice(2, 0, { label: t("teachers"), path: "/teachers" });
     navItems.splice(3, 0, { label: t("rooms"), path: "/rooms" });
+    navItems.splice(4, 0, { label: t("sections"), path: "/sections" });
   }
 
   const languages = [
@@ -389,6 +391,14 @@ export default function App() {
               element={
                 <RequireAuth allowedRoles={[ROLES.ADMIN]}>
                   <RoomsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/sections"
+              element={
+                <RequireAuth allowedRoles={[ROLES.ADMIN]}>
+                  <SectionsPage />
                 </RequireAuth>
               }
             />

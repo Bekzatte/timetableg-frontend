@@ -8,9 +8,10 @@ import { adminAPI, courseAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import { DEPARTMENTS } from "../../constants/departments";
+import { PROGRAMMES } from "../../constants/programmes";
 
 export const CourseManager = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -105,7 +106,9 @@ export const CourseManager = () => {
   }
 
   const columns = [
-    { key: "name", label: t("programmeName") },
+    { key: "code", label: t("courseCode") },
+    { key: "name", label: t("courseName") },
+    { key: "programme_name", label: t("programmeName") },
     { key: "study_year", label: t("year") },
     { key: "semester", label: t("semester") },
     { key: "department", label: t("facultyInstitute") },
@@ -114,17 +117,15 @@ export const CourseManager = () => {
 
   const formFields = [
     {
+      name: "code",
+      label: t("courseCode"),
+      placeholder: t("enterCourseCode"),
+      required: true,
+    },
+    {
       name: "name",
-      label: t("programmeName"),
-      type: "select",
-      placeholder: t("selectProgrammeName"),
-      options: [
-        "Программная инженерия (6B06101)",
-        "Бизнес-информатика (6B06102)",
-        "Компьютерная инженерия (6B06103)",
-        "DevOps инжиниринг (6B06104)",
-        "Цифровые агросистемы и комплексы (6B06115)",
-      ].map((programme) => ({ value: programme, label: programme })),
+      label: t("courseName"),
+      placeholder: t("enterCourseName"),
       required: true,
     },
     {
@@ -139,6 +140,17 @@ export const CourseManager = () => {
       label: t("semester"),
       type: "number",
       placeholder: "1",
+      required: true,
+    },
+    {
+      name: "programme_name",
+      label: t("programmeName"),
+      type: "select",
+      placeholder: t("selectProgrammeName"),
+      options: PROGRAMMES.map((programme) => ({
+        value: programme.labels.ru,
+        label: programme.labels[language] || programme.labels.en,
+      })),
       required: true,
     },
     {
