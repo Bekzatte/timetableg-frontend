@@ -108,8 +108,8 @@ export const CourseManager = () => {
   const columns = [
     { key: "code", label: t("courseCode") },
     { key: "name", label: t("courseName") },
-    { key: "programme_name", label: t("programmeName") },
-    { key: "study_year", label: t("year") },
+    { key: "programme", label: t("programmeName") },
+    { key: "year", label: t("year") },
     { key: "semester", label: t("semester") },
     { key: "department", label: t("facultyInstitute") },
     { key: "instructor_name", label: t("instructor") },
@@ -129,7 +129,7 @@ export const CourseManager = () => {
       required: true,
     },
     {
-      name: "study_year",
+      name: "year",
       label: t("year"),
       type: "number",
       placeholder: "1",
@@ -143,7 +143,7 @@ export const CourseManager = () => {
       required: true,
     },
     {
-      name: "programme_name",
+      name: "programme",
       label: t("programmeName"),
       type: "select",
       placeholder: t("selectProgrammeName"),
@@ -241,6 +241,8 @@ export const CourseManager = () => {
             editingCourse
               ? {
                   ...editingCourse,
+                  year: editingCourse.year || "",
+                  programme: editingCourse.programme || "",
                   instructor_id: editingCourse.instructor_id || "",
                 }
               : {}

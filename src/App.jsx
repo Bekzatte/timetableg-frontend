@@ -73,7 +73,7 @@ export default function App() {
   const navItems = isAdmin
     ? [
         { label: t("home"), path: "/" },
-        { label: t("courses"), path: "/courses" },
+        { label: t("courses"), path: "/disciplines" },
         { label: t("teachers"), path: "/teachers" },
         { label: t("rooms"), path: "/rooms" },
         { label: t("groups"), path: "/groups" },
@@ -385,6 +385,10 @@ export default function App() {
             />
             <Route
               path="/courses"
+              element={<Navigate to="/disciplines" replace />}
+            />
+            <Route
+              path="/disciplines"
               element={
                 <RequireAuth allowedRoles={[ROLES.ADMIN]}>
                   <CoursesPage />

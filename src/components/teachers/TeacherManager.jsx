@@ -91,7 +91,7 @@ export const TeacherManager = () => {
     { key: "name", label: t("fullName") },
     { key: "email", label: "Email" },
     { key: "phone", label: t("phone") },
-    { key: "specialization", label: t("facultyInstitute") },
+    { key: "department", label: t("facultyInstitute") },
   ];
 
   if (!isAdmin) {
@@ -121,7 +121,7 @@ export const TeacherManager = () => {
     },
     { name: "phone", label: t("phone"), placeholder: t("phonePlaceholder") },
     {
-      name: "specialization",
+      name: "department",
       label: t("facultyInstitute"),
       type: "select",
       placeholder: t("selectFacultyInstitute"),

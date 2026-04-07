@@ -86,7 +86,7 @@ const RAW_ERROR_TRANSLATION_KEYS = {
   "Запись не найдена": "errorRecordNotFound",
   "ID должен быть числом.": "errorInvalidId",
   "ID должен быть числом": "errorInvalidId",
-  "Для генерации расписания нужны курсы, преподаватели и аудитории.":
+  "Для генерации расписания нужны секции, преподаватели, группы и аудитории.":
     "errorScheduleGenerationRequiresData",
   "Not found": "errorNotFound",
   "Method not allowed": "errorMethodNotAllowed",
@@ -146,10 +146,10 @@ const getApiErrorMessage = (payload, status) => {
 };
 
 export const courseAPI = {
-  getAll: () => api.get("/courses"),
-  create: (data) => api.post("/courses", data),
-  update: (id, data) => api.put(`/courses/${id}`, data),
-  delete: (id) => api.delete(`/courses/${id}`),
+  getAll: () => api.get("/disciplines"),
+  create: (data) => api.post("/disciplines", data),
+  update: (id, data) => api.put(`/disciplines/${id}`, data),
+  delete: (id) => api.delete(`/disciplines/${id}`),
 };
 
 export const teacherAPI = {
@@ -285,28 +285,3 @@ api.interceptors.response.use(
     return Promise.reject(new Error(message));
   },
 );
-
-/**
- * ===== ПЕРЕКЛЮЧЕНИЕ НА РЕАЛЬНЫЙ API =====
- *
- * Когда бэкенд будет готов, замените импорты на реальные API:
- *
- * import axios from 'axios';
- *
- * const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
- *
- * const api = axios.create({
- *   baseURL: API_BASE_URL,
- *   headers: {
- *     'Content-Type': 'application/json',
- *   },
- * });
- *
- * export const courseAPI = {
- *   getAll: () => api.get('/courses'),
- *   create: (data) => api.post('/courses', data),
- *   update: (id, data) => api.put(`/courses/${id}`, data),
- *   delete: (id) => api.delete(`/courses/${id}`),
- * };
- * ... и так далее для остальных
- */

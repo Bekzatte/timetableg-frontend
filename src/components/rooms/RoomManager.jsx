@@ -22,7 +22,7 @@ export const RoomManager = () => {
   }, [execute]);
 
   const rooms = Array.isArray(data) ? data : [];
-  const availableRoomsCount = rooms.filter((room) => room.is_available).length;
+  const availableRoomsCount = rooms.filter((room) => room.available).length;
 
   const handleAddRoom = () => {
     setEditingRoom(null);
@@ -67,7 +67,7 @@ export const RoomManager = () => {
     try {
       const payload = {
         ...formData,
-        is_available: formData.is_available ? 1 : 0,
+        available: formData.available ? 1 : 0,
       };
       if (editingRoom) {
         await roomAPI.update(editingRoom.id, payload);
@@ -101,7 +101,7 @@ export const RoomManager = () => {
     { key: "department", label: t("facultyInstitute") },
     { key: "type", label: t("type") },
     {
-      key: "is_available",
+      key: "available",
       label: t("available"),
       render: (value) => (value ? t("yes") : t("no")),
     },
@@ -148,7 +148,7 @@ export const RoomManager = () => {
       required: true,
     },
     {
-      name: "is_available",
+      name: "available",
       label: t("available"),
       type: "toggle",
       trueLabel: t("yes"),
@@ -219,7 +219,7 @@ export const RoomManager = () => {
           fields={formFields}
           onSubmit={handleSubmit}
           initialValues={{
-            is_available: 1,
+            available: 1,
             ...(editingRoom || {}),
           }}
           submitText={editingRoom ? t("save") : t("add")}

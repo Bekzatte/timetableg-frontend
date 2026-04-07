@@ -25,30 +25,3 @@ export const useFetch = (asyncFunction) => {
 
   return { data, isLoading, error, execute };
 };
-
-export const useAsync = (asyncFunction, immediate = true) => {
-  const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(immediate);
-  const [error, setError] = useState(null);
-
-  const execute = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await asyncFunction();
-      setData(response.data);
-      return response.data;
-    } catch (err) {
-      setError(err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [asyncFunction]);
-
-  if (immediate) {
-    execute();
-  }
-
-  return { data, isLoading, error, execute };
-};

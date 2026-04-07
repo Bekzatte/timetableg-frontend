@@ -96,7 +96,7 @@ export const SectionManager = () => {
   const columns = [
     { key: "course_name", label: t("courseName") },
     { key: "group_name", label: t("groupNumber") },
-    { key: "class_count", label: t("classesCount") },
+    { key: "classes_count", label: t("classesCount") },
   ];
 
   const formFields = [
@@ -123,7 +123,7 @@ export const SectionManager = () => {
       required: true,
     },
     {
-      name: "class_count",
+      name: "classes_count",
       label: t("classesCount"),
       type: "number",
       placeholder: "1",

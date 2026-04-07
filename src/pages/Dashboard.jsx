@@ -78,7 +78,7 @@ export const Dashboard = () => {
       title: t("courseMgmt"),
       description: t("addCourse"),
       icon: BookOpen,
-      link: "/courses",
+      link: "/disciplines",
       count: courses.length,
       bgClass: "from-blue-100 to-blue-50",
       iconBgClass: "bg-blue-100",
