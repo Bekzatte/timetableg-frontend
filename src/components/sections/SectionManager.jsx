@@ -34,11 +34,6 @@ export const SectionManager = () => {
   const sections = Array.isArray(data) ? data : [];
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
-  const coveredCoursesCount = new Set(
-    sections
-      .map((section) => section.course_id)
-      .filter((courseId) => courseId !== null && courseId !== undefined),
-  ).size;
 
   const handleAddSection = () => {
     setEditingSection(null);
@@ -133,21 +128,13 @@ export const SectionManager = () => {
 
   return (
     <div className="p-6 bg-white">
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-4">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">
             {t("sectionsCount")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
             {sections.length}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
-          <p className="text-sm font-medium text-emerald-700">
-            {t("coursesCount")}
-          </p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">
-            {coveredCoursesCount}
           </p>
         </div>
       </div>
