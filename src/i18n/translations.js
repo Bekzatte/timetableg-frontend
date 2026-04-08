@@ -182,6 +182,7 @@ export const translations = {
     errorInvalidJson: "Қате JSON жіберілді.",
     errorDatabase: "Дерекқор қатесі орын алды.",
     errorInternalServer: "Ішкі сервер қатесі орын алды.",
+    errorOptimizerInputInfeasible: "Оптимизатор үшін деректерде қайшылық бар.",
     errorScheduleGenerationRequiresData:
       "Кесте құру үшін мына деректер жетіспейді",
     errorInvalidId: "ID сан болуы керек.",
@@ -467,6 +468,7 @@ export const translations = {
     errorInvalidJson: "Отправлен некорректный JSON.",
     errorDatabase: "Произошла ошибка базы данных.",
     errorInternalServer: "Произошла внутренняя ошибка сервера.",
+    errorOptimizerInputInfeasible: "Во входных данных есть конфликт для оптимизатора.",
     errorScheduleGenerationRequiresData:
       "Для генерации расписания не хватает данных",
     errorInvalidId: "ID должен быть числом.",
@@ -752,6 +754,7 @@ export const translations = {
     errorInvalidJson: "Invalid JSON was sent.",
     errorDatabase: "A database error occurred.",
     errorInternalServer: "An internal server error occurred.",
+    errorOptimizerInputInfeasible: "There is a conflict in the optimizer input data.",
     errorScheduleGenerationRequiresData:
       "More data is required to generate the schedule",
     errorInvalidId: "ID must be a number.",

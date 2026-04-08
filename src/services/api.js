@@ -50,6 +50,7 @@ const ERROR_CODE_TRANSLATION_KEYS = {
   invalid_json: "errorInvalidJson",
   database_error: "errorDatabase",
   internal_server_error: "errorInternalServer",
+  optimizer_input_infeasible: "errorOptimizerInputInfeasible",
   schedule_generation_requires_data: "errorScheduleGenerationRequiresData",
   invalid_id: "errorInvalidId",
   record_not_found: "errorRecordNotFound",
@@ -145,6 +146,13 @@ const getApiErrorMessage = (payload, status) => {
       payload?.details?.missing?.length
     ) {
       return `${getLocalized(translationKey)}: ${payload.details.missing.join(", ")}.`;
+    }
+    if (
+      errorCode === "optimizer_input_infeasible" &&
+      payload?.details?.issues?.length
+    ) {
+      const firstIssue = payload.details.issues[0];
+      return firstIssue?.reason || getLocalized(translationKey);
     }
     return getLocalized(translationKey);
   }
