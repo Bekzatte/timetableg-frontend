@@ -116,6 +116,7 @@ export const RoomManager = () => {
   const columns = [
     { key: "number", label: t("roomNumberHeader") },
     { key: "capacity", label: t("capacity") },
+    { key: "computer_count", label: t("computerCount") },
     { key: "department", label: t("facultyInstitute") },
     { key: "type", label: t("type") },
     {
@@ -165,6 +166,13 @@ export const RoomManager = () => {
         value: department,
         label: department,
       })),
+      required: true,
+    },
+    {
+      name: "computer_count",
+      label: t("computerCount"),
+      type: "number",
+      placeholder: "0",
       required: true,
     },
     {
@@ -278,6 +286,7 @@ export const RoomManager = () => {
           resetKey={editingRoom ? `room-${editingRoom.id}` : "room-new"}
           initialValues={{
             available: 1,
+            computer_count: 0,
             ...(editingRoom || {}),
           }}
           submitText={editingRoom ? t("save") : t("add")}

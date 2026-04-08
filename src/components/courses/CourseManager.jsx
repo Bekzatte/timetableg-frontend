@@ -94,6 +94,7 @@ export const CourseManager = () => {
         year: Number(formData.year),
         semester: Number(formData.semester),
         instructor_id: formData.instructor_id ? Number(formData.instructor_id) : null,
+        requires_computers: formData.requires_computers ? 1 : 0,
         instructor_name: selectedTeacher?.name || "",
       };
       if (editingCourse) {
@@ -130,6 +131,11 @@ export const CourseManager = () => {
     { key: "programme", label: t("programmeName") },
     { key: "year", label: t("studyCourse") },
     { key: "semester", label: t("semester") },
+    {
+      key: "requires_computers",
+      label: t("requiresComputers"),
+      render: (value) => (value ? t("yes") : t("no")),
+    },
     { key: "department", label: t("facultyInstitute") },
     { key: "instructor_name", label: t("instructor") },
   ];
@@ -199,6 +205,13 @@ export const CourseManager = () => {
         label: teacher.name,
       })),
       required: true,
+    },
+    {
+      name: "requires_computers",
+      label: t("requiresComputers"),
+      type: "toggle",
+      trueLabel: t("yes"),
+      falseLabel: t("no"),
     },
   ];
 
@@ -309,8 +322,9 @@ export const CourseManager = () => {
                   year: editingCourse.year || "",
                   programme: editingCourse.programme || "",
                   instructor_id: editingCourse.instructor_id || "",
+                  requires_computers: editingCourse.requires_computers ? 1 : 0,
                 }
-              : {}
+              : { requires_computers: 0 }
           }
           submitText={editingCourse ? t("save") : t("add")}
           isLoading={isSubmitting}

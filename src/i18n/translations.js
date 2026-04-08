@@ -82,6 +82,8 @@ export const translations = {
     building: "Ғимарат",
     type: "Түрі",
     equipment: "Жабдықтар",
+    computerCount: "Компьютер саны",
+    requiresComputers: "Компьютер қажет",
     available: "Қолжетімді",
     yes: "Иә",
     no: "Жоқ",
@@ -292,11 +294,11 @@ export const translations = {
       "Бір .xlsx файл арқылы пәндерді, оқытушыларды, аудиторияларды, топтарды және секцияларды жаппай жүктей аласыз. Disciplines парағындағы year өрісі генерацияда таңдалатын жылмен сәйкес болуы керек.",
     excelImportSheetFormat: "Excel файлында мына парақтар болуы керек:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, course, semester, programme, department, instructor_name, description (course мысалы: 2)",
+      "Disciplines: code, name, course, semester, programme, department, instructor_name, description, requires_computers (course мысалы: 2)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:
-      "Rooms: number, capacity, building, type, department, available, equipment",
+      "Rooms: number, capacity, building, type, department, available, equipment, computer_count",
     excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
     excelImportSectionsColumns: "Sections: course_code, group_name, classes_count, lesson_type",
     excelImportButton: "Excel импорттау",
@@ -424,6 +426,8 @@ export const translations = {
     building: "Здание",
     type: "Тип",
     equipment: "Оборудование",
+    computerCount: "Количество компьютеров",
+    requiresComputers: "Нужны компьютеры",
     available: "Доступно",
     yes: "Да",
     no: "Нет",
@@ -636,11 +640,11 @@ export const translations = {
       "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей, аудитории, группы и секции. Поле year на листе Disciplines должно совпадать с годом, который вы выбираете при генерации.",
     excelImportSheetFormat: "В Excel должны быть листы:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, course, semester, programme, department, instructor_name, description (пример course: 2)",
+      "Disciplines: code, name, course, semester, programme, department, instructor_name, description, requires_computers (пример course: 2)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:
-      "Rooms: number, capacity, building, type, department, available, equipment",
+      "Rooms: number, capacity, building, type, department, available, equipment, computer_count",
     excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
     excelImportSectionsColumns: "Sections: course_code, group_name, classes_count, lesson_type",
     excelImportButton: "Импортировать Excel",
@@ -767,6 +771,8 @@ export const translations = {
     building: "Building",
     type: "Type",
     equipment: "Equipment",
+    computerCount: "Computer Count",
+    requiresComputers: "Computers Required",
     available: "Available",
     yes: "Yes",
     no: "No",
@@ -978,11 +984,11 @@ export const translations = {
       "Upload one .xlsx file to bulk import courses, teachers, rooms, groups, and sections. The year field on the Disciplines sheet must match the year selected during schedule generation.",
     excelImportSheetFormat: "The Excel file must contain these sheets:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, course, semester, programme, department, instructor_name, description (example course: 2)",
+      "Disciplines: code, name, course, semester, programme, department, instructor_name, description, requires_computers (example course: 2)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:
-      "Rooms: number, capacity, building, type, department, available, equipment",
+      "Rooms: number, capacity, building, type, department, available, equipment, computer_count",
     excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
     excelImportSectionsColumns: "Sections: course_code, group_name, classes_count, lesson_type",
     excelImportButton: "Import Excel",
