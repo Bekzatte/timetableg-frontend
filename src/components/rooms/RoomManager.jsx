@@ -183,6 +183,9 @@ export const RoomManager = () => {
       name: "available",
       label: t("available"),
       type: "toggle",
+      required: true,
+      requireExplicitChoice: true,
+      placeholder: t("selectOption"),
       trueLabel: t("yes"),
       falseLabel: t("no"),
     },
@@ -191,7 +194,6 @@ export const RoomManager = () => {
       label: t("equipment"),
       type: "textarea",
       placeholder: t("equipmentPlaceholder"),
-      required: true,
     },
   ];
 
@@ -303,11 +305,7 @@ export const RoomManager = () => {
           fields={formFields}
           onSubmit={handleSubmit}
           resetKey={editingRoom ? `room-${editingRoom.id}` : "room-new"}
-          initialValues={{
-            available: 1,
-            computer_count: 0,
-            ...(editingRoom || {}),
-          }}
+          initialValues={editingRoom ? { ...editingRoom } : { computer_count: 0 }}
           submitText={editingRoom ? t("save") : t("add")}
           isLoading={isSubmitting}
         />
