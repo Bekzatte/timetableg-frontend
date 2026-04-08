@@ -204,7 +204,9 @@ export const scheduleAPI = {
   create: (data) => api.post("/schedules", data),
   update: (id, data) => api.put(`/schedules/${id}`, data),
   delete: (id) => api.delete(`/schedules/${id}`),
-  generate: (data) => api.post("/schedules/generate", data),
+  generate: (data) => api.post("/schedules/generate", data).then((response) => response.data),
+  getGenerationJob: (jobId) =>
+    api.get(`/schedules/generate/${jobId}`).then((response) => response.data),
   exportExcel: () =>
     api.get("/export/schedule", { responseType: "blob" }).then((response) => response.data),
 };

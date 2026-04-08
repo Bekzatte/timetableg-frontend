@@ -16,6 +16,7 @@ export const SchedulePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [generationMessage, setGenerationMessage] = useState("");
   const { data, execute } = useFetch(scheduleAPI.getAll);
 
   useEffect(() => {
@@ -28,14 +29,32 @@ export const SchedulePage = () => {
     execute();
   }, [execute]);
 
+  const waitForGenerationJob = async (jobId) => {
+    while (true) {
+      const job = await scheduleAPI.getGenerationJob(jobId);
+      if (job.status === "completed") {
+        return job;
+      }
+      if (job.status === "failed") {
+        throw new Error(job.error || t("errorUnknown"));
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 2500));
+    }
+  };
+
   const handleGenerateSchedule = async (formData, setErrors) => {
     try {
       setIsLoading(true);
-      const response = await scheduleAPI.generate(formData);
-      setSchedule(response.data || []);
+      setGenerationMessage(t("scheduleGenerationInProgress"));
+      const job = await scheduleAPI.generate(formData);
+      await waitForGenerationJob(job.jobId);
+      const nextSchedule = await execute();
+      setSchedule(nextSchedule || []);
+      setGenerationMessage("");
       setIsGenerateOpen(false);
     } catch (error) {
       console.error(t("errorGenerateSchedule"), error);
+      setGenerationMessage("");
       setErrors((prev) => ({
         ...prev,
         error: error.message,
@@ -153,6 +172,11 @@ export const SchedulePage = () => {
         title={t("generateNewSchedule")}
         size="md"
       >
+        {generationMessage ? (
+          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            {generationMessage}
+          </div>
+        ) : null}
         <Form
           fields={formFields}
           onSubmit={handleGenerateSchedule}

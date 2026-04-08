@@ -219,6 +219,8 @@ export const translations = {
     semester: "Семестр",
     year: "Жыл",
     errorGenerateSchedule: "Кестені құру қатесі",
+    scheduleGenerationInProgress:
+      "Кесте фондық режимде құрылып жатыр. Бұл процесс 1-2 минутқа созылуы мүмкін.",
     greedyAlgorithm: "Ашқаншыл алгоритм",
     geneticAlgorithm: "Генетикалық алгоритм",
     simulatedAnnealing: "Имитациялық сойдыру",
@@ -506,6 +508,8 @@ export const translations = {
     semester: "Семестр",
     year: "Год",
     errorGenerateSchedule: "Ошибка при генерировании расписания",
+    scheduleGenerationInProgress:
+      "Расписание генерируется в фоновом режиме. Это может занять 1-2 минуты.",
     greedyAlgorithm: "Жадный алгоритм",
     geneticAlgorithm: "Генетический алгоритм",
     simulatedAnnealing: "Имитация отжига",
@@ -791,6 +795,8 @@ export const translations = {
     semester: "Semester",
     year: "Year",
     errorGenerateSchedule: "Error generating schedule",
+    scheduleGenerationInProgress:
+      "The schedule is being generated in the background. This can take 1-2 minutes.",
     greedyAlgorithm: "Greedy Algorithm",
     geneticAlgorithm: "Genetic Algorithm",
     simulatedAnnealing: "Simulated Annealing",
