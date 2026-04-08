@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { authAPI, profileAPI } from "../services/api";
+import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { ROLES } from "../constants/roles";
 import { AuthContext } from "./AuthContextValue";
 
@@ -7,6 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useAutoDismiss(error, setError, 5000, null);
 
   const persistUser = (nextUser) => {
     setUser(nextUser);

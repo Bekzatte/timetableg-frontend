@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Users, Home, Zap, UsersRound } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { useTranslation } from "../hooks/useTranslation";
 import {
   adminAPI,
@@ -32,6 +33,8 @@ export const Dashboard = () => {
   const [isClearingAll, setIsClearingAll] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
+  useAutoDismiss(importError, setImportError);
+  useAutoDismiss(importResult, setImportResult, 5000, null);
   const { data: coursesData, execute: executeCourses } = useFetch(courseAPI.getAll);
   const { data: teachersData, execute: executeTeachers } = useFetch(teacherAPI.getAll);
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
