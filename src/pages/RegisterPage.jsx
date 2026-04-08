@@ -22,6 +22,7 @@ export const RegisterPage = () => {
   const [groupId, setGroupId] = useState("");
   const [subgroup, setSubgroup] = useState("");
   const [studentLanguage, setStudentLanguage] = useState("");
+  const [teacherLanguages, setTeacherLanguages] = useState([]);
   const [groups, setGroups] = useState([]);
   const [localError, setLocalError] = useState("");
 
@@ -35,6 +36,13 @@ export const RegisterPage = () => {
     (group) => String(group.id) === String(groupId),
   );
   const requiresSubgroup = Boolean(selectedGroup?.has_subgroups);
+  const toggleTeacherLanguage = (nextLanguage) => {
+    setTeacherLanguages((current) =>
+      current.includes(nextLanguage)
+        ? current.filter((item) => item !== nextLanguage)
+        : [...current, nextLanguage],
+    );
+  };
 
   useEffect(() => {
     groupAPI
@@ -59,6 +67,14 @@ export const RegisterPage = () => {
     if (
       selectedRole === ROLES.STUDENT &&
       (!department || !programmeName || !groupId || !studentLanguage)
+    ) {
+      setLocalError(t("fillAllFields"));
+      return;
+    }
+
+    if (
+      selectedRole === ROLES.TEACHER &&
+      (!department || teacherLanguages.length === 0)
     ) {
       setLocalError(t("fillAllFields"));
       return;
@@ -90,7 +106,7 @@ export const RegisterPage = () => {
         groupId,
         subgroup,
         studentLanguage,
-        selectedRole === ROLES.TEACHER ? ["ru", "kk"] : [],
+        selectedRole === ROLES.TEACHER ? teacherLanguages : [],
       );
       navigate("/");
     } catch (err) {
@@ -124,12 +140,15 @@ export const RegisterPage = () => {
                   onClick={() => {
                     setSelectedRole(option.value);
                     if (option.value !== ROLES.STUDENT) {
-                      setDepartment("");
                       setProgrammeName("");
                       setGroupId("");
                       setSubgroup("");
                       setStudentLanguage("");
                     }
+                    if (option.value !== ROLES.TEACHER) {
+                      setTeacherLanguages([]);
+                    }
+                    setDepartment("");
                   }}
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
                     selectedRole === option.value
@@ -270,6 +289,50 @@ export const RegisterPage = () => {
                   </select>
                 </div>
               ) : null}
+            </>
+          )}
+
+          {selectedRole === ROLES.TEACHER && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("facultyInstitute")}
+                </label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">{t("selectFacultyInstitute")}</option>
+                  {DEPARTMENTS.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <p className="block text-sm font-medium mb-2 text-gray-700">
+                  {t("teachingLanguages")}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {STUDY_LANGUAGES.map((item) => (
+                    <label
+                      key={item.value}
+                      className="flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={teacherLanguages.includes(item.value)}
+                        onChange={() => toggleTeacherLanguage(item.value)}
+                        className="h-4 w-4 rounded border-gray-300 text-[#014531] focus:ring-[#014531]"
+                      />
+                      <span>{t(item.labelKey)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </>
           )}
 

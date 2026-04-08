@@ -11,8 +11,12 @@ export const useFetch = (asyncFunction) => {
         setIsLoading(true);
         setError(null);
         const response = await asyncFunction(...params);
-        setData(response.data);
-        return response.data;
+        const normalizedData =
+          response && typeof response === "object" && "data" in response
+            ? response.data
+            : response;
+        setData(normalizedData);
+        return normalizedData;
       } catch (err) {
         setError(err.message);
         throw err;
