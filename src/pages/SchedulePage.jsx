@@ -48,14 +48,67 @@ const toIsoDateForWeekday = (weekday, year) => {
 const formatGenerationError = (job, t) => {
   const firstIssue = job.details?.issues?.[0];
   if (firstIssue?.reason) {
-    return firstIssue.reason;
+    const reason = String(firstIssue.reason);
+    const normalizedReason = reason.toLowerCase();
+    const items = [reason];
+
+    if (normalizedReason.includes("аудитор")) {
+      items.push("Проверьте, что для нужного типа занятия есть доступные аудитории.");
+    }
+    if (normalizedReason.includes("вместим")) {
+      items.push("Убедитесь, что вместимость аудитории не меньше размера группы или подгруппы.");
+    }
+    if (normalizedReason.includes("pccount") || normalizedReason.includes("компьют")) {
+      items.push("Для компьютерных дисциплин заполните computer_count у лабораторий и requires_computers у дисциплин.");
+    }
+    if (normalizedReason.includes("временн") || normalizedReason.includes("слотов")) {
+      items.push("Сократите количество секций или ослабьте ограничения, если занятий слишком много для доступных слотов.");
+    }
+
+    const error = new Error(t("errorGenerateSchedule"));
+    error.items = items;
+    return error;
   }
 
   if (job.details?.missing?.length) {
-    return `${t("errorScheduleGenerationRequiresData")}: ${job.details.missing.join(", ")}.`;
+    const details = job.details.missing.map((item) => {
+      const normalized = String(item).toLowerCase();
+      if (normalized.includes("секции")) {
+        return `${item}. Заполните Sections: предмет, группа, количество занятий и тип занятия.`;
+      }
+      if (normalized.includes("преподавател")) {
+        return `${item}. Добавьте преподавателей и назначьте их дисциплинам.`;
+      }
+      if (normalized.includes("аудит")) {
+        return `${item}. Добавьте доступные аудитории с типом, вместимостью и, при необходимости, компьютерами.`;
+      }
+      if (normalized.includes("групп")) {
+        return `${item}. Добавьте группы, число студентов и язык обучения.`;
+      }
+      return item;
+    });
+    const error = new Error(t("errorScheduleGenerationRequiresData"));
+    error.items = details;
+    return error;
   }
 
-  return job.error || t("errorUnknown");
+  const rawError = String(job.error || t("errorUnknown"));
+  const normalizedError = rawError.toLowerCase();
+  const items = [];
+
+  if (normalizedError.includes("не поддерживает язык группы")) {
+    items.push(rawError);
+    items.push("Проверьте язык группы и teaching_languages у назначенного преподавателя.");
+  } else if (normalizedError.includes("не найден преподаватель")) {
+    items.push(rawError);
+    items.push("Откройте дисциплину и назначьте преподавателя.");
+  } else {
+    items.push(rawError);
+  }
+
+  const error = new Error(t("errorGenerateSchedule"));
+  error.items = items;
+  return error;
 };
 
 export const SchedulePage = () => {
@@ -69,7 +122,7 @@ export const SchedulePage = () => {
   const [isEntrySaving, setIsEntrySaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [generationMessage, setGenerationMessage] = useState("");
+  const [generationError, setGenerationError] = useState(null);
   const [groupFilter, setGroupFilter] = useState("");
   const [teacherFilter, setTeacherFilter] = useState("");
   const [roomFilter, setRoomFilter] = useState("");
@@ -121,7 +174,7 @@ export const SchedulePage = () => {
         return job;
       }
       if (job.status === "failed") {
-        throw new Error(formatGenerationError(job, t));
+        throw formatGenerationError(job, t);
       }
       await new Promise((resolve) => window.setTimeout(resolve, 2500));
     }
@@ -135,16 +188,19 @@ export const SchedulePage = () => {
 
   const handleGenerateSchedule = async (formData, setErrors) => {
     try {
+      setGenerationError(null);
+      setIsGenerateOpen(false);
       setIsLoading(true);
-      setGenerationMessage(t("scheduleGenerationInProgress"));
       const job = await scheduleAPI.generate(formData);
       await waitForGenerationJob(job.jobId);
       await refreshSchedule();
-      setGenerationMessage("");
-      setIsGenerateOpen(false);
     } catch (error) {
       console.error(t("errorGenerateSchedule"), error);
-      setGenerationMessage("");
+      setGenerationError({
+        title: t("errorGenerateSchedule"),
+        message: error.message || t("errorUnknown"),
+        items: Array.isArray(error.items) ? error.items : [],
+      });
       setErrors((prev) => ({
         ...prev,
         error: error.message,
@@ -575,11 +631,6 @@ export const SchedulePage = () => {
         title={scheduleActionLabel}
         size="md"
       >
-        {generationMessage ? (
-          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            {generationMessage}
-          </div>
-        ) : null}
         <Form
           fields={formFields}
           onSubmit={handleGenerateSchedule}
@@ -588,6 +639,38 @@ export const SchedulePage = () => {
           isLoading={isLoading}
           initialValues={{ semester: 1, year: new Date().getFullYear() }}
         />
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(generationError)}
+        onClose={() => setGenerationError(null)}
+        title={generationError?.title || t("errorGenerateSchedule")}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {generationError?.message}
+          </div>
+          {generationError?.items?.length ? (
+            <div>
+              <p className="mb-2 text-sm font-medium text-gray-900">
+                {t("fillAllFields")}
+              </p>
+              <ul className="list-disc space-y-2 pl-5 text-sm text-gray-700">
+                {generationError.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setGenerationError(null)}
+            className="w-full rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#013726]"
+          >
+            {t("close")}
+          </button>
+        </div>
       </Modal>
 
       <Modal
