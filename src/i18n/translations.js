@@ -163,7 +163,7 @@ export const translations = {
     errorUnknown: "Сұрауды орындау мүмкін болмады.",
     errorMethodNotAllowed: "Бұл әрекетке рұқсат жоқ.",
     errorTimeout:
-      "Сервер тым ұзақ жауап беріп жатыр. Егер backend Render-де болса, ол ұйқыдан оянып жатқан болуы мүмкін.",
+      "Сервер әлі жауап бермеді. Егер backend Render-де болса, ол ұйқыдан оянып жатқан болуы мүмкін. 30-60 секунд күтіп, сұрауды тағы бір рет қайталап көріңіз.",
     errorNetwork:
       "Серверге қосылу мүмкін болмады. VITE_API_URL, CORS және backend қолжетімділігін тексеріңіз.",
     errorFillRequiredFields: "Міндетті өрістерді толтырыңыз.",
@@ -183,7 +183,7 @@ export const translations = {
     errorDatabase: "Дерекқор қатесі орын алды.",
     errorInternalServer: "Ішкі сервер қатесі орын алды.",
     errorScheduleGenerationRequiresData:
-      "Кесте құру үшін секциялар, оқытушылар, топтар және аудиториялар қажет.",
+      "Кесте құру үшін мына деректер жетіспейді",
     errorInvalidId: "ID сан болуы керек.",
     errorRecordNotFound: "Жазба табылмады.",
 
@@ -448,7 +448,7 @@ export const translations = {
     errorUnknown: "Не удалось выполнить запрос.",
     errorMethodNotAllowed: "Этот метод не поддерживается.",
     errorTimeout:
-      "Сервер отвечает слишком долго. Если backend на Render, он мог уснуть и сейчас просыпается.",
+      "Сервер пока не ответил. Если backend на Render, он мог уснуть и сейчас просыпается. Подождите 30-60 секунд и повторите запрос ещё раз.",
     errorNetwork:
       "Не удалось подключиться к серверу. Проверьте VITE_API_URL, CORS и доступность backend.",
     errorFillRequiredFields: "Заполните обязательные поля.",
@@ -468,7 +468,7 @@ export const translations = {
     errorDatabase: "Произошла ошибка базы данных.",
     errorInternalServer: "Произошла внутренняя ошибка сервера.",
     errorScheduleGenerationRequiresData:
-      "Для генерации расписания нужны секции, преподаватели, группы и аудитории.",
+      "Для генерации расписания не хватает данных",
     errorInvalidId: "ID должен быть числом.",
     errorRecordNotFound: "Запись не найдена.",
 
@@ -733,7 +733,7 @@ export const translations = {
     errorUnknown: "The request could not be completed.",
     errorMethodNotAllowed: "This method is not supported.",
     errorTimeout:
-      "The server is responding too slowly. If the backend is on Render, it may be waking up from sleep.",
+      "The server has not responded yet. If the backend is on Render, it may be waking up from sleep. Wait 30-60 seconds and retry once.",
     errorNetwork:
       "Could not connect to the server. Check VITE_API_URL, CORS, and backend availability.",
     errorFillRequiredFields: "Fill in the required fields.",
@@ -753,7 +753,7 @@ export const translations = {
     errorDatabase: "A database error occurred.",
     errorInternalServer: "An internal server error occurred.",
     errorScheduleGenerationRequiresData:
-      "Sections, teachers, groups, and rooms are required to generate a schedule.",
+      "More data is required to generate the schedule",
     errorInvalidId: "ID must be a number.",
     errorRecordNotFound: "Record not found.",
 
