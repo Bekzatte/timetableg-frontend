@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { teacherPreferenceAPI } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
+import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { useTranslation } from "../hooks/useTranslation";
 import { useFetch } from "../hooks/useAPI";
 
@@ -35,6 +36,11 @@ export default function ProfilePage() {
   } = useFetch(
     teacherPreferenceAPI.getMine,
   );
+
+  useAutoDismiss(localError, setLocalError);
+  useAutoDismiss(successMessage, setSuccessMessage);
+  useAutoDismiss(preferenceError, setPreferenceError);
+  useAutoDismiss(preferenceSuccess, setPreferenceSuccess);
 
   useEffect(() => {
     if (user?.role === "teacher") {

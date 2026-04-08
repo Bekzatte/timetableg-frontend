@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { DEPARTMENTS } from "../constants/departments";
 import { PROGRAMMES } from "../constants/programmes";
+import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { groupAPI } from "../services/api";
 import { STUDY_LANGUAGES } from "../constants/languages";
 
@@ -25,6 +26,8 @@ export const RegisterPage = () => {
   const [teacherLanguages, setTeacherLanguages] = useState([]);
   const [groups, setGroups] = useState([]);
   const [localError, setLocalError] = useState("");
+
+  useAutoDismiss(localError, setLocalError);
 
   const roleOptions = [
     { value: ROLES.STUDENT, label: t("student") },

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ROLES } from "../constants/roles";
 import { useAuth } from "../hooks/useAuth";
+import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { useTranslation } from "../hooks/useTranslation";
 
 export const LoginPage = () => {
@@ -12,6 +13,8 @@ export const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState("");
+
+  useAutoDismiss(localError, setLocalError);
 
   const roleOptions = [
     { value: ROLES.ADMIN, label: t("adminLogin") },
