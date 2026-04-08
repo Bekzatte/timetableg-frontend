@@ -16,6 +16,8 @@ export const SectionManager = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lessonTypeFilter, setLessonTypeFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
+  const [draftLessonTypeFilter, setDraftLessonTypeFilter] = useState("");
+  const [draftGroupFilter, setDraftGroupFilter] = useState("");
   const { data, isLoading, execute } = useFetch(sectionAPI.getAll);
   const {
     data: coursesData,
@@ -37,6 +39,7 @@ export const SectionManager = () => {
   const sections = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
+  const hasActiveFilters = Boolean(lessonTypeFilter || groupFilter);
   const filteredSections = useMemo(
     () =>
       sections.filter((section) => {
@@ -185,11 +188,23 @@ export const SectionManager = () => {
         onEdit={handleEditSection}
         isLoading={isLoading}
         enableSearch
+        hasActiveFilters={hasActiveFilters}
+        filterDialogTitle={t("filter")}
+        onApplyFilters={() => {
+          setLessonTypeFilter(draftLessonTypeFilter);
+          setGroupFilter(draftGroupFilter);
+        }}
+        onResetFilters={() => {
+          setDraftLessonTypeFilter("");
+          setDraftGroupFilter("");
+          setLessonTypeFilter("");
+          setGroupFilter("");
+        }}
         filterControls={
           <>
             <select
-              value={lessonTypeFilter}
-              onChange={(event) => setLessonTypeFilter(event.target.value)}
+              value={draftLessonTypeFilter}
+              onChange={(event) => setDraftLessonTypeFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("lessonType").toLowerCase()}</option>
@@ -198,8 +213,8 @@ export const SectionManager = () => {
               <option value="lab">{t("lab")}</option>
             </select>
             <select
-              value={groupFilter}
-              onChange={(event) => setGroupFilter(event.target.value)}
+              value={draftGroupFilter}
+              onChange={(event) => setDraftGroupFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("groups").toLowerCase()}</option>

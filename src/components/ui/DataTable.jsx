@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Trash2, Edit2 } from "lucide-react";
+import { Trash2, Edit2, Filter } from "lucide-react";
 import { useTranslation } from "../../hooks/useTranslation";
+import Modal from "./Modal";
 
 export const DataTable = ({
   columns,
@@ -11,9 +12,14 @@ export const DataTable = ({
   title,
   enableSearch = false,
   filterControls = null,
+  onApplyFilters = null,
+  onResetFilters = null,
+  hasActiveFilters = false,
+  filterDialogTitle = null,
 }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const filteredData = useMemo(() => {
     if (!enableSearch) {
@@ -44,36 +50,97 @@ export const DataTable = ({
     return <div className="p-4 text-center text-gray-600">{t("loading")}</div>;
   }
 
-  if (data.length === 0) {
-    return <div className="p-4 text-center text-gray-500">{t("noData")}</div>;
-  }
-
   return (
     <div className="w-full">
       {title && (
         <h2 className="text-xl font-bold mb-4 text-gray-900">{title}</h2>
       )}
       {enableSearch || filterControls ? (
-        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mb-4">
           {enableSearch ? (
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder={`${t("search")}...`}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#014531] focus:ring-2 focus:ring-[#014531]/20 lg:max-w-sm"
-            />
+            <div className="flex w-full items-stretch gap-2">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder={`${t("search")}...`}
+                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#014531] focus:ring-2 focus:ring-[#014531]/20"
+              />
+              {filterControls ? (
+                <button
+                  type="button"
+                  onClick={() => setIsFilterModalOpen(true)}
+                  className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                    hasActiveFilters
+                      ? "border-[#014531] bg-[#014531] text-white hover:bg-[#013726]"
+                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <Filter size={16} />
+                  <span className="hidden sm:inline">{t("filter")}</span>
+                </button>
+              ) : null}
+            </div>
           ) : (
-            <div />
+            filterControls ? (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsFilterModalOpen(true)}
+                  className={`inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                    hasActiveFilters
+                      ? "border-[#014531] bg-[#014531] text-white hover:bg-[#013726]"
+                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <Filter size={16} />
+                  {t("filter")}
+                </button>
+              </div>
+            ) : null
           )}
           {filterControls ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-              {filterControls}
-            </div>
+            <Modal
+              isOpen={isFilterModalOpen}
+              onClose={() => setIsFilterModalOpen(false)}
+              title={filterDialogTitle || t("filter")}
+              size="sm"
+            >
+              <div className="space-y-4">
+                <div className="grid gap-3">{filterControls}</div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onResetFilters) {
+                        onResetFilters();
+                      }
+                    }}
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    {t("reset")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onApplyFilters) {
+                        onApplyFilters();
+                      }
+                      setIsFilterModalOpen(false);
+                    }}
+                    className="w-full rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#013726]"
+                  >
+                    {t("apply")}
+                  </button>
+                </div>
+              </div>
+            </Modal>
           ) : null}
         </div>
       ) : null}
-      {filteredData.length === 0 ? (
+      {data.length === 0 ? (
+        <div className="p-4 text-center text-gray-500">{t("noData")}</div>
+      ) : filteredData.length === 0 ? (
         <div className="p-4 text-center text-gray-500">{t("noData")}</div>
       ) : null}
       <div className={`${filteredData.length === 0 ? "hidden" : "max-h-[65vh]"} space-y-3 overflow-y-auto pr-1 md:hidden`}>

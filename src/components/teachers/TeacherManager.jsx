@@ -19,6 +19,8 @@ export const TeacherManager = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [languageFilter, setLanguageFilter] = useState("");
+  const [draftDepartmentFilter, setDraftDepartmentFilter] = useState("");
+  const [draftLanguageFilter, setDraftLanguageFilter] = useState("");
   const { data, isLoading, execute } = useFetch(teacherAPI.getAll);
   const {
     data: preferenceRequestsData,
@@ -33,6 +35,7 @@ export const TeacherManager = () => {
   }, [execute, executePreferenceRequests]);
 
   const teachers = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const hasActiveFilters = Boolean(departmentFilter || languageFilter);
   const filteredTeachers = useMemo(
     () =>
       teachers.filter((teacher) => {
@@ -247,11 +250,23 @@ export const TeacherManager = () => {
         onDelete={handleDeleteTeacher}
         isLoading={isLoading}
         enableSearch
+        hasActiveFilters={hasActiveFilters}
+        filterDialogTitle={t("filter")}
+        onApplyFilters={() => {
+          setDepartmentFilter(draftDepartmentFilter);
+          setLanguageFilter(draftLanguageFilter);
+        }}
+        onResetFilters={() => {
+          setDraftDepartmentFilter("");
+          setDraftLanguageFilter("");
+          setDepartmentFilter("");
+          setLanguageFilter("");
+        }}
         filterControls={
           <>
             <select
-              value={departmentFilter}
-              onChange={(event) => setDepartmentFilter(event.target.value)}
+              value={draftDepartmentFilter}
+              onChange={(event) => setDraftDepartmentFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
@@ -262,8 +277,8 @@ export const TeacherManager = () => {
               ))}
             </select>
             <select
-              value={languageFilter}
-              onChange={(event) => setLanguageFilter(event.target.value)}
+              value={draftLanguageFilter}
+              onChange={(event) => setDraftLanguageFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("teachingLanguages").toLowerCase()}</option>

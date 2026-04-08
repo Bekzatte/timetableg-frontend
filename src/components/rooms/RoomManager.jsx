@@ -19,6 +19,9 @@ export const RoomManager = () => {
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
+  const [draftDepartmentFilter, setDraftDepartmentFilter] = useState("");
+  const [draftTypeFilter, setDraftTypeFilter] = useState("");
+  const [draftAvailabilityFilter, setDraftAvailabilityFilter] = useState("");
   const { data, isLoading, execute } = useFetch(roomAPI.getAll);
 
   useEffect(() => {
@@ -38,6 +41,7 @@ export const RoomManager = () => {
     [rooms, departmentFilter, typeFilter, availabilityFilter],
   );
   const availableRoomsCount = rooms.filter((room) => room.available).length;
+  const hasActiveFilters = Boolean(departmentFilter || typeFilter || availabilityFilter);
 
   const handleAddRoom = () => {
     setEditingRoom(null);
@@ -238,11 +242,26 @@ export const RoomManager = () => {
         onDelete={handleDeleteRoom}
         isLoading={isLoading}
         enableSearch
+        hasActiveFilters={hasActiveFilters}
+        filterDialogTitle={t("filter")}
+        onApplyFilters={() => {
+          setDepartmentFilter(draftDepartmentFilter);
+          setTypeFilter(draftTypeFilter);
+          setAvailabilityFilter(draftAvailabilityFilter);
+        }}
+        onResetFilters={() => {
+          setDraftDepartmentFilter("");
+          setDraftTypeFilter("");
+          setDraftAvailabilityFilter("");
+          setDepartmentFilter("");
+          setTypeFilter("");
+          setAvailabilityFilter("");
+        }}
         filterControls={
           <>
             <select
-              value={departmentFilter}
-              onChange={(event) => setDepartmentFilter(event.target.value)}
+              value={draftDepartmentFilter}
+              onChange={(event) => setDraftDepartmentFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
@@ -253,8 +272,8 @@ export const RoomManager = () => {
               ))}
             </select>
             <select
-              value={typeFilter}
-              onChange={(event) => setTypeFilter(event.target.value)}
+              value={draftTypeFilter}
+              onChange={(event) => setDraftTypeFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("roomType").toLowerCase()}</option>
@@ -263,8 +282,8 @@ export const RoomManager = () => {
               <option value="lab">{t("labHall")}</option>
             </select>
             <select
-              value={availabilityFilter}
-              onChange={(event) => setAvailabilityFilter(event.target.value)}
+              value={draftAvailabilityFilter}
+              onChange={(event) => setDraftAvailabilityFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("available").toLowerCase()}</option>

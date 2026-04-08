@@ -18,6 +18,8 @@ export const GroupManager = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [languageFilter, setLanguageFilter] = useState("");
   const [subgroupFilter, setSubgroupFilter] = useState("");
+  const [draftLanguageFilter, setDraftLanguageFilter] = useState("");
+  const [draftSubgroupFilter, setDraftSubgroupFilter] = useState("");
   const { data, isLoading, execute } = useFetch(groupAPI.getAll);
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export const GroupManager = () => {
     (sum, group) => sum + (Number(group.student_count) || 0),
     0,
   );
+  const hasActiveFilters = Boolean(languageFilter || subgroupFilter);
 
   const handleSubmit = async (formData, setErrors) => {
     try {
@@ -188,11 +191,23 @@ export const GroupManager = () => {
         isLoading={isLoading}
         onDelete={handleDeleteGroup}
         enableSearch
+        hasActiveFilters={hasActiveFilters}
+        filterDialogTitle={t("filter")}
+        onApplyFilters={() => {
+          setLanguageFilter(draftLanguageFilter);
+          setSubgroupFilter(draftSubgroupFilter);
+        }}
+        onResetFilters={() => {
+          setDraftLanguageFilter("");
+          setDraftSubgroupFilter("");
+          setLanguageFilter("");
+          setSubgroupFilter("");
+        }}
         filterControls={
           <>
             <select
-              value={languageFilter}
-              onChange={(event) => setLanguageFilter(event.target.value)}
+              value={draftLanguageFilter}
+              onChange={(event) => setDraftLanguageFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("studyLanguage").toLowerCase()}</option>
@@ -203,8 +218,8 @@ export const GroupManager = () => {
               ))}
             </select>
             <select
-              value={subgroupFilter}
-              onChange={(event) => setSubgroupFilter(event.target.value)}
+              value={draftSubgroupFilter}
+              onChange={(event) => setDraftSubgroupFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("subgroups").toLowerCase()}</option>

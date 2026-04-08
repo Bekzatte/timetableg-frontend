@@ -45,6 +45,19 @@ const toIsoDateForWeekday = (weekday, year) => {
   return `${monday.getFullYear()}-${month}-${day}`;
 };
 
+const formatGenerationError = (job, t) => {
+  const firstIssue = job.details?.issues?.[0];
+  if (firstIssue?.reason) {
+    return firstIssue.reason;
+  }
+
+  if (job.details?.missing?.length) {
+    return `${t("errorScheduleGenerationRequiresData")}: ${job.details.missing.join(", ")}.`;
+  }
+
+  return job.error || t("errorUnknown");
+};
+
 export const SchedulePage = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
@@ -61,6 +74,10 @@ export const SchedulePage = () => {
   const [teacherFilter, setTeacherFilter] = useState("");
   const [roomFilter, setRoomFilter] = useState("");
   const [dayFilter, setDayFilter] = useState("");
+  const [draftGroupFilter, setDraftGroupFilter] = useState("");
+  const [draftTeacherFilter, setDraftTeacherFilter] = useState("");
+  const [draftRoomFilter, setDraftRoomFilter] = useState("");
+  const [draftDayFilter, setDraftDayFilter] = useState("");
   const { data, execute } = useFetch(scheduleAPI.getAll);
   const { data: sectionsData, execute: executeSections } = useFetch(sectionAPI.getAll);
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
@@ -95,6 +112,7 @@ export const SchedulePage = () => {
       }),
     [schedule, groupFilter, teacherFilter, roomFilter, dayFilter],
   );
+  const hasActiveEntryFilters = Boolean(groupFilter || teacherFilter || roomFilter || dayFilter);
 
   const waitForGenerationJob = async (jobId) => {
     while (true) {
@@ -103,13 +121,7 @@ export const SchedulePage = () => {
         return job;
       }
       if (job.status === "failed") {
-        const firstIssue = job.details?.issues?.[0];
-        throw new Error(
-          firstIssue?.reason ||
-            job.details?.missing?.join(", ") ||
-            job.error ||
-            t("errorUnknown"),
-        );
+        throw new Error(formatGenerationError(job, t));
       }
       await new Promise((resolve) => window.setTimeout(resolve, 2500));
     }
@@ -381,7 +393,20 @@ export const SchedulePage = () => {
     schedule.length > 0 ? t("regenerateSchedule") : t("generateNewSchedule");
 
   return (
-    <div className="w-full px-0 py-2 sm:py-4">
+    <div className="relative w-full px-0 py-2 sm:py-4">
+      {isLoading ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+          <div className="rounded-2xl border border-blue-100 bg-white px-6 py-5 text-center shadow-xl">
+            <RotateCw size={28} className="mx-auto animate-spin text-[#014531]" />
+            <p className="mt-3 text-sm font-medium text-gray-900">
+              {t("scheduleGenerationInProgress")}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              {t("loading")}
+            </p>
+          </div>
+        </div>
+      ) : null}
       <div className="flex justify-between items-center mb-6 gap-3 flex-wrap">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("scheduleMgmt")}
@@ -390,6 +415,7 @@ export const SchedulePage = () => {
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-nowrap sm:items-center">
             <button
               onClick={handleAddEntry}
+              disabled={isLoading}
               className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
             >
               <Plus size={20} /> {t("addScheduleEntry")}
@@ -397,7 +423,7 @@ export const SchedulePage = () => {
             {schedule.length > 0 ? (
               <button
                 onClick={handleExportSchedule}
-                disabled={isExporting}
+                disabled={isExporting || isLoading}
                 className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#014531] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Download size={20} /> {isExporting ? t("loading") : t("exportSchedule")}
@@ -405,14 +431,15 @@ export const SchedulePage = () => {
             ) : null}
             <button
               onClick={handleResetSchedule}
-              disabled={isResetting}
+              disabled={isResetting || isLoading}
               className="whitespace-nowrap rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isResetting ? t("loading") : t("resetSchedule")}
             </button>
             <button
               onClick={() => setIsGenerateOpen(true)}
-              className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+              disabled={isLoading}
+              className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RotateCw size={20} /> {scheduleActionLabel}
             </button>
@@ -446,11 +473,29 @@ export const SchedulePage = () => {
             onDelete={handleDeleteEntry}
             isLoading={false}
             enableSearch
+            hasActiveFilters={hasActiveEntryFilters}
+            filterDialogTitle={t("filter")}
+            onApplyFilters={() => {
+              setGroupFilter(draftGroupFilter);
+              setTeacherFilter(draftTeacherFilter);
+              setRoomFilter(draftRoomFilter);
+              setDayFilter(draftDayFilter);
+            }}
+            onResetFilters={() => {
+              setDraftGroupFilter("");
+              setDraftTeacherFilter("");
+              setDraftRoomFilter("");
+              setDraftDayFilter("");
+              setGroupFilter("");
+              setTeacherFilter("");
+              setRoomFilter("");
+              setDayFilter("");
+            }}
             filterControls={
               <>
                 <select
-                  value={groupFilter}
-                  onChange={(event) => setGroupFilter(event.target.value)}
+                  value={draftGroupFilter}
+                  onChange={(event) => setDraftGroupFilter(event.target.value)}
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="">{t("all")} {t("groups").toLowerCase()}</option>
@@ -467,8 +512,8 @@ export const SchedulePage = () => {
                   ))}
                 </select>
                 <select
-                  value={teacherFilter}
-                  onChange={(event) => setTeacherFilter(event.target.value)}
+                  value={draftTeacherFilter}
+                  onChange={(event) => setDraftTeacherFilter(event.target.value)}
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="">{t("all")} {t("teachers").toLowerCase()}</option>
@@ -485,8 +530,8 @@ export const SchedulePage = () => {
                   ))}
                 </select>
                 <select
-                  value={roomFilter}
-                  onChange={(event) => setRoomFilter(event.target.value)}
+                  value={draftRoomFilter}
+                  onChange={(event) => setDraftRoomFilter(event.target.value)}
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="">{t("all")} {t("rooms").toLowerCase()}</option>
@@ -503,8 +548,8 @@ export const SchedulePage = () => {
                   ))}
                 </select>
                 <select
-                  value={dayFilter}
-                  onChange={(event) => setDayFilter(event.target.value)}
+                  value={draftDayFilter}
+                  onChange={(event) => setDraftDayFilter(event.target.value)}
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="">{t("all")} {t("day").toLowerCase()}</option>
@@ -522,7 +567,11 @@ export const SchedulePage = () => {
 
       <Modal
         isOpen={isGenerateOpen}
-        onClose={() => setIsGenerateOpen(false)}
+        onClose={() => {
+          if (!isLoading) {
+            setIsGenerateOpen(false);
+          }
+        }}
         title={scheduleActionLabel}
         size="md"
       >
@@ -543,7 +592,11 @@ export const SchedulePage = () => {
 
       <Modal
         isOpen={isEntryModalOpen}
-        onClose={() => setIsEntryModalOpen(false)}
+        onClose={() => {
+          if (!isLoading) {
+            setIsEntryModalOpen(false);
+          }
+        }}
         title={editingEntry ? t("editScheduleEntry") : t("addScheduleEntry")}
         size="md"
       >

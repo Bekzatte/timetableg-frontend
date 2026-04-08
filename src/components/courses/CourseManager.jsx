@@ -20,6 +20,9 @@ export const CourseManager = () => {
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [semesterFilter, setSemesterFilter] = useState("");
   const [courseFilter, setCourseFilter] = useState("");
+  const [draftDepartmentFilter, setDraftDepartmentFilter] = useState("");
+  const [draftSemesterFilter, setDraftSemesterFilter] = useState("");
+  const [draftCourseFilter, setDraftCourseFilter] = useState("");
   const { data, isLoading, execute } = useFetch(courseAPI.getAll);
   const {
     data: teachersData,
@@ -34,6 +37,7 @@ export const CourseManager = () => {
 
   const courses = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const teachers = Array.isArray(teachersData) ? teachersData : [];
+  const hasActiveFilters = Boolean(departmentFilter || semesterFilter || courseFilter);
   const filteredCourses = useMemo(
     () =>
       courses.filter((course) => {
@@ -264,11 +268,26 @@ export const CourseManager = () => {
         onDelete={handleDeleteCourse}
         isLoading={isLoading}
         enableSearch
+        hasActiveFilters={hasActiveFilters}
+        filterDialogTitle={t("filter")}
+        onApplyFilters={() => {
+          setDepartmentFilter(draftDepartmentFilter);
+          setSemesterFilter(draftSemesterFilter);
+          setCourseFilter(draftCourseFilter);
+        }}
+        onResetFilters={() => {
+          setDraftDepartmentFilter("");
+          setDraftSemesterFilter("");
+          setDraftCourseFilter("");
+          setDepartmentFilter("");
+          setSemesterFilter("");
+          setCourseFilter("");
+        }}
         filterControls={
           <>
             <select
-              value={departmentFilter}
-              onChange={(event) => setDepartmentFilter(event.target.value)}
+              value={draftDepartmentFilter}
+              onChange={(event) => setDraftDepartmentFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
@@ -279,8 +298,8 @@ export const CourseManager = () => {
               ))}
             </select>
             <select
-              value={courseFilter}
-              onChange={(event) => setCourseFilter(event.target.value)}
+              value={draftCourseFilter}
+              onChange={(event) => setDraftCourseFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("studyCourse").toLowerCase()}</option>
@@ -291,8 +310,8 @@ export const CourseManager = () => {
               ))}
             </select>
             <select
-              value={semesterFilter}
-              onChange={(event) => setSemesterFilter(event.target.value)}
+              value={draftSemesterFilter}
+              onChange={(event) => setDraftSemesterFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
               <option value="">{t("all")} {t("semester").toLowerCase()}</option>
