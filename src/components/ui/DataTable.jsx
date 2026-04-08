@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Trash2, Edit2 } from "lucide-react";
 import { useTranslation } from "../../hooks/useTranslation";
 
@@ -8,8 +9,35 @@ export const DataTable = ({
   onDelete,
   isLoading,
   title,
+  enableSearch = false,
 }) => {
   const { t } = useTranslation();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredData = useMemo(() => {
+    if (!enableSearch) {
+      return data;
+    }
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return data;
+    }
+
+    return data.filter((row) => {
+      const values = columns.flatMap((col) => {
+        const rawValue = row[col.key];
+        const renderedValue = col.render ? col.render(rawValue, row) : rawValue;
+        return [rawValue, renderedValue];
+      });
+
+      return values.some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(normalizedQuery),
+      );
+    });
+  }, [columns, data, enableSearch, searchQuery]);
 
   if (isLoading) {
     return <div className="p-4 text-center text-gray-600">{t("loading")}</div>;
@@ -24,8 +52,22 @@ export const DataTable = ({
       {title && (
         <h2 className="text-xl font-bold mb-4 text-gray-900">{title}</h2>
       )}
-      <div className="max-h-[65vh] space-y-3 overflow-y-auto pr-1 md:hidden">
-        {data.map((row, rowIndex) => (
+      {enableSearch ? (
+        <div className="mb-4">
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={`${t("search")}...`}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#014531] focus:ring-2 focus:ring-[#014531]/20"
+          />
+        </div>
+      ) : null}
+      {filteredData.length === 0 ? (
+        <div className="p-4 text-center text-gray-500">{t("noData")}</div>
+      ) : null}
+      <div className={`${filteredData.length === 0 ? "hidden" : "max-h-[65vh]"} space-y-3 overflow-y-auto pr-1 md:hidden`}>
+        {filteredData.map((row, rowIndex) => (
           <div
             key={row.id ?? rowIndex}
             className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
@@ -68,7 +110,7 @@ export const DataTable = ({
           </div>
         ))}
       </div>
-      <div className="hidden max-h-[65vh] overflow-auto rounded-lg border border-gray-200 shadow-md md:block">
+      <div className={`${filteredData.length === 0 ? "hidden" : ""} max-h-[65vh] overflow-auto rounded-lg border border-gray-200 shadow-md md:block`}>
         <table className="min-w-[860px] w-full border-collapse table-auto">
           <colgroup>
             {columns.map((_, i) => (
@@ -94,7 +136,7 @@ export const DataTable = ({
             </tr>
           </thead>
           <tbody>
-            {data.map((row, rowIndex) => (
+            {filteredData.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
                 className="border-b border-gray-200 hover:bg-gray-50 transition"

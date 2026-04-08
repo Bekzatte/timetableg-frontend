@@ -208,6 +208,7 @@ export const RoomManager = () => {
         onEdit={handleEditRoom}
         onDelete={handleDeleteRoom}
         isLoading={isLoading}
+        enableSearch
       />
 
       <Modal

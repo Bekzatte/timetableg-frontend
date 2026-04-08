@@ -88,7 +88,13 @@ export const SchedulePage = () => {
         return job;
       }
       if (job.status === "failed") {
-        throw new Error(job.error || t("errorUnknown"));
+        const firstIssue = job.details?.issues?.[0];
+        throw new Error(
+          firstIssue?.reason ||
+            job.details?.missing?.join(", ") ||
+            job.error ||
+            t("errorUnknown"),
+        );
       }
       await new Promise((resolve) => window.setTimeout(resolve, 2500));
     }

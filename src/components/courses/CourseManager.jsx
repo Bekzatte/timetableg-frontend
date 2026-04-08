@@ -227,6 +227,7 @@ export const CourseManager = () => {
         onEdit={handleEditCourse}
         onDelete={handleDeleteCourse}
         isLoading={isLoading}
+        enableSearch
       />
 
       <Modal

@@ -226,6 +226,7 @@ export const TeacherManager = () => {
         onEdit={handleEditTeacher}
         onDelete={handleDeleteTeacher}
         isLoading={isLoading}
+        enableSearch
       />
 
       <div className="mt-8 rounded-2xl border border-amber-100 bg-amber-50/40 p-5">

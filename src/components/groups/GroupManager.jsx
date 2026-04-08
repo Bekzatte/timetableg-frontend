@@ -171,6 +171,7 @@ export const GroupManager = () => {
         data={groups}
         isLoading={isLoading}
         onDelete={handleDeleteGroup}
+        enableSearch
         onEdit={(group) => {
           setEditingGroup(group);
           setIsModalOpen(true);

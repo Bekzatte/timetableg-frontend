@@ -169,6 +169,7 @@ export const SectionManager = () => {
         data={sections}
         onEdit={handleEditSection}
         isLoading={isLoading}
+        enableSearch
       />
 
       <Modal
