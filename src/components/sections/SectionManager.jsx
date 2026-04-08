@@ -13,6 +13,7 @@ export const SectionManager = () => {
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data, isLoading, execute } = useFetch(sectionAPI.getAll);
   const {
     data: coursesData,
@@ -54,6 +55,7 @@ export const SectionManager = () => {
     );
 
     try {
+      setIsSubmitting(true);
       const payload = {
         ...formData,
         course_id: Number(formData.course_id),
@@ -74,6 +76,8 @@ export const SectionManager = () => {
         ...prev,
         error: error.message,
       }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -191,6 +195,7 @@ export const SectionManager = () => {
               : { lesson_type: "lecture" }
           }
           submitText={editingSection ? t("save") : t("add")}
+          isLoading={isSubmitting}
         />
       </Modal>
     </div>

@@ -270,6 +270,8 @@ export const translations = {
     // Schedule (additional)
     semester: "Семестр",
     year: "Жыл",
+    studyCourse: "Курс",
+    selectStudyCourse: "Курсты таңдаңыз",
     errorGenerateSchedule: "Кестені құру қатесі",
     scheduleGenerationInProgress:
       "Кесте фондық режимде құрылып жатыр. Бұл процесс 1-2 минутқа созылуы мүмкін.",
@@ -289,7 +291,7 @@ export const translations = {
       "Бір .xlsx файл арқылы пәндерді, оқытушыларды, аудиторияларды, топтарды және секцияларды жаппай жүктей аласыз. Disciplines парағындағы year өрісі генерацияда таңдалатын жылмен сәйкес болуы керек.",
     excelImportSheetFormat: "Excel файлында мына парақтар болуы керек:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, year, semester, programme, department, instructor_name, description (year мысалы: 2026)",
+      "Disciplines: code, name, course, semester, programme, department, instructor_name, description (course мысалы: 2)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:
@@ -611,6 +613,8 @@ export const translations = {
     // Schedule (additional)
     semester: "Семестр",
     year: "Год",
+    studyCourse: "Курс",
+    selectStudyCourse: "Выберите курс",
     errorGenerateSchedule: "Ошибка при генерировании расписания",
     scheduleGenerationInProgress:
       "Расписание генерируется в фоновом режиме. Это может занять 1-2 минуты.",
@@ -630,7 +634,7 @@ export const translations = {
       "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей, аудитории, группы и секции. Поле year на листе Disciplines должно совпадать с годом, который вы выбираете при генерации.",
     excelImportSheetFormat: "В Excel должны быть листы:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, year, semester, programme, department, instructor_name, description (пример year: 2026)",
+      "Disciplines: code, name, course, semester, programme, department, instructor_name, description (пример course: 2)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:
@@ -950,6 +954,8 @@ export const translations = {
     // Schedule (additional)
     semester: "Semester",
     year: "Year",
+    studyCourse: "Course",
+    selectStudyCourse: "Select course",
     errorGenerateSchedule: "Error generating schedule",
     scheduleGenerationInProgress:
       "The schedule is being generated in the background. This can take 1-2 minutes.",
@@ -969,7 +975,7 @@ export const translations = {
       "Upload one .xlsx file to bulk import courses, teachers, rooms, groups, and sections. The year field on the Disciplines sheet must match the year selected during schedule generation.",
     excelImportSheetFormat: "The Excel file must contain these sheets:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, year, semester, programme, department, instructor_name, description (example year: 2026)",
+      "Disciplines: code, name, course, semester, programme, department, instructor_name, description (example course: 2)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:

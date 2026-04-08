@@ -12,6 +12,40 @@ export const Form = ({
   const [formData, setFormData] = React.useState(initialValues);
   const [errors, setErrors] = React.useState({});
 
+  React.useEffect(() => {
+    setFormData(initialValues);
+    setErrors({});
+  }, [initialValues]);
+
+  const validate = React.useCallback(() => {
+    const nextErrors = {};
+
+    fields.forEach((field) => {
+      if (!field.required) {
+        return;
+      }
+
+      const value = formData[field.name];
+
+      if (field.type === "checkbox-group") {
+        if (!Array.isArray(value) || value.length === 0) {
+          nextErrors[field.name] = t("fillAllFields");
+        }
+        return;
+      }
+
+      if (field.type === "toggle") {
+        return;
+      }
+
+      if (value === undefined || value === null || String(value).trim() === "") {
+        nextErrors[field.name] = t("fillAllFields");
+      }
+    });
+
+    return nextErrors;
+  }, [fields, formData, t]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -29,6 +63,11 @@ export const Form = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
     onSubmit(formData, setErrors);
   };
 

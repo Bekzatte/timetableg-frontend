@@ -15,6 +15,7 @@ export const GroupManager = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data, isLoading, execute } = useFetch(groupAPI.getAll);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export const GroupManager = () => {
 
   const handleSubmit = async (formData, setErrors) => {
     try {
+      setIsSubmitting(true);
       const payload = {
         ...formData,
         student_count: Number(formData.student_count),
@@ -44,6 +46,8 @@ export const GroupManager = () => {
       setIsModalOpen(false);
     } catch (error) {
       setErrors((prev) => ({ ...prev, error: error.message }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -188,6 +192,7 @@ export const GroupManager = () => {
           onSubmit={handleSubmit}
           initialValues={{ has_subgroups: 0, language: "ru", ...(editingGroup || {}) }}
           submitText={editingGroup ? t("save") : t("add")}
+          isLoading={isSubmitting}
         />
       </Modal>
     </div>

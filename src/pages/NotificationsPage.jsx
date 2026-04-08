@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Bell, Trash2 } from "lucide-react";
 import { useNotifications } from "../hooks/useNotifications";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -91,11 +91,12 @@ const getNotificationContent = (item, t) => {
 export default function NotificationsPage() {
   const { t, language } = useTranslation();
   const hasMarkedOnOpenRef = useRef(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const {
     items,
     unreadCount,
     isLoading,
-    markAsRead,
     markAllAsRead,
     deleteOne,
     deleteAll,
@@ -118,6 +119,24 @@ export default function NotificationsPage() {
     [items],
   );
 
+  const handleDeleteAll = async () => {
+    try {
+      setIsDeletingAll(true);
+      await deleteAll();
+    } finally {
+      setIsDeletingAll(false);
+    }
+  };
+
+  const handleDeleteOne = async (notificationId) => {
+    try {
+      setDeletingId(notificationId);
+      await deleteOne(notificationId);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="min-h-[70vh]">
       <div className="mx-auto max-w-[1240px] overflow-hidden rounded-[28px] border border-green-100 bg-gradient-to-br from-white via-[#f4fbf7] to-[#eef7f1] shadow-[0_24px_80px_rgba(1,69,49,0.12)] sm:rounded-[32px]">
@@ -138,24 +157,15 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {unreadCount > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => markAllAsRead()}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-300 px-4 py-3 text-sm font-semibold text-[#014531] transition hover:bg-yellow-200"
-                >
-                  <CheckCheck size={18} />
-                  {t("notificationsMarkAllRead")}
-                </button>
-              ) : null}
               {sortedItems.length > 0 ? (
                 <button
                   type="button"
-                  onClick={() => deleteAll()}
+                  onClick={handleDeleteAll}
+                  disabled={isDeletingAll}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
                 >
                   <Trash2 size={18} />
-                  {t("notificationsDeleteAll")}
+                  {isDeletingAll ? t("loading") : t("notificationsDeleteAll")}
                 </button>
               ) : null}
             </div>
@@ -221,21 +231,13 @@ export default function NotificationsPage() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {isUnread ? (
-                            <button
-                              type="button"
-                              onClick={() => markAsRead(item.id)}
-                              className="inline-flex items-center justify-center rounded-xl border border-green-200 px-3 py-2 text-sm font-medium text-[#014531] transition hover:bg-[#f4fbf7]"
-                            >
-                              {t("notificationsMarkRead")}
-                            </button>
-                          ) : null}
                           <button
                             type="button"
-                            onClick={() => deleteOne(item.id)}
+                            onClick={() => handleDeleteOne(item.id)}
+                            disabled={deletingId === item.id}
                             className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
                           >
-                            {t("delete")}
+                            {deletingId === item.id ? t("loading") : t("delete")}
                           </button>
                         </div>
                       </div>

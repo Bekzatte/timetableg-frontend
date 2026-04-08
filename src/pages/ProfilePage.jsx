@@ -225,22 +225,26 @@ export default function ProfilePage() {
                     {user?.email}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-[#f4fbf7] p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-                    {t("selectRole")}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-gray-900">
-                    {t(user?.role)}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-[#f4fbf7] p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-                    ID
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-gray-900">
-                    {user?.id}
-                  </p>
-                </div>
+                {user?.role !== "student" ? (
+                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      {t("selectRole")}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {t(user?.role)}
+                    </p>
+                  </div>
+                ) : null}
+                {user?.role === "admin" ? (
+                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      ID
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {user?.id}
+                    </p>
+                  </div>
+                ) : null}
                 {user?.department ? (
                   <div className="rounded-2xl bg-[#f4fbf7] p-4">
                     <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
@@ -292,7 +296,7 @@ export default function ProfilePage() {
                   </div>
                 ) : null}
                 {user?.teachingLanguages ? (
-                  <div className="rounded-2xl bg-[#f4fbf7] p-4 sm:col-span-2">
+                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
                     <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
                       {t("teachingLanguages")}
                     </p>

@@ -15,6 +15,7 @@ export const RoomManager = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data, isLoading, execute } = useFetch(roomAPI.getAll);
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export const RoomManager = () => {
 
   const handleSubmit = async (formData, setErrors) => {
     try {
+      setIsSubmitting(true);
       const payload = {
         ...formData,
         available: formData.available ? 1 : 0,
@@ -81,6 +83,8 @@ export const RoomManager = () => {
         ...prev,
         error: error.message,
       }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -125,6 +129,7 @@ export const RoomManager = () => {
       name: "building",
       label: t("building"),
       placeholder: t("mainBuildingPlaceholder"),
+      required: true,
     },
     {
       name: "type",
@@ -135,6 +140,7 @@ export const RoomManager = () => {
         { value: "practical", label: t("practicalRoom") },
         { value: "lab", label: t("labHall") },
       ],
+      required: true,
     },
     {
       name: "department",
@@ -159,6 +165,7 @@ export const RoomManager = () => {
       label: t("equipment"),
       type: "textarea",
       placeholder: t("equipmentPlaceholder"),
+      required: true,
     },
   ];
 
@@ -224,6 +231,7 @@ export const RoomManager = () => {
             ...(editingRoom || {}),
           }}
           submitText={editingRoom ? t("save") : t("add")}
+          isLoading={isSubmitting}
         />
       </Modal>
     </div>

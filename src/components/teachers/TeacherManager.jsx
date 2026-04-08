@@ -16,6 +16,7 @@ export const TeacherManager = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data, isLoading, execute } = useFetch(teacherAPI.getAll);
   const {
     data: preferenceRequestsData,
@@ -73,6 +74,7 @@ export const TeacherManager = () => {
 
   const handleSubmit = async (formData, setErrors) => {
     try {
+      setIsSubmitting(true);
       if (!String(formData.email || "").trim().toLowerCase().endsWith("@kazatu.edu.kz")) {
         setErrors((prev) => ({
           ...prev,
@@ -99,6 +101,8 @@ export const TeacherManager = () => {
         ...prev,
         error: error.message,
       }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -156,7 +160,7 @@ export const TeacherManager = () => {
       placeholder: "name@kazatu.edu.kz",
       required: true,
     },
-    { name: "phone", label: t("phone"), placeholder: t("phonePlaceholder") },
+    { name: "phone", label: t("phone"), placeholder: t("phonePlaceholder"), required: true },
     {
       name: "department",
       label: t("facultyInstitute"),
@@ -328,6 +332,7 @@ export const TeacherManager = () => {
               : { teaching_languages: ["ru", "kk"] }
           }
           submitText={editingTeacher ? t("save") : t("add")}
+          isLoading={isSubmitting}
         />
       </Modal>
     </div>

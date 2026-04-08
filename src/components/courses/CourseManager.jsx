@@ -16,6 +16,7 @@ export const CourseManager = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data, isLoading, execute } = useFetch(courseAPI.getAll);
   const {
     data: teachersData,
@@ -74,8 +75,11 @@ export const CourseManager = () => {
     );
 
     try {
+      setIsSubmitting(true);
       const payload = {
         ...formData,
+        year: Number(formData.year),
+        semester: Number(formData.semester),
         instructor_id: formData.instructor_id ? Number(formData.instructor_id) : null,
         instructor_name: selectedTeacher?.name || "",
       };
@@ -91,6 +95,8 @@ export const CourseManager = () => {
         ...prev,
         error: error.message,
       }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -109,7 +115,7 @@ export const CourseManager = () => {
     { key: "code", label: t("courseCode") },
     { key: "name", label: t("courseName") },
     { key: "programme", label: t("programmeName") },
-    { key: "year", label: t("year") },
+    { key: "year", label: t("studyCourse") },
     { key: "semester", label: t("semester") },
     { key: "department", label: t("facultyInstitute") },
     { key: "instructor_name", label: t("instructor") },
@@ -130,9 +136,13 @@ export const CourseManager = () => {
     },
     {
       name: "year",
-      label: t("year"),
-      type: "number",
-      placeholder: String(new Date().getFullYear()),
+      label: t("studyCourse"),
+      type: "select",
+      placeholder: t("selectStudyCourse"),
+      options: [1, 2, 3, 4, 5, 6].map((course) => ({
+        value: course,
+        label: String(course),
+      })),
       required: true,
     },
     {
@@ -249,6 +259,7 @@ export const CourseManager = () => {
               : {}
           }
           submitText={editingCourse ? t("save") : t("add")}
+          isLoading={isSubmitting}
         />
       </Modal>
     </div>
