@@ -292,7 +292,7 @@ export const TeacherManager = () => {
         }
       />
 
-      <div className="mt-8 rounded-2xl border border-amber-100 bg-amber-50/40 p-5">
+      <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50/40 p-5">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">

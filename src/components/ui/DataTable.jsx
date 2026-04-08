@@ -107,8 +107,10 @@ export const DataTable = ({
               size="sm"
             >
               <div className="space-y-4">
-                <div className="grid gap-3">{filterControls}</div>
-                <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="grid justify-items-start gap-3 [&>select]:w-full [&>select]:max-w-full sm:[&>select]:max-w-[260px] [&>select]:truncate">
+                  {filterControls}
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                   <button
                     type="button"
                     onClick={() => {
@@ -116,7 +118,7 @@ export const DataTable = ({
                         onResetFilters();
                       }
                     }}
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:w-auto"
                   >
                     {t("reset")}
                   </button>
@@ -128,7 +130,7 @@ export const DataTable = ({
                       }
                       setIsFilterModalOpen(false);
                     }}
-                    className="w-full rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#013726]"
+                    className="w-full rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#013726] sm:w-auto"
                   >
                     {t("apply")}
                   </button>
