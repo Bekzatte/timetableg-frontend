@@ -31,6 +31,7 @@ export const Dashboard = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
   const [isClearingAll, setIsClearingAll] = useState(false);
+  const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
   useAutoDismiss(importError, setImportError);
@@ -236,6 +237,27 @@ export const Dashboard = () => {
     }
   };
 
+  const handleSendTestEmail = async () => {
+    const email = window.prompt(t("testEmailPrompt"));
+    if (!email) {
+      return;
+    }
+
+    try {
+      setIsSendingTestEmail(true);
+      setImportError("");
+      const result = await adminAPI.sendTestEmail(email);
+      setImportResult({
+        success: true,
+        testEmail: result.email,
+      });
+    } catch (error) {
+      setImportError(error.message || t("errorUnknown"));
+    } finally {
+      setIsSendingTestEmail(false);
+    }
+  };
+
   return (
     <div className="w-full from-blue-50 to-indigo-100">
       <div className="mx-auto w-full max-w-[1440px] px-0 py-2 sm:py-4">
@@ -356,6 +378,14 @@ export const Dashboard = () => {
                 </button>
                 <button
                   type="button"
+                  onClick={handleSendTestEmail}
+                  disabled={isSendingTestEmail}
+                  className={outlineActionButtonClass}
+                >
+                  {isSendingTestEmail ? t("loading") : t("sendTestEmail")}
+                </button>
+                <button
+                  type="button"
                   onClick={handleClearAllData}
                   disabled={isClearingAll}
                   className={dangerActionButtonClass}
@@ -381,6 +411,11 @@ export const Dashboard = () => {
               importResult.cleared ? (
                 <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
                   <p className="font-semibold">{t("clearAllDataSuccess")}</p>
+                </div>
+              ) : importResult.testEmail ? (
+                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                  <p className="font-semibold">{t("testEmailSuccess")}</p>
+                  <p className="mt-1">{importResult.testEmail}</p>
                 </div>
               ) : (
                 <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
