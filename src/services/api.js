@@ -131,6 +131,10 @@ const getApiErrorMessage = (payload, status) => {
     ? RAW_ERROR_TRANSLATION_KEYS[payload.error]
     : null;
 
+  if (errorCode === "bad_request" && payload?.error) {
+    return payload.error;
+  }
+
   if (translationKey) {
     if (errorCode === "fill_required_fields" && payload?.details?.fields?.length) {
       return `${getLocalized(translationKey)}: ${payload.details.fields.join(", ")}`;

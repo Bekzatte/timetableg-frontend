@@ -38,7 +38,7 @@ export const SchedulePage = () => {
       console.error(t("errorGenerateSchedule"), error);
       setErrors((prev) => ({
         ...prev,
-        error: error.response?.data?.error || error.message,
+        error: error.message,
       }));
     } finally {
       setIsLoading(false);
@@ -168,6 +168,7 @@ export const SchedulePage = () => {
           onSubmit={handleGenerateSchedule}
           submitText={t("generateSchedule")}
           isLoading={isLoading}
+          initialValues={{ semester: 1, year: new Date().getFullYear(), algorithm: "greedy" }}
         />
       </Modal>
     </div>
