@@ -168,7 +168,6 @@ export default function App() {
             <div className="flex min-w-0 items-center lg:hidden">
               {user ? (
                 <div className="flex items-center gap-2">
-                  {notificationLink}
                   <div
                     ref={mobileProfileMenuRef}
                     className="relative flex items-center"
@@ -230,6 +229,7 @@ export default function App() {
                       </div>
                     ) : null}
                   </div>
+                  {notificationLink}
                 </div>
               ) : (
                 <div className="w-10" />
@@ -253,15 +253,15 @@ export default function App() {
             {/* Right side controls */}
             <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
               {/* Language Selector - Desktop */}
-              <div className="hidden sm:flex items-center gap-0.5 bg-white bg-opacity-10 rounded-xl p-0.5">
+              <div className="hidden sm:flex items-center gap-1 rounded-xl border border-white/20 bg-[#014531] p-1">
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
                     onClick={() => setLanguage(lang.code)}
-                      className={`px-3 py-1.5 rounded-xl font-semibold transition duration-200 text-xs whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg font-semibold transition duration-200 text-xs whitespace-nowrap ${
                       language === lang.code
-                        ? "bg-yellow-400 text-black shadow-md scale-105"
-                        : "text-white hover:bg-white/20"
+                        ? "bg-yellow-400 text-black shadow-sm"
+                        : "text-white hover:bg-white/10"
                     }`}
                   >
                     {lang.name}
@@ -394,10 +394,10 @@ export default function App() {
                         setLanguage(lang.code);
                         setMenuOpen(false);
                       }}
-                      className={`flex-1 px-2 py-2 rounded text-xs font-semibold transition duration-200 ${
+                      className={`flex-1 rounded-md px-2 py-2 text-xs font-semibold transition duration-200 ${
                         language === lang.code
-                          ? "bg-yellow-400 text-black shadow-md"
-                          : "bg-white text-black hover:bg-yellow-400"
+                          ? "bg-yellow-400 text-black shadow-sm"
+                          : "border border-white/20 bg-[#014531] text-white hover:bg-white/10"
                       }`}
                     >
                       {lang.name}
@@ -578,10 +578,10 @@ export default function App() {
                     <button
                       key={lang.code}
                       onClick={() => setLanguage(lang.code)}
-                      className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition font-semibold ${
+                      className={`rounded-md px-2 sm:px-3 py-1 text-xs font-semibold transition sm:text-sm ${
                         language === lang.code
                           ? "bg-yellow-400 text-black"
-                          : "bg-white/10 text-white hover:bg-white/20"
+                          : "border border-white/20 bg-[#014531] text-white hover:bg-white/10"
                       }`}
                     >
                       {lang.name}
