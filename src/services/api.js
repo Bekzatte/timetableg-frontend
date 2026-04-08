@@ -272,8 +272,6 @@ export const adminAPI = {
   clearAllData: () => api.post("/admin/clear-all").then((response) => response.data),
   clearCollection: (collection) =>
     api.post(`/admin/clear/${collection}`).then((response) => response.data),
-  sendTestEmail: (email) =>
-    api.post("/notifications/test-email", { email }).then((response) => response.data),
 };
 
 export default {
