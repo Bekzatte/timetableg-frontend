@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
@@ -17,6 +17,8 @@ export const TeacherManager = () => {
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [languageFilter, setLanguageFilter] = useState("");
   const { data, isLoading, execute } = useFetch(teacherAPI.getAll);
   const {
     data: preferenceRequestsData,
@@ -30,7 +32,21 @@ export const TeacherManager = () => {
     executePreferenceRequests();
   }, [execute, executePreferenceRequests]);
 
-  const teachers = Array.isArray(data) ? data : [];
+  const teachers = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const filteredTeachers = useMemo(
+    () =>
+      teachers.filter((teacher) => {
+        const matchesDepartment = !departmentFilter || teacher.department === departmentFilter;
+        const matchesLanguage =
+          !languageFilter ||
+          String(teacher.teaching_languages || "ru,kk")
+            .split(",")
+            .map((item) => item.trim())
+            .includes(languageFilter);
+        return matchesDepartment && matchesLanguage;
+      }),
+    [teachers, departmentFilter, languageFilter],
+  );
   const preferenceRequests = Array.isArray(preferenceRequestsData) ? preferenceRequestsData : [];
 
   const handleAddTeacher = () => {
@@ -226,11 +242,39 @@ export const TeacherManager = () => {
 
       <DataTable
         columns={columns}
-        data={teachers}
+        data={filteredTeachers}
         onEdit={handleEditTeacher}
         onDelete={handleDeleteTeacher}
         isLoading={isLoading}
         enableSearch
+        filterControls={
+          <>
+            <select
+              value={departmentFilter}
+              onChange={(event) => setDepartmentFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
+              {DEPARTMENTS.map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </select>
+            <select
+              value={languageFilter}
+              onChange={(event) => setLanguageFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("teachingLanguages").toLowerCase()}</option>
+              {STUDY_LANGUAGES.map((language) => (
+                <option key={language.value} value={language.value}>
+                  {t(language.labelKey)}
+                </option>
+              ))}
+            </select>
+          </>
+        }
       />
 
       <div className="mt-8 rounded-2xl border border-amber-100 bg-amber-50/40 p-5">
@@ -321,6 +365,7 @@ export const TeacherManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
+          resetKey={editingTeacher ? `teacher-${editingTeacher.id}` : "teacher-new"}
           initialValues={
             editingTeacher
               ? {

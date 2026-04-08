@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
@@ -17,6 +17,9 @@ export const CourseManager = () => {
   const [editingCourse, setEditingCourse] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [semesterFilter, setSemesterFilter] = useState("");
+  const [courseFilter, setCourseFilter] = useState("");
   const { data, isLoading, execute } = useFetch(courseAPI.getAll);
   const {
     data: teachersData,
@@ -29,8 +32,18 @@ export const CourseManager = () => {
     executeTeachers();
   }, [execute, executeTeachers]);
 
-  const courses = Array.isArray(data) ? data : [];
+  const courses = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const teachers = Array.isArray(teachersData) ? teachersData : [];
+  const filteredCourses = useMemo(
+    () =>
+      courses.filter((course) => {
+        const matchesDepartment = !departmentFilter || course.department === departmentFilter;
+        const matchesSemester = !semesterFilter || String(course.semester) === semesterFilter;
+        const matchesCourse = !courseFilter || String(course.year) === courseFilter;
+        return matchesDepartment && matchesSemester && matchesCourse;
+      }),
+    [courses, departmentFilter, semesterFilter, courseFilter],
+  );
 
   const handleAddCourse = () => {
     setEditingCourse(null);
@@ -233,11 +246,51 @@ export const CourseManager = () => {
 
       <DataTable
         columns={columns}
-        data={courses}
+        data={filteredCourses}
         onEdit={handleEditCourse}
         onDelete={handleDeleteCourse}
         isLoading={isLoading}
         enableSearch
+        filterControls={
+          <>
+            <select
+              value={departmentFilter}
+              onChange={(event) => setDepartmentFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
+              {DEPARTMENTS.map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </select>
+            <select
+              value={courseFilter}
+              onChange={(event) => setCourseFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("studyCourse").toLowerCase()}</option>
+              {[1, 2, 3, 4, 5, 6].map((course) => (
+                <option key={course} value={course}>
+                  {course}
+                </option>
+              ))}
+            </select>
+            <select
+              value={semesterFilter}
+              onChange={(event) => setSemesterFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("semester").toLowerCase()}</option>
+              {[1, 2].map((semester) => (
+                <option key={semester} value={semester}>
+                  {semester}
+                </option>
+              ))}
+            </select>
+          </>
+        }
       />
 
       <Modal
@@ -248,6 +301,7 @@ export const CourseManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
+          resetKey={editingCourse ? `course-${editingCourse.id}` : "course-new"}
           initialValues={
             editingCourse
               ? {

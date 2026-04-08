@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Plus, RotateCw } from "lucide-react";
 import TimetableGrid from "../components/timetable/TimetableGrid";
 import DataTable from "../components/ui/DataTable";
@@ -57,6 +57,10 @@ export const SchedulePage = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [generationMessage, setGenerationMessage] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
+  const [teacherFilter, setTeacherFilter] = useState("");
+  const [roomFilter, setRoomFilter] = useState("");
+  const [dayFilter, setDayFilter] = useState("");
   const { data, execute } = useFetch(scheduleAPI.getAll);
   const { data: sectionsData, execute: executeSections } = useFetch(sectionAPI.getAll);
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
@@ -80,6 +84,17 @@ export const SchedulePage = () => {
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
   const rooms = Array.isArray(roomsData) ? roomsData : [];
   const courses = Array.isArray(coursesData) ? coursesData : [];
+  const filteredSchedule = useMemo(
+    () =>
+      schedule.filter((entry) => {
+        const matchesGroup = !groupFilter || String(entry.group_id) === groupFilter;
+        const matchesTeacher = !teacherFilter || String(entry.teacher_id) === teacherFilter;
+        const matchesRoom = !roomFilter || String(entry.room_id) === roomFilter;
+        const matchesDay = !dayFilter || getWeekdayValue(entry.day) === dayFilter;
+        return matchesGroup && matchesTeacher && matchesRoom && matchesDay;
+      }),
+    [schedule, groupFilter, teacherFilter, roomFilter, dayFilter],
+  );
 
   const waitForGenerationJob = async (jobId) => {
     while (true) {
@@ -426,10 +441,81 @@ export const SchedulePage = () => {
           </div>
           <DataTable
             columns={scheduleColumns}
-            data={schedule}
+            data={filteredSchedule}
             onEdit={handleEditEntry}
             onDelete={handleDeleteEntry}
             isLoading={false}
+            enableSearch
+            filterControls={
+              <>
+                <select
+                  value={groupFilter}
+                  onChange={(event) => setGroupFilter(event.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                >
+                  <option value="">{t("all")} {t("groups").toLowerCase()}</option>
+                  {Array.from(
+                    new Map(
+                      schedule
+                        .filter((entry) => entry.group_id)
+                        .map((entry) => [entry.group_id, entry.group_name]),
+                    ).entries(),
+                  ).map(([id, name]) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={teacherFilter}
+                  onChange={(event) => setTeacherFilter(event.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                >
+                  <option value="">{t("all")} {t("teachers").toLowerCase()}</option>
+                  {Array.from(
+                    new Map(
+                      schedule
+                        .filter((entry) => entry.teacher_id)
+                        .map((entry) => [entry.teacher_id, entry.teacher_name]),
+                    ).entries(),
+                  ).map(([id, name]) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={roomFilter}
+                  onChange={(event) => setRoomFilter(event.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                >
+                  <option value="">{t("all")} {t("rooms").toLowerCase()}</option>
+                  {Array.from(
+                    new Map(
+                      schedule
+                        .filter((entry) => entry.room_id)
+                        .map((entry) => [entry.room_id, entry.room_number]),
+                    ).entries(),
+                  ).map(([id, number]) => (
+                    <option key={id} value={id}>
+                      {number}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={dayFilter}
+                  onChange={(event) => setDayFilter(event.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                >
+                  <option value="">{t("all")} {t("day").toLowerCase()}</option>
+                  {WEEKDAY_OPTIONS.map((day) => (
+                    <option key={day.value} value={day.value}>
+                      {t(day.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </>
+            }
           />
         </div>
       )}
@@ -448,6 +534,7 @@ export const SchedulePage = () => {
         <Form
           fields={formFields}
           onSubmit={handleGenerateSchedule}
+          resetKey={`schedule-generate-${schedule.length > 0 ? "regenerate" : "new"}`}
           submitText={schedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule")}
           isLoading={isLoading}
           initialValues={{ semester: 1, year: new Date().getFullYear() }}
@@ -463,6 +550,7 @@ export const SchedulePage = () => {
         <Form
           fields={entryFields}
           onSubmit={handleEntrySubmit}
+          resetKey={editingEntry ? `schedule-entry-${editingEntry.id}` : "schedule-entry-new"}
           submitText={editingEntry ? t("save") : t("add")}
           isLoading={isEntrySaving}
           initialValues={

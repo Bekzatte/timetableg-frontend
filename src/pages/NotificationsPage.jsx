@@ -90,7 +90,7 @@ const getNotificationContent = (item, t) => {
 
 export default function NotificationsPage() {
   const { t, language } = useTranslation();
-  const hasMarkedOnOpenRef = useRef(false);
+  const isMarkingReadRef = useRef(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const {
@@ -103,15 +103,16 @@ export default function NotificationsPage() {
   } = useNotifications();
 
   useEffect(() => {
-    if (unreadCount > 0 && !hasMarkedOnOpenRef.current) {
-      hasMarkedOnOpenRef.current = true;
-      markAllAsRead().catch(() => {
-        hasMarkedOnOpenRef.current = false;
+    if (unreadCount <= 0 || isMarkingReadRef.current) {
+      return;
+    }
+
+    isMarkingReadRef.current = true;
+    markAllAsRead()
+      .catch(() => {})
+      .finally(() => {
+        isMarkingReadRef.current = false;
       });
-    }
-    if (unreadCount === 0) {
-      hasMarkedOnOpenRef.current = true;
-    }
   }, [markAllAsRead, unreadCount]);
 
   const sortedItems = useMemo(

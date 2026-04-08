@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
@@ -16,13 +16,25 @@ export const GroupManager = () => {
   const [editingGroup, setEditingGroup] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [languageFilter, setLanguageFilter] = useState("");
+  const [subgroupFilter, setSubgroupFilter] = useState("");
   const { data, isLoading, execute } = useFetch(groupAPI.getAll);
 
   useEffect(() => {
     execute();
   }, [execute]);
 
-  const groups = Array.isArray(data) ? data : [];
+  const groups = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const filteredGroups = useMemo(
+    () =>
+      groups.filter((group) => {
+        const matchesLanguage = !languageFilter || group.language === languageFilter;
+        const matchesSubgroup =
+          !subgroupFilter || String(Number(Boolean(group.has_subgroups))) === subgroupFilter;
+        return matchesLanguage && matchesSubgroup;
+      }),
+    [groups, languageFilter, subgroupFilter],
+  );
   const totalStudents = groups.reduce(
     (sum, group) => sum + (Number(group.student_count) || 0),
     0,
@@ -172,10 +184,35 @@ export const GroupManager = () => {
 
       <DataTable
         columns={columns}
-        data={groups}
+        data={filteredGroups}
         isLoading={isLoading}
         onDelete={handleDeleteGroup}
         enableSearch
+        filterControls={
+          <>
+            <select
+              value={languageFilter}
+              onChange={(event) => setLanguageFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("studyLanguage").toLowerCase()}</option>
+              {STUDY_LANGUAGES.map((language) => (
+                <option key={language.value} value={language.value}>
+                  {t(language.labelKey)}
+                </option>
+              ))}
+            </select>
+            <select
+              value={subgroupFilter}
+              onChange={(event) => setSubgroupFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("subgroups").toLowerCase()}</option>
+              <option value="1">A / B</option>
+              <option value="0">{t("no")}</option>
+            </select>
+          </>
+        }
         onEdit={(group) => {
           setEditingGroup(group);
           setIsModalOpen(true);
@@ -190,6 +227,7 @@ export const GroupManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
+          resetKey={editingGroup ? `group-${editingGroup.id}` : "group-new"}
           initialValues={{ has_subgroups: 0, language: "ru", ...(editingGroup || {}) }}
           submitText={editingGroup ? t("save") : t("add")}
           isLoading={isSubmitting}

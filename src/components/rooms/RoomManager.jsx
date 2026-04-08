@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
@@ -16,13 +16,27 @@ export const RoomManager = () => {
   const [editingRoom, setEditingRoom] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [availabilityFilter, setAvailabilityFilter] = useState("");
   const { data, isLoading, execute } = useFetch(roomAPI.getAll);
 
   useEffect(() => {
     execute();
   }, [execute]);
 
-  const rooms = Array.isArray(data) ? data : [];
+  const rooms = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const filteredRooms = useMemo(
+    () =>
+      rooms.filter((room) => {
+        const matchesDepartment = !departmentFilter || room.department === departmentFilter;
+        const matchesType = !typeFilter || room.type === typeFilter;
+        const matchesAvailability =
+          !availabilityFilter || String(Number(Boolean(room.available))) === availabilityFilter;
+        return matchesDepartment && matchesType && matchesAvailability;
+      }),
+    [rooms, departmentFilter, typeFilter, availabilityFilter],
+  );
   const availableRoomsCount = rooms.filter((room) => room.available).length;
 
   const handleAddRoom = () => {
@@ -211,11 +225,46 @@ export const RoomManager = () => {
 
       <DataTable
         columns={columns}
-        data={rooms}
+        data={filteredRooms}
         onEdit={handleEditRoom}
         onDelete={handleDeleteRoom}
         isLoading={isLoading}
         enableSearch
+        filterControls={
+          <>
+            <select
+              value={departmentFilter}
+              onChange={(event) => setDepartmentFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
+              {DEPARTMENTS.map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </select>
+            <select
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("roomType").toLowerCase()}</option>
+              <option value="lecture">{t("lectureHall")}</option>
+              <option value="practical">{t("practicalRoom")}</option>
+              <option value="lab">{t("labHall")}</option>
+            </select>
+            <select
+              value={availabilityFilter}
+              onChange={(event) => setAvailabilityFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("available").toLowerCase()}</option>
+              <option value="1">{t("yes")}</option>
+              <option value="0">{t("no")}</option>
+            </select>
+          </>
+        }
       />
 
       <Modal
@@ -226,6 +275,7 @@ export const RoomManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
+          resetKey={editingRoom ? `room-${editingRoom.id}` : "room-new"}
           initialValues={{
             available: 1,
             ...(editingRoom || {}),

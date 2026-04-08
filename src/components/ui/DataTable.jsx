@@ -10,6 +10,7 @@ export const DataTable = ({
   isLoading,
   title,
   enableSearch = false,
+  filterControls = null,
 }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,15 +53,24 @@ export const DataTable = ({
       {title && (
         <h2 className="text-xl font-bold mb-4 text-gray-900">{title}</h2>
       )}
-      {enableSearch ? (
-        <div className="mb-4">
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder={`${t("search")}...`}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#014531] focus:ring-2 focus:ring-[#014531]/20"
-          />
+      {enableSearch || filterControls ? (
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          {enableSearch ? (
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder={`${t("search")}...`}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#014531] focus:ring-2 focus:ring-[#014531]/20 lg:max-w-sm"
+            />
+          ) : (
+            <div />
+          )}
+          {filterControls ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+              {filterControls}
+            </div>
+          ) : null}
         </div>
       ) : null}
       {filteredData.length === 0 ? (

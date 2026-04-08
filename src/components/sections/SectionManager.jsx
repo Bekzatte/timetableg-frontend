@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
@@ -14,6 +14,8 @@ export const SectionManager = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lessonTypeFilter, setLessonTypeFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
   const { data, isLoading, execute } = useFetch(sectionAPI.getAll);
   const {
     data: coursesData,
@@ -32,9 +34,18 @@ export const SectionManager = () => {
     executeGroups();
   }, [execute, executeCourses, executeGroups]);
 
-  const sections = Array.isArray(data) ? data : [];
+  const sections = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
+  const filteredSections = useMemo(
+    () =>
+      sections.filter((section) => {
+        const matchesLessonType = !lessonTypeFilter || section.lesson_type === lessonTypeFilter;
+        const matchesGroup = !groupFilter || String(section.group_id) === groupFilter;
+        return matchesLessonType && matchesGroup;
+      }),
+    [sections, lessonTypeFilter, groupFilter],
+  );
 
   const handleAddSection = () => {
     setEditingSection(null);
@@ -170,10 +181,36 @@ export const SectionManager = () => {
 
       <DataTable
         columns={columns}
-        data={sections}
+        data={filteredSections}
         onEdit={handleEditSection}
         isLoading={isLoading}
         enableSearch
+        filterControls={
+          <>
+            <select
+              value={lessonTypeFilter}
+              onChange={(event) => setLessonTypeFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("lessonType").toLowerCase()}</option>
+              <option value="lecture">{t("lecture")}</option>
+              <option value="practical">{t("practical")}</option>
+              <option value="lab">{t("lab")}</option>
+            </select>
+            <select
+              value={groupFilter}
+              onChange={(event) => setGroupFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("groups").toLowerCase()}</option>
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+          </>
+        }
       />
 
       <Modal
@@ -184,6 +221,7 @@ export const SectionManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
+          resetKey={editingSection ? `section-${editingSection.id}` : "section-new"}
           initialValues={
             editingSection
               ? {

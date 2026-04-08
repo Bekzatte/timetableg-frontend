@@ -7,15 +7,20 @@ export const Form = ({
   submitText,
   isLoading = false,
   initialValues = {},
+  resetKey = "default",
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = React.useState(initialValues);
   const [errors, setErrors] = React.useState({});
+  const previousResetKeyRef = React.useRef(resetKey);
 
   React.useEffect(() => {
-    setFormData(initialValues);
-    setErrors({});
-  }, [initialValues]);
+    if (previousResetKeyRef.current !== resetKey) {
+      previousResetKeyRef.current = resetKey;
+      setFormData(initialValues);
+      setErrors({});
+    }
+  }, [resetKey, initialValues]);
 
   const validate = React.useCallback(() => {
     const nextErrors = {};
