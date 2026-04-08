@@ -107,7 +107,7 @@ export const DataTable = ({
               size="sm"
             >
               <div className="space-y-4">
-                <div className="grid justify-items-start gap-3 [&>select]:w-full [&>select]:max-w-full sm:[&>select]:max-w-[260px] [&>select]:truncate">
+                <div className="grid gap-3 [&>select]:w-full [&>select]:max-w-full [&>select]:truncate">
                   {filterControls}
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
