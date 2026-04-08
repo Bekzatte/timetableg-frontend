@@ -100,16 +100,6 @@ export const SchedulePage = () => {
       placeholder: "2026",
       required: true,
     },
-    {
-      name: "algorithm",
-      label: t("algorithm"),
-      type: "select",
-      options: [
-        { value: "greedy", label: t("greedyAlgorithm") },
-        { value: "genetic", label: t("geneticAlgorithm") },
-        { value: "simulated_annealing", label: t("simulatedAnnealing") },
-      ],
-    },
   ];
 
   return (
@@ -168,7 +158,7 @@ export const SchedulePage = () => {
           onSubmit={handleGenerateSchedule}
           submitText={t("generateSchedule")}
           isLoading={isLoading}
-          initialValues={{ semester: 1, year: new Date().getFullYear(), algorithm: "greedy" }}
+          initialValues={{ semester: 1, year: new Date().getFullYear() }}
         />
       </Modal>
     </div>

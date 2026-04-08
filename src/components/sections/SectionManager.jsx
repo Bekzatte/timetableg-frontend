@@ -92,6 +92,7 @@ export const SectionManager = () => {
     { key: "course_name", label: t("courseName") },
     { key: "group_name", label: t("groupNumber") },
     { key: "classes_count", label: t("classesCount") },
+    { key: "lesson_type", label: t("lessonType"), render: (value) => t(value || "lecture") },
   ];
 
   const formFields = [
@@ -122,6 +123,18 @@ export const SectionManager = () => {
       label: t("classesCount"),
       type: "number",
       placeholder: "1",
+      required: true,
+    },
+    {
+      name: "lesson_type",
+      label: t("lessonType"),
+      type: "select",
+      placeholder: t("selectLessonType"),
+      options: [
+        { value: "lecture", label: t("lecture") },
+        { value: "practical", label: t("practical") },
+        { value: "lab", label: t("lab") },
+      ],
       required: true,
     },
   ];
@@ -172,8 +185,9 @@ export const SectionManager = () => {
                   ...editingSection,
                   course_id: editingSection.course_id || "",
                   group_id: editingSection.group_id || "",
+                  lesson_type: editingSection.lesson_type || "lecture",
                 }
-              : {}
+              : { lesson_type: "lecture" }
           }
           submitText={editingSection ? t("save") : t("add")}
         />
