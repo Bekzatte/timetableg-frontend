@@ -278,7 +278,7 @@ export const translations = {
     selectStudyCourse: "Курсты таңдаңыз",
     errorGenerateSchedule: "Кестені құру қатесі",
     scheduleGenerationInProgress:
-      "Кесте фондық режимде құрылып жатыр. Бұл процесс 1-2 минутқа созылуы мүмкін.",
+      "Кесте құрылып жатыр. Бұл көбірек уақыт алуы мүмкін.",
     greedyAlgorithm: "Ашқаншыл алгоритм",
     geneticAlgorithm: "Генетикалық алгоритм",
     simulatedAnnealing: "Имитациялық сойдыру",
@@ -625,7 +625,7 @@ export const translations = {
     selectStudyCourse: "Выберите курс",
     errorGenerateSchedule: "Ошибка при генерировании расписания",
     scheduleGenerationInProgress:
-      "Расписание генерируется в фоновом режиме. Это может занять 1-2 минуты.",
+      "Расписание генерируется. Это может занять дольше времени.",
     greedyAlgorithm: "Жадный алгоритм",
     geneticAlgorithm: "Генетический алгоритм",
     simulatedAnnealing: "Имитация отжига",
@@ -970,7 +970,7 @@ export const translations = {
     selectStudyCourse: "Select course",
     errorGenerateSchedule: "Error generating schedule",
     scheduleGenerationInProgress:
-      "The schedule is being generated in the background. This can take 1-2 minutes.",
+      "The schedule is being generated. This may take longer.",
     greedyAlgorithm: "Greedy Algorithm",
     geneticAlgorithm: "Genetic Algorithm",
     simulatedAnnealing: "Simulated Annealing",
