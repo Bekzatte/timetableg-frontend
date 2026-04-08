@@ -8,6 +8,7 @@ import { adminAPI, teacherAPI, teacherPreferenceAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import { DEPARTMENTS } from "../../constants/departments";
+import { STUDY_LANGUAGES } from "../../constants/languages";
 
 export const TeacherManager = () => {
   const { t } = useTranslation();
@@ -19,6 +20,7 @@ export const TeacherManager = () => {
   const {
     data: preferenceRequestsData,
     isLoading: isPreferenceRequestsLoading,
+    error: preferenceRequestsError,
     execute: executePreferenceRequests,
   } = useFetch(teacherPreferenceAPI.getAll);
 
@@ -80,9 +82,15 @@ export const TeacherManager = () => {
       }
 
       if (editingTeacher) {
-        await teacherAPI.update(editingTeacher.id, formData);
+        await teacherAPI.update(editingTeacher.id, {
+          ...formData,
+          teaching_languages: formData.teaching_languages || ["ru", "kk"],
+        });
       } else {
-        await teacherAPI.create(formData);
+        await teacherAPI.create({
+          ...formData,
+          teaching_languages: formData.teaching_languages || ["ru", "kk"],
+        });
       }
       await execute();
       setIsModalOpen(false);
@@ -111,6 +119,16 @@ export const TeacherManager = () => {
     { key: "email", label: "Email" },
     { key: "phone", label: t("phone") },
     { key: "department", label: t("facultyInstitute") },
+    {
+      key: "teaching_languages",
+      label: t("teachingLanguages"),
+      render: (value) =>
+        String(value || "ru,kk")
+          .split(",")
+          .filter(Boolean)
+          .map((item) => t(item === "kk" ? "languageKazakh" : "languageRussian"))
+          .join(", "),
+    },
   ];
 
   if (!isAdmin) {
@@ -149,6 +167,16 @@ export const TeacherManager = () => {
         value: department,
         label: department,
       })),
+    },
+    {
+      name: "teaching_languages",
+      label: t("teachingLanguages"),
+      type: "checkbox-group",
+      options: STUDY_LANGUAGES.map((item) => ({
+        value: item.value,
+        label: t(item.labelKey),
+      })),
+      required: true,
     },
   ];
 
@@ -219,6 +247,10 @@ export const TeacherManager = () => {
           <div className="rounded-xl bg-white px-4 py-6 text-center text-gray-500">
             {t("loading")}
           </div>
+        ) : preferenceRequestsError ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-6 text-center text-red-700">
+            {preferenceRequestsError}
+          </div>
         ) : preferenceRequests.length === 0 ? (
           <div className="rounded-xl border border-dashed border-amber-200 bg-white px-4 py-6 text-center text-gray-500">
             {t("teacherRequestsEmpty")}
@@ -284,7 +316,16 @@ export const TeacherManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
-          initialValues={editingTeacher || {}}
+          initialValues={
+            editingTeacher
+              ? {
+                  ...editingTeacher,
+                  teaching_languages: String(editingTeacher.teaching_languages || "ru,kk")
+                    .split(",")
+                    .filter(Boolean),
+                }
+              : { teaching_languages: ["ru", "kk"] }
+          }
           submitText={editingTeacher ? t("save") : t("add")}
         />
       </Modal>

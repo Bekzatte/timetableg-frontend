@@ -7,6 +7,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, groupAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
+import { STUDY_LANGUAGES } from "../../constants/languages";
 
 export const GroupManager = () => {
   const { t } = useTranslation();
@@ -32,6 +33,7 @@ export const GroupManager = () => {
         ...formData,
         student_count: Number(formData.student_count),
         has_subgroups: formData.has_subgroups ? 1 : 0,
+        language: formData.language || "ru",
       };
       if (editingGroup) {
         await groupAPI.update(editingGroup.id, payload);
@@ -84,6 +86,11 @@ export const GroupManager = () => {
     { key: "name", label: t("groupNumber") },
     { key: "student_count", label: t("studentCount") },
     {
+      key: "language",
+      label: t("studyLanguage"),
+      render: (value) => t(value === "kk" ? "languageKazakh" : "languageRussian"),
+    },
+    {
       key: "has_subgroups",
       label: t("subgroups"),
       render: (value) => (value ? "A / B" : t("no")),
@@ -102,6 +109,17 @@ export const GroupManager = () => {
       label: t("studentCount"),
       type: "number",
       placeholder: "25",
+      required: true,
+    },
+    {
+      name: "language",
+      label: t("studyLanguage"),
+      type: "select",
+      placeholder: t("selectStudyLanguage"),
+      options: STUDY_LANGUAGES.map((item) => ({
+        value: item.value,
+        label: t(item.labelKey),
+      })),
       required: true,
     },
     {
@@ -167,7 +185,7 @@ export const GroupManager = () => {
         <Form
           fields={formFields}
           onSubmit={handleSubmit}
-          initialValues={{ has_subgroups: 0, ...(editingGroup || {}) }}
+          initialValues={{ has_subgroups: 0, language: "ru", ...(editingGroup || {}) }}
           submitText={editingGroup ? t("save") : t("add")}
         />
       </Modal>

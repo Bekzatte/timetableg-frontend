@@ -28,13 +28,19 @@ export default function ProfilePage() {
   const [preferenceSuccess, setPreferenceSuccess] = useState("");
   const [isSubmittingPreference, setIsSubmittingPreference] = useState(false);
   const fileInputRef = useRef(null);
-  const { data: preferenceData, execute: executePreferences } = useFetch(
+  const {
+    data: preferenceData,
+    error: preferenceLoadError,
+    execute: executePreferences,
+  } = useFetch(
     teacherPreferenceAPI.getMine,
   );
 
   useEffect(() => {
     if (user?.role === "teacher") {
-      executePreferences().catch(() => {});
+      executePreferences().catch((error) => {
+        setPreferenceError(error.message);
+      });
     }
   }, [executePreferences, user?.role]);
 
@@ -269,6 +275,30 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 ) : null}
+                {user?.language ? (
+                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      {t("studyLanguage")}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {t(user.language === "kk" ? "languageKazakh" : "languageRussian")}
+                    </p>
+                  </div>
+                ) : null}
+                {user?.teachingLanguages ? (
+                  <div className="rounded-2xl bg-[#f4fbf7] p-4 sm:col-span-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      {t("teachingLanguages")}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {String(user.teachingLanguages)
+                        .split(",")
+                        .filter(Boolean)
+                        .map((item) => t(item === "kk" ? "languageKazakh" : "languageRussian"))
+                        .join(", ")}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -297,6 +327,11 @@ export default function ProfilePage() {
                 {preferenceError ? (
                   <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {preferenceError}
+                  </div>
+                ) : null}
+                {!preferenceError && preferenceLoadError ? (
+                  <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {preferenceLoadError}
                   </div>
                 ) : null}
                 {preferenceSuccess ? (

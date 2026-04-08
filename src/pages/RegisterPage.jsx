@@ -6,6 +6,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { DEPARTMENTS } from "../constants/departments";
 import { PROGRAMMES } from "../constants/programmes";
 import { groupAPI } from "../services/api";
+import { STUDY_LANGUAGES } from "../constants/languages";
 
 export const RegisterPage = () => {
   const { t, language } = useTranslation();
@@ -20,6 +21,7 @@ export const RegisterPage = () => {
   const [programmeName, setProgrammeName] = useState("");
   const [groupId, setGroupId] = useState("");
   const [subgroup, setSubgroup] = useState("");
+  const [studentLanguage, setStudentLanguage] = useState("");
   const [groups, setGroups] = useState([]);
   const [localError, setLocalError] = useState("");
 
@@ -56,7 +58,7 @@ export const RegisterPage = () => {
 
     if (
       selectedRole === ROLES.STUDENT &&
-      (!department || !programmeName || !groupId)
+      (!department || !programmeName || !groupId || !studentLanguage)
     ) {
       setLocalError(t("fillAllFields"));
       return;
@@ -87,6 +89,8 @@ export const RegisterPage = () => {
         programmeName,
         groupId,
         subgroup,
+        studentLanguage,
+        selectedRole === ROLES.TEACHER ? ["ru", "kk"] : [],
       );
       navigate("/");
     } catch (err) {
@@ -124,6 +128,7 @@ export const RegisterPage = () => {
                       setProgrammeName("");
                       setGroupId("");
                       setSubgroup("");
+                      setStudentLanguage("");
                     }
                   }}
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
@@ -205,6 +210,24 @@ export const RegisterPage = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("studyLanguage")}
+                </label>
+                <select
+                  value={studentLanguage}
+                  onChange={(e) => setStudentLanguage(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">{t("selectStudyLanguage")}</option>
+                  {STUDY_LANGUAGES.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {t(item.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
                   {t("groupNumber")}
                 </label>
                 <select
@@ -215,6 +238,7 @@ export const RegisterPage = () => {
                       (group) => String(group.id) === String(nextGroupId),
                     );
                     setGroupId(nextGroupId);
+                    setStudentLanguage(nextGroup?.language || "");
                     if (!nextGroup?.has_subgroups) {
                       setSubgroup("");
                     }
@@ -224,7 +248,7 @@ export const RegisterPage = () => {
                   <option value="">{t("selectGroup")}</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {group.name}
+                      {group.name} • {t(group.language === "kk" ? "languageKazakh" : "languageRussian")}
                     </option>
                   ))}
                 </select>

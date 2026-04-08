@@ -69,6 +69,8 @@ export const AuthProvider = ({ children }) => {
     programmeName = "",
     groupId = "",
     subgroup = "",
+    language = "",
+    teachingLanguages = [],
   ) => {
     setIsLoading(true);
     setError(null);
@@ -82,6 +84,8 @@ export const AuthProvider = ({ children }) => {
         programmeName,
         groupId,
         subgroup,
+        language,
+        teachingLanguages,
       );
       persistUser(userData);
       return userData;

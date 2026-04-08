@@ -96,6 +96,35 @@ export const Form = ({
                 />
               </button>
             </label>
+          ) : field.type === "checkbox-group" ? (
+            <div className="grid gap-2">
+              {field.options?.map((opt) => {
+                const currentValues = Array.isArray(formData[field.name]) ? formData[field.name] : [];
+                const checked = currentValues.includes(opt.value);
+                return (
+                  <label
+                    key={opt.value}
+                    className="flex items-center gap-3 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) => {
+                        const nextValues = event.target.checked
+                          ? [...currentValues, opt.value]
+                          : currentValues.filter((value) => value !== opt.value);
+                        setFormData((prev) => ({
+                          ...prev,
+                          [field.name]: nextValues,
+                        }));
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <span>{opt.label}</span>
+                  </label>
+                );
+              })}
+            </div>
           ) : (
             <input
               type={field.type || "text"}
