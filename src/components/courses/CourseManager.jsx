@@ -215,8 +215,6 @@ export const CourseManager = () => {
       label: t("requiresComputers"),
       type: "toggle",
       required: true,
-      requireExplicitChoice: true,
-      placeholder: t("selectOption"),
       trueLabel: t("yes"),
       falseLabel: t("no"),
     },
@@ -346,7 +344,7 @@ export const CourseManager = () => {
                   instructor_id: editingCourse.instructor_id || "",
                   requires_computers: editingCourse.requires_computers ? 1 : 0,
                 }
-              : {}
+              : { requires_computers: 0 }
           }
           submitText={editingCourse ? t("save") : t("add")}
           isLoading={isSubmitting}

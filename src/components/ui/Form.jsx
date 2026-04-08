@@ -40,9 +40,6 @@ export const Form = ({
       }
 
       if (field.type === "toggle") {
-        if (field.requireExplicitChoice && value !== 0 && value !== 1) {
-          nextErrors[field.name] = t("fillAllFields");
-        }
         return;
       }
 
@@ -122,23 +119,14 @@ export const Form = ({
           ) : field.type === "toggle" ? (
             <label className="flex items-center justify-between rounded-md border border-gray-300 bg-white px-4 py-3">
               <span className="text-sm font-medium text-gray-700">
-                {formData[field.name] === 1
-                  ? field.trueLabel || t("yes")
-                  : formData[field.name] === 0
-                    ? field.falseLabel || t("no")
-                    : field.placeholder || t("selectOption")}
+                {formData[field.name] ? field.trueLabel || t("yes") : field.falseLabel || t("no")}
               </span>
               <button
                 type="button"
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
-                    [field.name]:
-                      prev[field.name] === undefined || prev[field.name] === null || prev[field.name] === ""
-                        ? 1
-                        : prev[field.name]
-                          ? 0
-                          : 1,
+                    [field.name]: prev[field.name] ? 0 : 1,
                   }))
                 }
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${

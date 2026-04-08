@@ -146,8 +146,6 @@ export const GroupManager = () => {
       label: t("subgroups"),
       type: "toggle",
       required: true,
-      requireExplicitChoice: true,
-      placeholder: t("selectOption"),
       trueLabel: "A / B",
       falseLabel: t("no"),
     },
