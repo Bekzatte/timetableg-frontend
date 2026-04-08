@@ -37,7 +37,7 @@ export const Dashboard = () => {
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
   const { data: groupsData, execute: executeGroups } = useFetch(groupAPI.getAll);
   const { data: sectionsData, execute: executeSections } = useFetch(sectionAPI.getAll);
-  const { data: schedulesData, execute: executeSchedules } = useFetch(scheduleAPI.getAll);
+  const { execute: executeSchedules } = useFetch(scheduleAPI.getAll);
   const actionButtonClass =
     "inline-flex h-[46px] w-full items-center justify-center rounded-md px-4 text-sm text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
   const outlineActionButtonClass = `${actionButtonClass} border border-[#014531] text-[#014531] hover:bg-[#f4fbf7]`;
@@ -48,7 +48,6 @@ export const Dashboard = () => {
   const rooms = Array.isArray(roomsData) ? roomsData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
-  const schedules = Array.isArray(schedulesData) ? schedulesData : [];
   const importSummaryLabels = {
     courses: t("courses"),
     teachers: t("teachers"),

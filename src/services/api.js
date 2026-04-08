@@ -238,6 +238,14 @@ export const profileAPI = {
     api.post("/profile/avatar", { avatarData }).then((response) => response.data),
 };
 
+export const teacherPreferenceAPI = {
+  getMine: () => api.get("/teacher-preferences/mine").then((response) => response.data),
+  getAll: () => api.get("/teacher-preferences").then((response) => response.data),
+  create: (data) => api.post("/teacher-preferences", data).then((response) => response.data),
+  updateStatus: (id, data) =>
+    api.put(`/teacher-preferences/${id}/status`, data).then((response) => response.data),
+};
+
 export const importAPI = {
   importExcel: (fileName, fileContent) =>
     api
@@ -262,6 +270,7 @@ export default {
   scheduleAPI,
   authAPI,
   profileAPI,
+  teacherPreferenceAPI,
   importAPI,
   adminAPI,
 };

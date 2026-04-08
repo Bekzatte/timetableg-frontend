@@ -220,10 +220,10 @@ export default function App() {
                   <button
                     key={lang.code}
                     onClick={() => setLanguage(lang.code)}
-                    className={`px-3 py-1.5 rounded-xl font-semibold transition duration-200 text-xs whitespace-nowrap ${
+                      className={`px-3 py-1.5 rounded-xl font-semibold transition duration-200 text-xs whitespace-nowrap ${
                       language === lang.code
                         ? "bg-yellow-400 text-black shadow-md scale-105"
-                        : "text-black hover:bg-white hover:bg-opacity-20"
+                        : "text-white hover:bg-white/20"
                     }`}
                   >
                     {lang.name}
@@ -511,7 +511,7 @@ export default function App() {
                       className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition font-semibold ${
                         language === lang.code
                           ? "bg-yellow-400 text-black"
-                          : "bg-white bg-opacity-10 text-black hover:bg-opacity-20"
+                          : "bg-white/10 text-white hover:bg-white/20"
                       }`}
                     >
                       {lang.name}

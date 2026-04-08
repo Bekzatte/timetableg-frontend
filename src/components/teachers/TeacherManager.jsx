@@ -4,7 +4,7 @@ import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { adminAPI, teacherAPI } from "../../services/api";
+import { adminAPI, teacherAPI, teacherPreferenceAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import { DEPARTMENTS } from "../../constants/departments";
@@ -16,12 +16,19 @@ export const TeacherManager = () => {
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const { data, isLoading, execute } = useFetch(teacherAPI.getAll);
+  const {
+    data: preferenceRequestsData,
+    isLoading: isPreferenceRequestsLoading,
+    execute: executePreferenceRequests,
+  } = useFetch(teacherPreferenceAPI.getAll);
 
   useEffect(() => {
     execute();
-  }, [execute]);
+    executePreferenceRequests();
+  }, [execute, executePreferenceRequests]);
 
   const teachers = Array.isArray(data) ? data : [];
+  const preferenceRequests = Array.isArray(preferenceRequestsData) ? preferenceRequestsData : [];
 
   const handleAddTeacher = () => {
     setEditingTeacher(null);
@@ -84,6 +91,18 @@ export const TeacherManager = () => {
         ...prev,
         error: error.message,
       }));
+    }
+  };
+
+  const handleUpdateRequestStatus = async (request, status) => {
+    try {
+      await teacherPreferenceAPI.updateStatus(request.id, {
+        status,
+        admin_comment: "",
+      });
+      await executePreferenceRequests();
+    } catch (error) {
+      console.error(t("errorSaveTeacherPreference"), error);
     }
   };
 
@@ -180,6 +199,82 @@ export const TeacherManager = () => {
         onDelete={handleDeleteTeacher}
         isLoading={isLoading}
       />
+
+      <div className="mt-8 rounded-2xl border border-amber-100 bg-amber-50/40 p-5">
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {t("teacherRequestsTitle")}
+            </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              {t("teacherRequestsDescription")}
+            </p>
+          </div>
+          <div className="rounded-full bg-white px-4 py-2 text-sm font-medium text-amber-700 shadow-sm">
+            {preferenceRequests.length}
+          </div>
+        </div>
+
+        {isPreferenceRequestsLoading ? (
+          <div className="rounded-xl bg-white px-4 py-6 text-center text-gray-500">
+            {t("loading")}
+          </div>
+        ) : preferenceRequests.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-amber-200 bg-white px-4 py-6 text-center text-gray-500">
+            {t("teacherRequestsEmpty")}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {preferenceRequests.map((request) => (
+              <div
+                key={request.id}
+                className="rounded-2xl border border-white bg-white p-4 shadow-sm"
+              >
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-base font-semibold text-gray-900">
+                      {request.teacher_name} • {t(request.preferred_day)} • {request.preferred_hour}:00
+                    </p>
+                    <p className="text-sm text-gray-600">{request.teacher_email}</p>
+                    <p className="text-sm text-gray-600">
+                      {request.note || t("teacherPreferenceNoNote")}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-start gap-3 lg:items-end">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${
+                        request.status === "approved"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : request.status === "rejected"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {t(`teacherPreferenceStatus${request.status[0].toUpperCase()}${request.status.slice(1)}`)}
+                    </span>
+                    {request.status === "pending" ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleUpdateRequestStatus(request, "approved")}
+                          className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                        >
+                          {t("approve")}
+                        </button>
+                        <button
+                          onClick={() => handleUpdateRequestStatus(request, "rejected")}
+                          className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700"
+                        >
+                          {t("reject")}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <Modal
         isOpen={isModalOpen}

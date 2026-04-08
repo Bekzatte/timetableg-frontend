@@ -36,7 +36,7 @@ export const TimetableGrid = ({ schedule = [] }) => {
             <th className="px-4 py-2 text-left border-r font-semibold text-gray-900 border-gray-200 w-32">
               {t("time")}
             </th>
-            {days.map((day, idx) => (
+            {days.map((day) => (
               <th
                 key={day}
                 className="px-3 py-2 text-center border-r font-semibold text-sm text-gray-900 border-gray-200"
