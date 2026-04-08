@@ -206,7 +206,7 @@ export const TeacherManager = () => {
 
   return (
     <div className="p-6 bg-white">
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">
             {t("totalInstructors")}
@@ -223,21 +223,28 @@ export const TeacherManager = () => {
             {DEPARTMENTS.length}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsRequestsModalOpen(true)}
+          className="rounded-2xl border border-amber-100 bg-amber-50 p-5 text-left transition hover:bg-amber-100"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-amber-700">
+                {t("teacherRequestsTitle")}
+              </p>
+              <p className="mt-2 text-3xl font-bold text-gray-900">
+                {preferenceRequests.length}
+              </p>
+            </div>
+            <Bell size={22} className="text-amber-700" />
+          </div>
+        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t("teacherMgmt")}</h1>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <button
-            onClick={() => setIsRequestsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-100 w-full sm:w-auto"
-          >
-            <Bell size={18} />
-            {t("teacherRequestsTitle")}
-            <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-amber-700 shadow-sm">
-              {preferenceRequests.length}
-            </span>
-          </button>
           <button
             onClick={handleAddTeacher}
             className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto"
@@ -331,7 +338,7 @@ export const TeacherManager = () => {
         isOpen={isRequestsModalOpen}
         onClose={() => setIsRequestsModalOpen(false)}
         title={t("teacherRequestsTitle")}
-        size="lg"
+        size="md"
       >
         <div className="space-y-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

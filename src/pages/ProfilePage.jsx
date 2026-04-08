@@ -166,9 +166,6 @@ export default function ProfilePage() {
 
               <h2 className="mt-5 text-2xl font-semibold">{user?.displayName}</h2>
               <p className="mt-1 text-sm text-green-100">{user?.email}</p>
-              <span className="mt-4 rounded-full bg-yellow-300 px-4 py-1 text-sm font-semibold text-[#014531]">
-                {t(user?.role)}
-              </span>
             </div>
 
             <div className="mt-6">
@@ -225,26 +222,6 @@ export default function ProfilePage() {
                     {user?.email}
                   </p>
                 </div>
-                {user?.role !== "student" ? (
-                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-                      {t("selectRole")}
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-gray-900">
-                      {t(user?.role)}
-                    </p>
-                  </div>
-                ) : null}
-                {user?.role === "admin" ? (
-                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-                      ID
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-gray-900">
-                      {user?.id}
-                    </p>
-                  </div>
-                ) : null}
                 {user?.department ? (
                   <div className="rounded-2xl bg-[#f4fbf7] p-4">
                     <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
