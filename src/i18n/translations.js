@@ -239,8 +239,24 @@ export const translations = {
     errorDatabase: "Дерекқор қатесі орын алды.",
     errorInternalServer: "Ішкі сервер қатесі орын алды.",
     errorOptimizerInputInfeasible: "Оптимизатор үшін деректерде қайшылық бар.",
+    errorOptimizerDependencyMissing:
+      "Кесте генераторы серверде толық орнатылмаған. Backend тәуелділіктерін тексеріңіз.",
+    errorOptimizerRequiresTeachers:
+      "Кестені құру үшін кемінде бір оқытушы қажет.",
+    errorOptimizerRequiresRooms:
+      "Кестені құру үшін кемінде бір аудитория қажет.",
+    errorOptimizerRequiresPlanItems:
+      "Кестені құру үшін секциялар немесе жоспар элементтері қажет.",
+    errorOptimizerRequiresSlots:
+      "Кестені құру үшін уақыт слоттары немесе күндер мен сағаттар қажет.",
+    errorOptimizerNoSolution:
+      "Берілген шектеулермен жарамды кесте табылмады.",
     errorScheduleGenerationRequiresData:
       "Кесте құру үшін мына деректер жетіспейді",
+    errorInvalidTimeSlot: "Уақыт слоттарының бірінде күн немесе сағат дұрыс берілмеген.",
+    errorInvalidTeacher: "Оқытушы жазбасында міндетті ID жоқ.",
+    errorInvalidRoom: "Аудитория жазбасында міндетті ID жоқ.",
+    errorUnknownTeacher: "Кесте элементіне байланысқан оқытушы табылмады.",
     errorInvalidId: "ID сан болуы керек.",
     errorRecordNotFound: "Жазба табылмады.",
 
@@ -292,15 +308,15 @@ export const translations = {
     errorExportSchedule: "Кестені экспорттау қатесі",
     excelImportTitle: "Excel импорттау",
     excelImportDescription:
-      "Бір .xlsx файл арқылы пәндерді, оқытушыларды, аудиторияларды, топтарды және секцияларды жаппай жүктей аласыз. Disciplines парағындағы year өрісі генерацияда таңдалатын жылмен сәйкес болуы керек.",
+      "Бір .xlsx файл арқылы пәндерді, оқытушыларды, аудиторияларды, топтарды және секцияларды жаппай жүктей аласыз. Disciplines парағындағы course өрісі пәннің курсын, ал генерациядағы year өрісі кестенің оқу жылын білдіреді.",
     excelImportSheetFormat: "Excel файлында мына парақтар болуы керек:",
     excelImportCoursesColumns:
       "Disciplines: code, name, course, semester, programme, department, instructor_name, description, requires_computers (course мысалы: 2)",
     excelImportTeachersColumns:
-      "Teachers: name, email, phone, department",
+      "Teachers: name, email, phone, department, teaching_languages",
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, department, available, equipment, computer_count",
-    excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
+    excelImportGroupsColumns: "Groups: name, student_count, study_course, has_subgroups, language",
     excelImportSectionsColumns: "Sections: course_code, group_name, classes_count, lesson_type",
     excelImportButton: "Excel импорттау",
     excelTemplateButton: "Шаблонды жүктеу",
@@ -585,8 +601,24 @@ export const translations = {
     errorDatabase: "Произошла ошибка базы данных.",
     errorInternalServer: "Произошла внутренняя ошибка сервера.",
     errorOptimizerInputInfeasible: "Во входных данных есть конфликт для оптимизатора.",
+    errorOptimizerDependencyMissing:
+      "Генератор расписания не полностью установлен на сервере. Проверьте backend-зависимости.",
+    errorOptimizerRequiresTeachers:
+      "Для генерации расписания нужен хотя бы один преподаватель.",
+    errorOptimizerRequiresRooms:
+      "Для генерации расписания нужна хотя бы одна аудитория.",
+    errorOptimizerRequiresPlanItems:
+      "Для генерации расписания нужны секции или элементы плана.",
+    errorOptimizerRequiresSlots:
+      "Для генерации расписания нужны временные слоты или список дней и часов.",
+    errorOptimizerNoSolution:
+      "Не удалось найти допустимое расписание при текущих ограничениях.",
     errorScheduleGenerationRequiresData:
       "Для генерации расписания не хватает данных",
+    errorInvalidTimeSlot: "В одном из временных слотов неверно передан день или час.",
+    errorInvalidTeacher: "В записи преподавателя отсутствует обязательный ID.",
+    errorInvalidRoom: "В записи аудитории отсутствует обязательный ID.",
+    errorUnknownTeacher: "Для одного из элементов расписания не найден преподаватель.",
     errorInvalidId: "ID должен быть числом.",
     errorRecordNotFound: "Запись не найдена.",
 
@@ -639,15 +671,15 @@ export const translations = {
     errorExportSchedule: "Ошибка при экспорте расписания",
     excelImportTitle: "Импорт Excel",
     excelImportDescription:
-      "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей, аудитории, группы и секции. Поле year на листе Disciplines должно совпадать с годом, который вы выбираете при генерации.",
+      "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей, аудитории, группы и секции. Поле course на листе Disciplines означает курс предмета, а поле year при генерации означает учебный год расписания.",
     excelImportSheetFormat: "В Excel должны быть листы:",
     excelImportCoursesColumns:
       "Disciplines: code, name, course, semester, programme, department, instructor_name, description, requires_computers (пример course: 2)",
     excelImportTeachersColumns:
-      "Teachers: name, email, phone, department",
+      "Teachers: name, email, phone, department, teaching_languages",
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, department, available, equipment, computer_count",
-    excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
+    excelImportGroupsColumns: "Groups: name, student_count, study_course, has_subgroups, language",
     excelImportSectionsColumns: "Sections: course_code, group_name, classes_count, lesson_type",
     excelImportButton: "Импортировать Excel",
     excelTemplateButton: "Скачать шаблон",
@@ -931,8 +963,24 @@ export const translations = {
     errorDatabase: "A database error occurred.",
     errorInternalServer: "An internal server error occurred.",
     errorOptimizerInputInfeasible: "There is a conflict in the optimizer input data.",
+    errorOptimizerDependencyMissing:
+      "The schedule generator is not fully installed on the server. Check backend dependencies.",
+    errorOptimizerRequiresTeachers:
+      "At least one teacher is required to generate a schedule.",
+    errorOptimizerRequiresRooms:
+      "At least one room is required to generate a schedule.",
+    errorOptimizerRequiresPlanItems:
+      "Sections or plan items are required to generate a schedule.",
+    errorOptimizerRequiresSlots:
+      "Time slots or a list of days and hours are required to generate a schedule.",
+    errorOptimizerNoSolution:
+      "No valid schedule could be found with the current constraints.",
     errorScheduleGenerationRequiresData:
       "More data is required to generate the schedule",
+    errorInvalidTimeSlot: "One of the time slots has an invalid day or hour.",
+    errorInvalidTeacher: "A teacher record is missing the required ID.",
+    errorInvalidRoom: "A room record is missing the required ID.",
+    errorUnknownTeacher: "A teacher linked to a schedule item could not be found.",
     errorInvalidId: "ID must be a number.",
     errorRecordNotFound: "Record not found.",
 
@@ -984,15 +1032,15 @@ export const translations = {
     errorExportSchedule: "Error exporting schedule",
     excelImportTitle: "Excel Import",
     excelImportDescription:
-      "Upload one .xlsx file to bulk import courses, teachers, rooms, groups, and sections. The year field on the Disciplines sheet must match the year selected during schedule generation.",
+      "Upload one .xlsx file to bulk import courses, teachers, rooms, groups, and sections. The course field on the Disciplines sheet is the study course of the subject, while the year field during generation is the academic year of the schedule.",
     excelImportSheetFormat: "The Excel file must contain these sheets:",
     excelImportCoursesColumns:
       "Disciplines: code, name, course, semester, programme, department, instructor_name, description, requires_computers (example course: 2)",
     excelImportTeachersColumns:
-      "Teachers: name, email, phone, department",
+      "Teachers: name, email, phone, department, teaching_languages",
     excelImportRoomsColumns:
       "Rooms: number, capacity, building, type, department, available, equipment, computer_count",
-    excelImportGroupsColumns: "Groups: name, student_count, has_subgroups",
+    excelImportGroupsColumns: "Groups: name, student_count, study_course, has_subgroups, language",
     excelImportSectionsColumns: "Sections: course_code, group_name, classes_count, lesson_type",
     excelImportButton: "Import Excel",
     excelTemplateButton: "Download Template",

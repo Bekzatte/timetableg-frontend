@@ -267,14 +267,14 @@ export const RegisterPage = () => {
                   }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
-                  <option value="">{t("selectGroup")}</option>
-                  {groups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name} • {t(group.language === "kk" ? "languageKazakh" : "languageRussian")}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                    <option value="">{t("selectGroup")}</option>
+                    {groups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name} • {t(group.language === "kk" ? "languageKazakh" : "languageRussian")} • {t("studyCourse")} {group.study_course ?? "-"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
               {requiresSubgroup ? (
                 <div>

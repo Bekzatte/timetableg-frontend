@@ -51,8 +51,18 @@ const ERROR_CODE_TRANSLATION_KEYS = {
   database_error: "errorDatabase",
   internal_server_error: "errorInternalServer",
   optimizer_input_infeasible: "errorOptimizerInputInfeasible",
+  optimizer_dependency_missing: "errorOptimizerDependencyMissing",
+  optimizer_requires_teachers: "errorOptimizerRequiresTeachers",
+  optimizer_requires_rooms: "errorOptimizerRequiresRooms",
+  optimizer_requires_plan_items: "errorOptimizerRequiresPlanItems",
+  optimizer_requires_slots: "errorOptimizerRequiresSlots",
+  optimizer_no_solution: "errorOptimizerNoSolution",
   schedule_generation_requires_data: "errorScheduleGenerationRequiresData",
+  invalid_time_slot: "errorInvalidTimeSlot",
   invalid_id: "errorInvalidId",
+  invalid_teacher: "errorInvalidTeacher",
+  invalid_room: "errorInvalidRoom",
+  unknown_teacher: "errorUnknownTeacher",
   record_not_found: "errorRecordNotFound",
   forbidden: "errorForbidden",
   not_found: "errorNotFound",
@@ -90,6 +100,8 @@ const RAW_ERROR_TRANSLATION_KEYS = {
   "ID должен быть числом": "errorInvalidId",
   "Для генерации расписания нужны секции, преподаватели, группы и аудитории.":
     "errorScheduleGenerationRequiresData",
+  "Для оптимизатора нужно установить ortools: pip install ortools":
+    "errorOptimizerDependencyMissing",
   "Not found": "errorNotFound",
   "Method not allowed": "errorMethodNotAllowed",
 };

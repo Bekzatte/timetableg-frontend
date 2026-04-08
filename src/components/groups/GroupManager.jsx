@@ -18,8 +18,10 @@ export const GroupManager = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [languageFilter, setLanguageFilter] = useState("");
   const [subgroupFilter, setSubgroupFilter] = useState("");
+  const [courseFilter, setCourseFilter] = useState("");
   const [draftLanguageFilter, setDraftLanguageFilter] = useState("");
   const [draftSubgroupFilter, setDraftSubgroupFilter] = useState("");
+  const [draftCourseFilter, setDraftCourseFilter] = useState("");
   const { data, isLoading, execute } = useFetch(groupAPI.getAll);
 
   useEffect(() => {
@@ -33,15 +35,16 @@ export const GroupManager = () => {
         const matchesLanguage = !languageFilter || group.language === languageFilter;
         const matchesSubgroup =
           !subgroupFilter || String(Number(Boolean(group.has_subgroups))) === subgroupFilter;
-        return matchesLanguage && matchesSubgroup;
+        const matchesCourse = !courseFilter || String(group.study_course) === courseFilter;
+        return matchesLanguage && matchesSubgroup && matchesCourse;
       }),
-    [groups, languageFilter, subgroupFilter],
+    [groups, languageFilter, subgroupFilter, courseFilter],
   );
   const totalStudents = groups.reduce(
     (sum, group) => sum + (Number(group.student_count) || 0),
     0,
   );
-  const hasActiveFilters = Boolean(languageFilter || subgroupFilter);
+  const hasActiveFilters = Boolean(languageFilter || subgroupFilter || courseFilter);
 
   const handleSubmit = async (formData, setErrors) => {
     try {
@@ -49,6 +52,7 @@ export const GroupManager = () => {
       const payload = {
         ...formData,
         student_count: Number(formData.student_count),
+        study_course: Number(formData.study_course),
         has_subgroups: formData.has_subgroups ? 1 : 0,
         language: formData.language || "ru",
       };
@@ -104,6 +108,7 @@ export const GroupManager = () => {
   const columns = [
     { key: "name", label: t("groupNumber") },
     { key: "student_count", label: t("studentCount") },
+    { key: "study_course", label: t("studyCourse") },
     {
       key: "language",
       label: t("studyLanguage"),
@@ -128,6 +133,17 @@ export const GroupManager = () => {
       label: t("studentCount"),
       type: "number",
       placeholder: "25",
+      required: true,
+    },
+    {
+      name: "study_course",
+      label: t("studyCourse"),
+      type: "select",
+      placeholder: t("selectStudyCourse"),
+      options: [1, 2, 3, 4, 5, 6].map((course) => ({
+        value: course,
+        label: String(course),
+      })),
       required: true,
     },
     {
@@ -197,15 +213,30 @@ export const GroupManager = () => {
         onApplyFilters={() => {
           setLanguageFilter(draftLanguageFilter);
           setSubgroupFilter(draftSubgroupFilter);
+          setCourseFilter(draftCourseFilter);
         }}
         onResetFilters={() => {
           setDraftLanguageFilter("");
           setDraftSubgroupFilter("");
+          setDraftCourseFilter("");
           setLanguageFilter("");
           setSubgroupFilter("");
+          setCourseFilter("");
         }}
         filterControls={
           <>
+            <select
+              value={draftCourseFilter}
+              onChange={(event) => setDraftCourseFilter(event.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">{t("all")} {t("studyCourse").toLowerCase()}</option>
+              {[1, 2, 3, 4, 5, 6].map((course) => (
+                <option key={course} value={course}>
+                  {course}
+                </option>
+              ))}
+            </select>
             <select
               value={draftLanguageFilter}
               onChange={(event) => setDraftLanguageFilter(event.target.value)}

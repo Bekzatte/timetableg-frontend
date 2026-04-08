@@ -192,7 +192,7 @@ export const DataTable = ({
           ))}
         </div>
       )}
-      <div className="max-h-[65vh] overflow-auto rounded-lg border border-gray-200 shadow-md md:block">
+      <div className="hidden max-h-[65vh] overflow-auto rounded-lg border border-gray-200 shadow-md md:block">
         <table className="min-w-[860px] w-full border-collapse table-auto">
           <colgroup>
             {columns.map((_, i) => (

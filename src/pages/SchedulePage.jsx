@@ -23,6 +23,20 @@ const WEEKDAY_OPTIONS = [
   { value: "friday", labelKey: "friday" },
 ];
 
+const JOB_ERROR_CODE_TRANSLATION_KEYS = {
+  optimizer_dependency_missing: "errorOptimizerDependencyMissing",
+  optimizer_requires_teachers: "errorOptimizerRequiresTeachers",
+  optimizer_requires_rooms: "errorOptimizerRequiresRooms",
+  optimizer_requires_plan_items: "errorOptimizerRequiresPlanItems",
+  optimizer_requires_slots: "errorOptimizerRequiresSlots",
+  optimizer_no_solution: "errorOptimizerNoSolution",
+  invalid_time_slot: "errorInvalidTimeSlot",
+  invalid_teacher: "errorInvalidTeacher",
+  invalid_room: "errorInvalidRoom",
+  unknown_teacher: "errorUnknownTeacher",
+  schedule_generation_requires_data: "errorScheduleGenerationRequiresData",
+};
+
 const getWeekdayValue = (isoDate) => {
   if (!isoDate) {
     return "monday";
@@ -46,6 +60,9 @@ const toIsoDateForWeekday = (weekday, year) => {
 };
 
 const formatGenerationError = (job, t) => {
+  const translationKey = job?.errorCode
+    ? JOB_ERROR_CODE_TRANSLATION_KEYS[job.errorCode]
+    : null;
   const firstIssue = job.details?.issues?.[0];
   if (firstIssue?.reason) {
     const reason = String(firstIssue.reason);
@@ -89,6 +106,12 @@ const formatGenerationError = (job, t) => {
     });
     const error = new Error(t("errorScheduleGenerationRequiresData"));
     error.items = details;
+    return error;
+  }
+
+  if (translationKey) {
+    const error = new Error(t(translationKey));
+    error.items = [];
     return error;
   }
 
