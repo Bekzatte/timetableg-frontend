@@ -132,7 +132,7 @@ export const CourseManager = () => {
       name: "year",
       label: t("year"),
       type: "number",
-      placeholder: "1",
+      placeholder: String(new Date().getFullYear()),
       required: true,
     },
     {

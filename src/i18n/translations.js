@@ -231,10 +231,10 @@ export const translations = {
     errorExportSchedule: "Кестені экспорттау қатесі",
     excelImportTitle: "Excel импорттау",
     excelImportDescription:
-      "Бір .xlsx файл арқылы пәндерді, оқытушыларды, аудиторияларды, топтарды және секцияларды жаппай жүктей аласыз.",
+      "Бір .xlsx файл арқылы пәндерді, оқытушыларды, аудиторияларды, топтарды және секцияларды жаппай жүктей аласыз. Disciplines парағындағы year өрісі генерацияда таңдалатын жылмен сәйкес болуы керек.",
     excelImportSheetFormat: "Excel файлында мына парақтар болуы керек:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, year, semester, programme, department, instructor_name, description",
+      "Disciplines: code, name, year, semester, programme, department, instructor_name, description (year мысалы: 2026)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:
@@ -517,10 +517,10 @@ export const translations = {
     errorExportSchedule: "Ошибка при экспорте расписания",
     excelImportTitle: "Импорт Excel",
     excelImportDescription:
-      "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей, аудитории, группы и секции.",
+      "Загрузите один .xlsx файл, чтобы массово импортировать курсы, преподавателей, аудитории, группы и секции. Поле year на листе Disciplines должно совпадать с годом, который вы выбираете при генерации.",
     excelImportSheetFormat: "В Excel должны быть листы:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, year, semester, programme, department, instructor_name, description",
+      "Disciplines: code, name, year, semester, programme, department, instructor_name, description (пример year: 2026)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:
@@ -801,10 +801,10 @@ export const translations = {
     errorExportSchedule: "Error exporting schedule",
     excelImportTitle: "Excel Import",
     excelImportDescription:
-      "Upload one .xlsx file to bulk import courses, teachers, rooms, groups, and sections.",
+      "Upload one .xlsx file to bulk import courses, teachers, rooms, groups, and sections. The year field on the Disciplines sheet must match the year selected during schedule generation.",
     excelImportSheetFormat: "The Excel file must contain these sheets:",
     excelImportCoursesColumns:
-      "Disciplines: code, name, year, semester, programme, department, instructor_name, description",
+      "Disciplines: code, name, year, semester, programme, department, instructor_name, description (example year: 2026)",
     excelImportTeachersColumns:
       "Teachers: name, email, phone, department",
     excelImportRoomsColumns:
