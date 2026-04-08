@@ -6,7 +6,7 @@ import {
   Link,
   Navigate,
 } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Bell, Menu, X } from "lucide-react";
 import Dashboard from "./pages/Dashboard";
 import CoursesPage from "./pages/CoursesPage";
 import TeachersPage from "./pages/TeachersPage";
@@ -16,11 +16,13 @@ import SectionsPage from "./pages/SectionsPage";
 import SchedulePage from "./pages/SchedulePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
 import { useLanguage } from "./hooks/useLanguage";
 import { useTranslation } from "./hooks/useTranslation";
 import { ROLES } from "./constants/roles";
 import { useAuth } from "./hooks/useAuth";
+import { useNotifications } from "./hooks/useNotifications";
 import "./index.css";
 
 const getInitials = (displayName = "") =>
@@ -69,6 +71,7 @@ export default function App() {
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
   const { user, isAdmin, logout } = useAuth();
+  const { unreadCount, isEnabled: notificationsEnabled } = useNotifications();
   const homePath = user && !isAdmin ? "/schedule" : "/";
   const navItems = isAdmin
     ? [
@@ -89,6 +92,26 @@ export default function App() {
     { code: "ru", name: "РУС" },
     { code: "en", name: "ENG" },
   ];
+  const notificationBadge = unreadCount > 99 ? "99+" : unreadCount;
+
+  const notificationLink = notificationsEnabled ? (
+    <Link
+      to="/notifications"
+      className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
+      aria-label={t("notifications")}
+      onClick={() => {
+        setMenuOpen(false);
+        setProfileMenuOpen(false);
+      }}
+    >
+      <Bell size={19} />
+      {unreadCount > 0 ? (
+        <span className="absolute -right-1 -top-1 min-w-[20px] rounded-full bg-yellow-300 px-1.5 py-0.5 text-center text-[10px] font-bold text-[#014531]">
+          {notificationBadge}
+        </span>
+      ) : null}
+    </Link>
+  ) : null;
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -144,54 +167,69 @@ export default function App() {
 
             <div className="flex min-w-0 items-center lg:hidden">
               {user ? (
-                <div
-                  ref={mobileProfileMenuRef}
-                  className="relative flex items-center"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setProfileMenuOpen((prev) => !prev)}
-                    className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition"
-                    aria-label={t("profile")}
+                <div className="flex items-center gap-2">
+                  {notificationLink}
+                  <div
+                    ref={mobileProfileMenuRef}
+                    className="relative flex items-center"
                   >
-                    {user.avatarData ? (
-                      <img
-                        src={user.avatarData}
-                        alt={user.displayName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-xs font-bold text-yellow-300">
-                        {getInitials(user.displayName)}
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setProfileMenuOpen((prev) => !prev)}
+                      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition"
+                      aria-label={t("profile")}
+                    >
+                      {user.avatarData ? (
+                        <img
+                          src={user.avatarData}
+                          alt={user.displayName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs font-bold text-yellow-300">
+                          {getInitials(user.displayName)}
+                        </span>
+                      )}
+                    </button>
 
-                  {profileMenuOpen ? (
-                    <div className="absolute left-0 top-[calc(100%+10px)] z-50 min-w-44 overflow-hidden rounded-2xl border border-green-900/20 bg-white shadow-2xl">
-                      <Link
-                        to="/profile"
-                        onClick={() => {
-                          setProfileMenuOpen(false);
-                          setMenuOpen(false);
-                        }}
-                        className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
-                      >
-                        {t("profile")}
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          logout();
-                          setProfileMenuOpen(false);
-                          setMenuOpen(false);
-                        }}
-                        className="block w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
-                      >
-                        {t("logout")}
-                      </button>
-                    </div>
-                  ) : null}
+                    {profileMenuOpen ? (
+                      <div className="absolute left-0 top-[calc(100%+10px)] z-50 min-w-44 overflow-hidden rounded-2xl border border-green-900/20 bg-white shadow-2xl">
+                        {notificationsEnabled ? (
+                          <Link
+                            to="/notifications"
+                            onClick={() => {
+                              setProfileMenuOpen(false);
+                              setMenuOpen(false);
+                            }}
+                            className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
+                          >
+                            {t("notifications")}
+                          </Link>
+                        ) : null}
+                        <Link
+                          to="/profile"
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            setMenuOpen(false);
+                          }}
+                          className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
+                        >
+                          {t("profile")}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            logout();
+                            setProfileMenuOpen(false);
+                            setMenuOpen(false);
+                          }}
+                          className="block w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                        >
+                          {t("logout")}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               ) : (
                 <div className="w-10" />
@@ -233,54 +271,69 @@ export default function App() {
 
               {/* Auth Buttons - Desktop */}
               {user ? (
-                <div
-                  ref={desktopProfileMenuRef}
-                  className="relative hidden items-center lg:flex"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setProfileMenuOpen((prev) => !prev)}
-                    className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition hover:scale-105"
-                    aria-label={t("profile")}
+                <div className="hidden items-center gap-3 lg:flex">
+                  {notificationLink}
+                  <div
+                    ref={desktopProfileMenuRef}
+                    className="relative flex items-center"
                   >
-                    {user.avatarData ? (
-                      <img
-                        src={user.avatarData}
-                        alt={user.displayName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-sm font-bold text-yellow-300">
-                        {getInitials(user.displayName)}
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setProfileMenuOpen((prev) => !prev)}
+                      className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition hover:scale-105"
+                      aria-label={t("profile")}
+                    >
+                      {user.avatarData ? (
+                        <img
+                          src={user.avatarData}
+                          alt={user.displayName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-bold text-yellow-300">
+                          {getInitials(user.displayName)}
+                        </span>
+                      )}
+                    </button>
 
-                  {profileMenuOpen ? (
-                    <div className="absolute right-0 top-[calc(100%+10px)] z-50 min-w-44 overflow-hidden rounded-2xl border border-green-900/20 bg-white shadow-2xl">
-                      <Link
-                        to="/profile"
-                        onClick={() => {
-                          setProfileMenuOpen(false);
-                          setMenuOpen(false);
-                        }}
-                        className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
-                      >
-                        {t("profile")}
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          logout();
-                          setProfileMenuOpen(false);
-                          setMenuOpen(false);
-                        }}
-                        className="block w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
-                      >
-                        {t("logout")}
-                      </button>
-                    </div>
-                  ) : null}
+                    {profileMenuOpen ? (
+                      <div className="absolute right-0 top-[calc(100%+10px)] z-50 min-w-44 overflow-hidden rounded-2xl border border-green-900/20 bg-white shadow-2xl">
+                        {notificationsEnabled ? (
+                          <Link
+                            to="/notifications"
+                            onClick={() => {
+                              setProfileMenuOpen(false);
+                              setMenuOpen(false);
+                            }}
+                            className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
+                          >
+                            {t("notifications")}
+                          </Link>
+                        ) : null}
+                        <Link
+                          to="/profile"
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            setMenuOpen(false);
+                          }}
+                          className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
+                        >
+                          {t("profile")}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            logout();
+                            setProfileMenuOpen(false);
+                            setMenuOpen(false);
+                          }}
+                          className="block w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                        >
+                          {t("logout")}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-2">
@@ -322,6 +375,15 @@ export default function App() {
                     {item.label}
                   </Link>
                 ))}
+                {notificationsEnabled ? (
+                  <Link
+                    to="/notifications"
+                    className="block text-white hover:text-yellow-300 transition py-2 px-3 font-medium rounded"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {t("notifications")}
+                  </Link>
+                ) : null}
 
                 {/* Mobile Language Selector */}
                 <div className="flex gap-2 pt-3 mt-3 border-t border-green-900">
@@ -444,6 +506,14 @@ export default function App() {
                   allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
                 >
                   <ProfilePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <RequireAuth allowedRoles={[ROLES.TEACHER, ROLES.STUDENT]}>
+                  <NotificationsPage />
                 </RequireAuth>
               }
             />

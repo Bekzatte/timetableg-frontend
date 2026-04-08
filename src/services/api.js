@@ -259,6 +259,14 @@ export const teacherPreferenceAPI = {
     api.put(`/teacher-preferences/${id}/status`, data).then((response) => response.data),
 };
 
+export const notificationsAPI = {
+  getAll: () => api.get("/notifications").then((response) => response.data),
+  markRead: (id) => api.put(`/notifications/${id}/read`).then((response) => response.data),
+  markAllRead: () => api.post("/notifications/read-all").then((response) => response.data),
+  deleteOne: (id) => api.delete(`/notifications/${id}`).then((response) => response.data),
+  deleteAll: () => api.delete("/notifications").then((response) => response.data),
+};
+
 export const importAPI = {
   importExcel: (fileName, fileContent) =>
     api
