@@ -38,7 +38,6 @@ export const RegisterPage = () => {
   const [teacherSearchResults, setTeacherSearchResults] = useState([]);
   const [hasTeacherSearchAttempt, setHasTeacherSearchAttempt] = useState(false);
   const [selectedTeacherAccount, setSelectedTeacherAccount] = useState(null);
-  const [claimEmail, setClaimEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [claimDebugCode, setClaimDebugCode] = useState("");
   const [isSearchingTeachers, setIsSearchingTeachers] = useState(false);
@@ -74,7 +73,6 @@ export const RegisterPage = () => {
     setTeacherSearchResults([]);
     setHasTeacherSearchAttempt(false);
     setSelectedTeacherAccount(null);
-    setClaimEmail("");
     setVerificationCode("");
     setClaimDebugCode("");
   };
@@ -197,7 +195,6 @@ export const RegisterPage = () => {
     setDisplayName(teacherAccount.name || "");
     setEmail("");
     setDepartment("");
-    setClaimEmail("");
     setTeacherLanguages(
       String(teacherAccount.teachingLanguages || "ru,kk")
         .split(",")
@@ -220,7 +217,7 @@ export const RegisterPage = () => {
       setLocalError("");
       const result = await teacherClaimAPI.request(
         selectedTeacherAccount.id,
-        claimEmail.trim().toLowerCase(),
+        selectedTeacherAccount.email,
       );
       setClaimDebugCode(result.debugCode || "");
     } catch (err) {
@@ -254,11 +251,11 @@ export const RegisterPage = () => {
         setIsConfirmingClaim(true);
         await teacherClaimAPI.confirm(
           selectedTeacherAccount.id,
-          claimEmail.trim().toLowerCase(),
+          selectedTeacherAccount.email,
           verificationCode,
           password,
         );
-        await login(claimEmail.trim().toLowerCase(), password, ROLES.TEACHER);
+        await login(selectedTeacherAccount.email, password, ROLES.TEACHER);
         navigate("/schedule");
       } catch (err) {
         setLocalError(err.message);
@@ -464,20 +461,6 @@ export const RegisterPage = () => {
                         </p>
                       </div>
 
-                      <div>
-                        <label className="mb-1 block text-sm font-medium text-emerald-900">
-                          {t("teacherClaimEmailLabel")}
-                        </label>
-                        <input
-                          type="email"
-                          autoComplete="email"
-                          value={claimEmail}
-                          onChange={(e) => setClaimEmail(e.target.value)}
-                          placeholder={t("teacherClaimEmailPlaceholder")}
-                          className="w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        />
-                      </div>
-
                       <button
                         type="button"
                         onClick={handleRequestClaimCode}
@@ -491,6 +474,10 @@ export const RegisterPage = () => {
 
                       {claimDebugCode ? (
                         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                          <p>
+                            {t("teacherClaimCodeSentHint")}{" "}
+                            <span className="font-medium">{selectedTeacherAccount.maskedEmail}</span>
+                          </p>
                           {t("teacherClaimDevCode")}:{" "}
                           <span className="font-semibold">{claimDebugCode}</span>
                         </div>
@@ -547,55 +534,6 @@ export const RegisterPage = () => {
               </div>
             </>
           )}
-
-          {selectedRole === ROLES.TEACHER &&
-          teacherRegistrationMode === TEACHER_REGISTRATION_MODES.MANUAL ? (
-            <>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">
-                  {t("facultyInstitute")}
-                </label>
-                <select
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="">{t("selectFacultyInstitute")}</option>
-                  {DEPARTMENTS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <p className="block text-sm font-medium mb-2 text-gray-700">
-                  {t("teachingLanguages")}
-                </p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {STUDY_LANGUAGES.map((item) => (
-                    <label
-                      key={item.value}
-                      className="flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={teacherLanguages.includes(item.value)}
-                        onChange={() => toggleTeacherLanguage(item.value)}
-                        className="h-4 w-4 rounded border-gray-300 text-[#014531] focus:ring-[#014531]"
-                      />
-                      <span>{t(item.labelKey)}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                {t("teacherEmailHint")}
-              </p>
-            </>
-          ) : null}
 
           {selectedRole === ROLES.STUDENT && (
             <>
