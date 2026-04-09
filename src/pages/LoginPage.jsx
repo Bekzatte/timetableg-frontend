@@ -45,7 +45,10 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-md">
+      <div
+        data-testid="login-card"
+        className="w-full max-w-lg rounded-lg bg-white p-6 shadow-md"
+      >
         <h1 className="text-2xl font-bold mb-4 text-gray-900">{t("login")}</h1>
 
         {(localError || error) && (

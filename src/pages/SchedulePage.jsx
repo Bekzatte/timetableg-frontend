@@ -537,7 +537,10 @@ export const SchedulePage = () => {
           </div>
         </div>
       ) : null}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+      <div
+        data-testid="schedule-toolbar"
+        className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between"
+      >
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("scheduleMgmt")}
         </h1>
@@ -583,7 +586,10 @@ export const SchedulePage = () => {
         </div>
       ) : null}
 
-      <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
+      <div
+        data-testid="schedule-content"
+        className="rounded-lg bg-white p-4 shadow-md sm:p-6"
+      >
         {schedule.length > 0 ? (
           <TimetableGrid schedule={schedule} />
         ) : (
