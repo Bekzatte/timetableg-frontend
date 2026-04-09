@@ -11,6 +11,7 @@ import { STUDY_LANGUAGES } from "../constants/languages";
 
 const TEACHER_REGISTRATION_MODES = {
   CLAIM: "claim",
+  MANUAL: "manual",
 };
 
 export const RegisterPage = () => {
@@ -126,6 +127,13 @@ export const RegisterPage = () => {
     setPassword("");
     setConfirmPassword("");
     resetTeacherClaimState();
+
+    if (mode === TEACHER_REGISTRATION_MODES.MANUAL) {
+      setDisplayName("");
+      setEmail("");
+      setDepartment("");
+      setTeacherLanguages([]);
+    }
   };
 
   const searchTeachers = useCallback(async (query) => {
@@ -352,15 +360,32 @@ export const RegisterPage = () => {
             <div className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
               <div>
                 <p className="mb-2 text-sm font-medium text-gray-700">{t("teacher")}</p>
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={() =>
                       handleTeacherRegistrationModeChange(TEACHER_REGISTRATION_MODES.CLAIM)
                     }
-                    className="rounded-md border border-[#014531] bg-[#014531] px-3 py-2 text-sm font-medium text-white transition"
+                    className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                      teacherRegistrationMode === TEACHER_REGISTRATION_MODES.CLAIM
+                        ? "border-[#014531] bg-[#014531] text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-[#014531]"
+                    }`}
                   >
                     {t("claimImportedTeacher")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTeacherRegistrationModeChange(TEACHER_REGISTRATION_MODES.MANUAL)
+                    }
+                    className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                      teacherRegistrationMode === TEACHER_REGISTRATION_MODES.MANUAL
+                        ? "border-[#014531] bg-[#014531] text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-[#014531]"
+                    }`}
+                  >
+                    {t("manualTeacherRegistration")}
                   </button>
                 </div>
               </div>
@@ -490,7 +515,8 @@ export const RegisterPage = () => {
             </div>
           ) : null}
 
-          {selectedRole !== ROLES.TEACHER && (
+          {(selectedRole !== ROLES.TEACHER ||
+            teacherRegistrationMode === TEACHER_REGISTRATION_MODES.MANUAL) && (
             <>
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
@@ -521,6 +547,55 @@ export const RegisterPage = () => {
               </div>
             </>
           )}
+
+          {selectedRole === ROLES.TEACHER &&
+          teacherRegistrationMode === TEACHER_REGISTRATION_MODES.MANUAL ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("facultyInstitute")}
+                </label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">{t("selectFacultyInstitute")}</option>
+                  {DEPARTMENTS.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <p className="block text-sm font-medium mb-2 text-gray-700">
+                  {t("teachingLanguages")}
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {STUDY_LANGUAGES.map((item) => (
+                    <label
+                      key={item.value}
+                      className="flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={teacherLanguages.includes(item.value)}
+                        onChange={() => toggleTeacherLanguage(item.value)}
+                        className="h-4 w-4 rounded border-gray-300 text-[#014531] focus:ring-[#014531]"
+                      />
+                      <span>{t(item.labelKey)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {t("teacherEmailHint")}
+              </p>
+            </>
+          ) : null}
 
           {selectedRole === ROLES.STUDENT && (
             <>
