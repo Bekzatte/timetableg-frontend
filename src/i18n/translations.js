@@ -216,6 +216,10 @@ export const translations = {
     teacherClaimSearchHelp:
       "Excel арқылы импортталған оқытушылар осы жерден өз аккаунтын таба алады.",
     teacherClaimSearchEmpty: "Сәйкес импортталған оқытушы табылмады.",
+    teacherClaimMissingEmailHint:
+      "Бұл оқытушы жазбасында email жоқ. Кодты алу үшін корпоративтік почтаны енгізіңіз.",
+    teacherClaimEmailLabel: "Корпоративтік email",
+    teacherClaimEmailPlaceholder: "name@kazatu.edu.kz",
     teacherClaimSelectAccount: "Аккаунтты таңдау",
     teacherClaimSelectedAccount: "Таңдалған оқытушы",
     teacherClaimRequestCode: "Код сұрау",
@@ -612,6 +616,10 @@ export const translations = {
     teacherClaimSearchHelp:
       "Преподаватели, импортированные через Excel, могут забрать свой аккаунт здесь.",
     teacherClaimSearchEmpty: "Подходящий импортированный преподаватель не найден.",
+    teacherClaimMissingEmailHint:
+      "У этой записи преподавателя нет email. Чтобы получить код, введите корпоративную почту.",
+    teacherClaimEmailLabel: "Корпоративная почта",
+    teacherClaimEmailPlaceholder: "name@kazatu.edu.kz",
     teacherClaimSelectAccount: "Выбрать аккаунт",
     teacherClaimSelectedAccount: "Выбранный преподаватель",
     teacherClaimRequestCode: "Запросить код",
@@ -1008,6 +1016,10 @@ export const translations = {
     teacherClaimSearchHelp:
       "Teachers imported from Excel can claim their account here.",
     teacherClaimSearchEmpty: "No matching imported teacher was found.",
+    teacherClaimMissingEmailHint:
+      "This teacher record has no email. Enter a corporate email to receive the code.",
+    teacherClaimEmailLabel: "Corporate email",
+    teacherClaimEmailPlaceholder: "name@kazatu.edu.kz",
     teacherClaimSelectAccount: "Select account",
     teacherClaimSelectedAccount: "Selected teacher",
     teacherClaimRequestCode: "Request code",

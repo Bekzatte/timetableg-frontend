@@ -38,6 +38,7 @@ export const RegisterPage = () => {
   const [teacherSearchResults, setTeacherSearchResults] = useState([]);
   const [hasTeacherSearchAttempt, setHasTeacherSearchAttempt] = useState(false);
   const [selectedTeacherAccount, setSelectedTeacherAccount] = useState(null);
+  const [claimEmail, setClaimEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [claimDebugCode, setClaimDebugCode] = useState("");
   const [isSearchingTeachers, setIsSearchingTeachers] = useState(false);
@@ -59,6 +60,9 @@ export const RegisterPage = () => {
   const isSubmittingClaim = isConfirmingClaim || isLoading;
   const emailPlaceholder =
     selectedRole === ROLES.TEACHER ? "name@kazatu.edu.kz" : "name@example.com";
+  const claimDeliveryLabel = selectedTeacherAccount?.hasEmail
+    ? selectedTeacherAccount.maskedEmail
+    : claimEmail.trim().toLowerCase();
 
   const toggleTeacherLanguage = (nextLanguage) => {
     setTeacherLanguages((current) =>
@@ -73,6 +77,7 @@ export const RegisterPage = () => {
     setTeacherSearchResults([]);
     setHasTeacherSearchAttempt(false);
     setSelectedTeacherAccount(null);
+    setClaimEmail("");
     setVerificationCode("");
     setClaimDebugCode("");
   };
@@ -195,6 +200,7 @@ export const RegisterPage = () => {
     setDisplayName(teacherAccount.name || "");
     setEmail("");
     setDepartment("");
+    setClaimEmail(teacherAccount.email || "");
     setTeacherLanguages(
       String(teacherAccount.teachingLanguages || "ru,kk")
         .split(",")
@@ -217,9 +223,10 @@ export const RegisterPage = () => {
       setLocalError("");
       const result = await teacherClaimAPI.request(
         selectedTeacherAccount.id,
-        selectedTeacherAccount.email,
+        selectedTeacherAccount.hasEmail ? "" : claimEmail.trim().toLowerCase(),
       );
       setClaimDebugCode(result.debugCode || "");
+      setClaimEmail(result.email || claimEmail.trim().toLowerCase());
     } catch (err) {
       setLocalError(err.message);
     } finally {
@@ -251,11 +258,15 @@ export const RegisterPage = () => {
         setIsConfirmingClaim(true);
         await teacherClaimAPI.confirm(
           selectedTeacherAccount.id,
-          selectedTeacherAccount.email,
           verificationCode,
           password,
+          selectedTeacherAccount.hasEmail ? "" : claimEmail.trim().toLowerCase(),
         );
-        await login(selectedTeacherAccount.email, password, ROLES.TEACHER);
+        await login(
+          (selectedTeacherAccount.email || claimEmail).trim().toLowerCase(),
+          password,
+          ROLES.TEACHER,
+        );
         navigate("/schedule");
       } catch (err) {
         setLocalError(err.message);
@@ -461,6 +472,27 @@ export const RegisterPage = () => {
                         </p>
                       </div>
 
+                      {!selectedTeacherAccount.hasEmail ? (
+                        <div className="space-y-2">
+                          <p className="text-xs text-emerald-800">
+                            {t("teacherClaimMissingEmailHint")}
+                          </p>
+                          <div>
+                            <label className="mb-1 block text-sm font-medium text-emerald-900">
+                              {t("teacherClaimEmailLabel")}
+                            </label>
+                            <input
+                              type="email"
+                              autoComplete="email"
+                              value={claimEmail}
+                              onChange={(e) => setClaimEmail(e.target.value)}
+                              placeholder={t("teacherClaimEmailPlaceholder")}
+                              className="w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+
                       <button
                         type="button"
                         onClick={handleRequestClaimCode}
@@ -470,18 +502,18 @@ export const RegisterPage = () => {
                         {isRequestingClaimCode ? t("loading") : t("teacherClaimRequestCode")}
                       </button>
 
-                      <p className="text-xs text-emerald-800">{t("teacherClaimVerificationHint")}</p>
-
                       {claimDebugCode ? (
                         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                           <p>
                             {t("teacherClaimCodeSentHint")}{" "}
-                            <span className="font-medium">{selectedTeacherAccount.maskedEmail}</span>
+                            <span className="font-medium">{claimDeliveryLabel}</span>
                           </p>
                           {t("teacherClaimDevCode")}:{" "}
                           <span className="font-semibold">{claimDebugCode}</span>
                         </div>
                       ) : null}
+
+                      <p className="text-xs text-emerald-800">{t("teacherClaimVerificationHint")}</p>
                     </div>
                   ) : null}
 

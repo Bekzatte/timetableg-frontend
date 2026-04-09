@@ -269,13 +269,13 @@ export const teacherClaimAPI = {
     api
       .get("/public/teachers/claim-search", { params: { q: query } })
       .then((response) => response.data),
-  request: (teacherId, email) =>
+  request: (teacherId, email = "") =>
     api
       .post("/auth/teacher-claim/request", { teacherId, email })
       .then((response) => response.data),
-  confirm: (teacherId, email, code, password) =>
+  confirm: (teacherId, code, password, email = "") =>
     api
-      .post("/auth/teacher-claim/confirm", { teacherId, email, code, password })
+      .post("/auth/teacher-claim/confirm", { teacherId, code, password, email })
       .then((response) => response.data),
 };
 
