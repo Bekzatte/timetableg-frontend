@@ -45,6 +45,10 @@ const ERROR_CODE_TRANSLATION_KEYS = {
   role_mismatch: "errorRoleMismatch",
   teacher_email_domain_required: "errorTeacherEmailDomainRequired",
   teacher_account_email_domain_required: "errorTeacherAccountEmailDomainRequired",
+  teacher_claim_already_completed: "errorTeacherClaimAlreadyCompleted",
+  teacher_claim_email_mismatch: "errorTeacherClaimEmailMismatch",
+  teacher_claim_code_invalid: "errorTeacherClaimCodeInvalid",
+  teacher_claim_code_expired: "errorTeacherClaimCodeExpired",
   auth_required: "errorAuthRequired",
   invalid_token: "errorInvalidToken",
   invalid_json: "errorInvalidJson",
@@ -257,6 +261,21 @@ export const authAPI = {
   logout: () => api.post("/auth/logout").then((response) => response.data),
 };
 
+export const teacherClaimAPI = {
+  search: (query) =>
+    api
+      .get("/public/teachers/claim-search", { params: { q: query } })
+      .then((response) => response.data),
+  request: (teacherId, email) =>
+    api
+      .post("/auth/teacher-claim/request", { teacherId, email })
+      .then((response) => response.data),
+  confirm: (teacherId, email, code, password) =>
+    api
+      .post("/auth/teacher-claim/confirm", { teacherId, email, code, password })
+      .then((response) => response.data),
+};
+
 export const profileAPI = {
   getCurrent: () => api.get("/profile").then((response) => response.data),
   uploadAvatar: (avatarData) =>
@@ -302,6 +321,7 @@ export default {
   sectionAPI,
   scheduleAPI,
   authAPI,
+  teacherClaimAPI,
   profileAPI,
   teacherPreferenceAPI,
   importAPI,
