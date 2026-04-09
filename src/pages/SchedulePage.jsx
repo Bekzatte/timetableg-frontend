@@ -553,7 +553,7 @@ export const SchedulePage = () => {
             <button
               onClick={handleAddEntry}
               disabled={isLoading}
-              className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto"
             >
               <Plus size={20} /> {t("addScheduleEntry")}
             </button>
