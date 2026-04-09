@@ -222,6 +222,16 @@ export default function ProfilePage() {
                     {user?.email}
                   </p>
                 </div>
+                {user?.phone ? (
+                  <div className="rounded-2xl bg-[#f4fbf7] p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      {t("phone")}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
+                      {user.phone}
+                    </p>
+                  </div>
+                ) : null}
                 {user?.department ? (
                   <div className="rounded-2xl bg-[#f4fbf7] p-4">
                     <p className="text-xs uppercase tracking-[0.2em] text-gray-500">

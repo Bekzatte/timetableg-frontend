@@ -211,10 +211,10 @@ export const translations = {
     claimImportedTeacher: "Импортталған аккаунтты табу",
     manualTeacherRegistration: "Қолмен тіркелу",
     teacherClaimSearchLabel: "Өзіңізді тізімнен табыңыз",
-    teacherClaimSearchPlaceholder: "Аты-жөні немесе email бойынша іздеу",
+    teacherClaimSearchPlaceholder: "Аты-жөні, email немесе телефон бойынша іздеу",
     teacherClaimSearchAction: "Іздеу",
     teacherClaimSearchHelp:
-      "Excel арқылы импортталған оқытушылар осы жерден өз аккаунтын таба алады.",
+      "Excel арқылы импортталған оқытушылар осы жерден аты-жөні, email немесе телефон арқылы өз аккаунтын таба алады.",
     teacherClaimSearchEmpty: "Сәйкес импортталған оқытушы табылмады.",
     teacherClaimMissingEmailHint:
       "Бұл оқытушы жазбасында email жоқ. Кодты алу үшін корпоративтік почтаны енгізіңіз.",
@@ -611,10 +611,10 @@ export const translations = {
     claimImportedTeacher: "Найти импортированный аккаунт",
     manualTeacherRegistration: "Ручная регистрация",
     teacherClaimSearchLabel: "Найдите себя в списке",
-    teacherClaimSearchPlaceholder: "Поиск по ФИО или email",
+    teacherClaimSearchPlaceholder: "Поиск по ФИО, email или телефону",
     teacherClaimSearchAction: "Найти",
     teacherClaimSearchHelp:
-      "Преподаватели, импортированные через Excel, могут забрать свой аккаунт здесь.",
+      "Преподаватели, импортированные через Excel, могут найти свой аккаунт здесь по ФИО, email или телефону.",
     teacherClaimSearchEmpty: "Подходящий импортированный преподаватель не найден.",
     teacherClaimMissingEmailHint:
       "У этой записи преподавателя нет email. Чтобы получить код, введите корпоративную почту.",
@@ -1011,10 +1011,10 @@ export const translations = {
     claimImportedTeacher: "Claim imported account",
     manualTeacherRegistration: "Manual registration",
     teacherClaimSearchLabel: "Find yourself in the list",
-    teacherClaimSearchPlaceholder: "Search by full name or email",
+    teacherClaimSearchPlaceholder: "Search by full name, email, or phone",
     teacherClaimSearchAction: "Search",
     teacherClaimSearchHelp:
-      "Teachers imported from Excel can claim their account here.",
+      "Teachers imported from Excel can find and claim their account here by full name, email, or phone.",
     teacherClaimSearchEmpty: "No matching imported teacher was found.",
     teacherClaimMissingEmailHint:
       "This teacher record has no email. Enter a corporate email to receive the code.",

@@ -24,6 +24,7 @@ export const RegisterPage = () => {
   );
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [department, setDepartment] = useState("");
@@ -115,12 +116,14 @@ export const RegisterPage = () => {
     if (role === ROLES.TEACHER) {
       setDisplayName("");
       setEmail("");
+      setPhone("");
       setDepartment("");
       return;
     }
 
     setDisplayName("");
     setEmail("");
+    setPhone("");
     setDepartment("");
   };
 
@@ -134,6 +137,7 @@ export const RegisterPage = () => {
     if (mode === TEACHER_REGISTRATION_MODES.MANUAL) {
       setDisplayName("");
       setEmail("");
+      setPhone("");
       setDepartment("");
       setTeacherLanguages([]);
     }
@@ -291,7 +295,7 @@ export const RegisterPage = () => {
 
     if (
       selectedRole === ROLES.TEACHER &&
-      (!department || teacherLanguages.length === 0)
+      (!phone.trim() || !department || teacherLanguages.length === 0)
     ) {
       setLocalError(t("fillAllFields"));
       return;
@@ -318,6 +322,7 @@ export const RegisterPage = () => {
         password,
         displayName,
         selectedRole,
+        selectedRole === ROLES.TEACHER ? phone.trim() : "",
         department,
         programmeName,
         groupId,
@@ -684,6 +689,20 @@ export const RegisterPage = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("phone")}
+                </label>
+                <input
+                  type="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t("phonePlaceholder")}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
 
               <div>
