@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Plus } from "lucide-react";
+import { Bell, Plus, Trash2 } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
@@ -18,6 +18,8 @@ export const TeacherManager = () => {
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeletingRequestId, setIsDeletingRequestId] = useState(null);
+  const [isClearingRequests, setIsClearingRequests] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [languageFilter, setLanguageFilter] = useState("");
   const [draftDepartmentFilter, setDraftDepartmentFilter] = useState("");
@@ -139,6 +141,38 @@ export const TeacherManager = () => {
       await executePreferenceRequests();
     } catch (error) {
       console.error(t("errorSaveTeacherPreference"), error);
+    }
+  };
+
+  const handleDeleteRequest = async (request) => {
+    if (!window.confirm(t("confirmDeleteTeacherRequest"))) {
+      return;
+    }
+
+    try {
+      setIsDeletingRequestId(request.id);
+      await teacherPreferenceAPI.deleteOne(request.id);
+      await executePreferenceRequests();
+    } catch (error) {
+      console.error(t("errorDeleteTeacherRequest"), error);
+    } finally {
+      setIsDeletingRequestId(null);
+    }
+  };
+
+  const handleClearRequests = async () => {
+    if (!window.confirm(t("confirmClearTeacherRequests"))) {
+      return;
+    }
+
+    try {
+      setIsClearingRequests(true);
+      await teacherPreferenceAPI.deleteAll();
+      await executePreferenceRequests();
+    } catch (error) {
+      console.error(t("errorDeleteTeacherRequest"), error);
+    } finally {
+      setIsClearingRequests(false);
     }
   };
 
@@ -351,8 +385,18 @@ export const TeacherManager = () => {
                 {t("teacherRequestsDescription")}
               </p>
             </div>
-            <div className="rounded-full bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">
-              {preferenceRequests.length}
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="rounded-full bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">
+                {preferenceRequests.length}
+              </div>
+              <button
+                type="button"
+                onClick={handleClearRequests}
+                disabled={isClearingRequests || preferenceRequests.length === 0}
+                className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isClearingRequests ? t("loading") : t("clearTeacherRequests")}
+              </button>
             </div>
           </div>
 
@@ -386,17 +430,28 @@ export const TeacherManager = () => {
                       </p>
                     </div>
                     <div className="flex flex-col items-start gap-3 lg:items-end">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${
-                          request.status === "approved"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : request.status === "rejected"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-amber-100 text-amber-700"
-                        }`}
-                      >
-                        {t(`teacherPreferenceStatus${request.status[0].toUpperCase()}${request.status.slice(1)}`)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${
+                            request.status === "approved"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : request.status === "rejected"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {t(`teacherPreferenceStatus${request.status[0].toUpperCase()}${request.status.slice(1)}`)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRequest(request)}
+                          disabled={isDeletingRequestId === request.id}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          aria-label={t("delete")}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                       {request.status === "pending" ? (
                         <div className="flex gap-2">
                           <button

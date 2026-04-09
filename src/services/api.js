@@ -373,6 +373,8 @@ export const teacherPreferenceAPI = {
   create: (data) => api.post("/teacher-preferences", data).then((response) => response.data),
   updateStatus: (id, data) =>
     api.put(`/teacher-preferences/${id}/status`, data).then((response) => response.data),
+  deleteOne: (id) => api.delete(`/teacher-preferences/${id}`).then((response) => response.data),
+  deleteAll: () => api.delete("/teacher-preferences").then((response) => response.data),
 };
 
 export const notificationsAPI = {

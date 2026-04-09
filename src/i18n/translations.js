@@ -188,6 +188,10 @@ export const translations = {
     teacherRequestsDescription:
       "Бұл жерде оқытушылар жіберген слот сұраулары көрсетіледі. Мақұлданғандары кесте генерациясында қолданылады.",
     teacherRequestsEmpty: "Оқытушылардан сұраулар түскен жоқ.",
+    clearTeacherRequests: "Сұрауларды тазалау",
+    confirmDeleteTeacherRequest: "Осы оқытушы сұрауын өшіру керек пе?",
+    confirmClearTeacherRequests: "Барлық оқытушы сұрауларын өшіру керек пе?",
+    errorDeleteTeacherRequest: "Оқытушы сұрауын өшіру қатесі",
     notificationsTitle: "Кесте хабарламалары",
     notificationsEmpty: "Сізде әзірге хабарлама жоқ.",
     notificationsMarkRead: "Оқылды деп белгілеу",
@@ -649,6 +653,10 @@ export const translations = {
     teacherRequestsDescription:
       "Здесь отображаются все заявки преподавателей на удобные слоты. Одобренные заявки учитываются при генерации расписания.",
     teacherRequestsEmpty: "Пока нет запросов от преподавателей.",
+    clearTeacherRequests: "Очистить запросы",
+    confirmDeleteTeacherRequest: "Удалить этот запрос преподавателя?",
+    confirmClearTeacherRequests: "Удалить все запросы преподавателей?",
+    errorDeleteTeacherRequest: "Ошибка при удалении запроса преподавателя",
     notificationsTitle: "Уведомления о расписании",
     notificationsEmpty: "У вас пока нет уведомлений.",
     notificationsMarkRead: "Отметить как прочитанное",
@@ -1109,6 +1117,10 @@ export const translations = {
     teacherRequestsDescription:
       "All teacher slot requests are shown here. Approved requests are used during schedule generation.",
     teacherRequestsEmpty: "There are no teacher requests yet.",
+    clearTeacherRequests: "Clear requests",
+    confirmDeleteTeacherRequest: "Delete this teacher request?",
+    confirmClearTeacherRequests: "Delete all teacher requests?",
+    errorDeleteTeacherRequest: "Error deleting teacher request",
     notificationsTitle: "Schedule notifications",
     notificationsEmpty: "You have no notifications yet.",
     notificationsMarkRead: "Mark as read",
