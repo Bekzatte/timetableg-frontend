@@ -415,9 +415,6 @@ export const RegisterPage = () => {
                               <p className="font-medium text-gray-900">{teacherAccount.name}</p>
                               <p className="text-sm text-gray-600">{teacherAccount.maskedEmail}</p>
                             </div>
-                            <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
-                              {t("teacherClaimSelectAccount")}
-                            </span>
                           </div>
                         </button>
                       ))}
