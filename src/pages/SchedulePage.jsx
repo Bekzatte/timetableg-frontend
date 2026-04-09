@@ -537,23 +537,23 @@ export const SchedulePage = () => {
           </div>
         </div>
       ) : null}
-      <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:gap-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("scheduleMgmt")}
         </h1>
         {isAdmin && (
-          <div className="flex w-full flex-col gap-2 sm:grid sm:grid-cols-2 xl:ml-auto xl:flex-row xl:flex-wrap xl:justify-end xl:gap-2">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
             <button
               onClick={() => setIsGenerateOpen(true)}
               disabled={isLoading}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-center text-sm font-medium leading-snug text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 xl:w-auto xl:flex-none xl:whitespace-nowrap"
+              className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RotateCw size={20} /> {scheduleActionLabel}
             </button>
             <button
               onClick={handleAddEntry}
               disabled={isLoading}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-center text-sm font-medium leading-snug text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 xl:w-auto xl:flex-none xl:whitespace-nowrap"
+              className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Plus size={20} /> {t("addScheduleEntry")}
             </button>
@@ -561,7 +561,7 @@ export const SchedulePage = () => {
               <button
                 onClick={handleExportSchedule}
                 disabled={isExporting || isLoading}
-                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-[#014531] px-4 py-2 text-center text-sm font-medium leading-snug text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60 xl:w-auto xl:flex-none xl:whitespace-nowrap"
+                className="flex items-center justify-center gap-2 bg-[#014531] text-white px-4 py-2 rounded-md hover:bg-[#02704e] transition w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Download size={20} /> {isExporting ? t("loading") : t("exportSchedule")}
               </button>
@@ -569,7 +569,7 @@ export const SchedulePage = () => {
             <button
               onClick={handleResetSchedule}
               disabled={isResetting || isLoading || schedule.length === 0}
-              className="flex min-h-[44px] w-full items-center justify-center rounded-md bg-red-600 px-4 py-2 text-center text-sm font-medium leading-snug text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 xl:w-auto xl:flex-none xl:whitespace-nowrap"
+              className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
               {isResetting ? t("loading") : t("resetSchedule")}
             </button>
