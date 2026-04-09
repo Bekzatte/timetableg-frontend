@@ -20,7 +20,7 @@ const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.onerror = () => reject(new Error("file_read_error"));
     reader.readAsDataURL(file);
   });
 
@@ -175,7 +175,7 @@ export const Dashboard = () => {
       setImportResult(result);
       setImportFile(null);
     } catch (error) {
-      setImportError(error.message || t("errorUnknown"));
+      setImportError(error.message === "file_read_error" ? t("errorFileRead") : error.message || t("errorUnknown"));
     } finally {
       setIsImporting(false);
     }

@@ -61,6 +61,16 @@ const toIsoDateForWeekday = (weekday, year) => {
   return `${monday.getFullYear()}-${month}-${day}`;
 };
 
+const GROUP_LANGUAGE_UNSUPPORTED_PATTERN =
+  /Преподаватель курса '(.+)' не поддерживает язык группы '(.+)'\.?/i;
+const TEACHER_NOT_FOUND_PATTERN = /не найден преподаватель/i;
+const GENERATION_REASON_TRANSLATION_KEYS = {
+  "Для дисциплины не найдено подходящих аудиторий по типу, вместимости или PCCount.":
+    "errorGenerationNoSuitableRoomsReason",
+  "Недостаточно доступных временных слотов для заданных ограничений.":
+    "errorGenerationInsufficientSlotsReason",
+};
+
 const formatGenerationError = (job, t) => {
   const translationKey = job?.errorCode
     ? JOB_ERROR_CODE_TRANSLATION_KEYS[job.errorCode]
@@ -69,19 +79,19 @@ const formatGenerationError = (job, t) => {
   if (firstIssue?.reason) {
     const reason = String(firstIssue.reason);
     const normalizedReason = reason.toLowerCase();
-    const items = [reason];
+    const items = [t(GENERATION_REASON_TRANSLATION_KEYS[reason] || reason)];
 
     if (normalizedReason.includes("аудитор")) {
-      items.push("Проверьте, что для нужного типа занятия есть доступные аудитории.");
+      items.push(t("errorGenerationRoomsAvailableHint"));
     }
     if (normalizedReason.includes("вместим")) {
-      items.push("Убедитесь, что вместимость аудитории не меньше размера группы или подгруппы.");
+      items.push(t("errorGenerationRoomCapacityHint"));
     }
     if (normalizedReason.includes("pccount") || normalizedReason.includes("компьют")) {
-      items.push("Для компьютерных дисциплин заполните computer_count у лабораторий и requires_computers у дисциплин.");
+      items.push(t("errorGenerationComputersHint"));
     }
     if (normalizedReason.includes("временн") || normalizedReason.includes("слотов")) {
-      items.push("Сократите количество секций или ослабьте ограничения, если занятий слишком много для доступных слотов.");
+      items.push(t("errorGenerationSlotsHint"));
     }
 
     const error = new Error(t("errorGenerateSchedule"));
@@ -93,16 +103,16 @@ const formatGenerationError = (job, t) => {
     const details = job.details.missing.map((item) => {
       const normalized = String(item).toLowerCase();
       if (normalized.includes("секции")) {
-        return `${item}. Заполните Sections: предмет, группа, количество занятий и тип занятия.`;
+        return `${item}. ${t("errorGenerationMissingSectionsHint")}`;
       }
       if (normalized.includes("преподавател")) {
-        return `${item}. Добавьте преподавателей и назначьте их дисциплинам.`;
+        return `${item}. ${t("errorGenerationMissingTeachersHint")}`;
       }
       if (normalized.includes("аудит")) {
-        return `${item}. Добавьте доступные аудитории с типом, вместимостью и, при необходимости, компьютерами.`;
+        return `${item}. ${t("errorGenerationMissingRoomsHint")}`;
       }
       if (normalized.includes("групп")) {
-        return `${item}. Добавьте группы, число студентов и язык обучения.`;
+        return `${item}. ${t("errorGenerationMissingGroupsHint")}`;
       }
       return item;
     });
@@ -122,11 +132,20 @@ const formatGenerationError = (job, t) => {
   const items = [];
 
   if (normalizedError.includes("не поддерживает язык группы")) {
-    items.push(rawError);
-    items.push("Проверьте язык группы и teaching_languages у назначенного преподавателя.");
-  } else if (normalizedError.includes("не найден преподаватель")) {
-    items.push(rawError);
-    items.push("Откройте дисциплину и назначьте преподавателя.");
+    const match = rawError.match(GROUP_LANGUAGE_UNSUPPORTED_PATTERN);
+    if (match) {
+      items.push(
+        t("errorTeacherDoesNotSupportGroupLanguage")
+          .replace("${course}", match[1])
+          .replace("${language}", match[2]),
+      );
+    } else {
+      items.push(t("errorTeacherDoesNotSupportGroupLanguageFallback"));
+    }
+    items.push(t("errorTeacherDoesNotSupportGroupLanguageHint"));
+  } else if (TEACHER_NOT_FOUND_PATTERN.test(normalizedError)) {
+    items.push(t("errorTeacherNotAssigned"));
+    items.push(t("errorTeacherNotAssignedHint"));
   } else {
     items.push(rawError);
   }

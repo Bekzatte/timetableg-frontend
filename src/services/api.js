@@ -36,6 +36,51 @@ const getCurrentLanguage = () => localStorage.getItem("language") || "ru";
 
 const getLocalized = (key) => getTranslation(getCurrentLanguage(), key);
 
+const ERROR_PATTERN_TRANSLATORS = [
+  {
+    pattern: /^Для курса '(.+)' не найден преподаватель\.$/i,
+    getMessage: (match) =>
+      getLocalized("errorTeacherNotAssignedForCourse").replace("${course}", match[1]),
+  },
+  {
+    pattern: /^Для группы '(.+)' не указан курс обучения\.$/i,
+    getMessage: (match) =>
+      getLocalized("errorStudyCourseMissingForGroup").replace("${group}", match[1]),
+  },
+  {
+    pattern:
+      /^Дисциплина '(.+)' предназначена для (\d+) курса, а группа '(.+)' указана как (\d+) курс\.$/i,
+    getMessage: (match) =>
+      getLocalized("errorCourseGroupStudyCourseMismatch")
+        .replace("${course}", match[1])
+        .replace("${courseYear}", match[2])
+        .replace("${group}", match[3])
+        .replace("${groupCourse}", match[4]),
+  },
+  {
+    pattern: /^Преподаватель курса '(.+)' не поддерживает язык группы '(.+)'\.?$/i,
+    getMessage: (match) =>
+      getLocalized("errorTeacherDoesNotSupportGroupLanguage")
+        .replace("${course}", match[1])
+        .replace("${language}", match[2]),
+  },
+  {
+    pattern: /^Для секции не найден курс с кодом '(.+)'\.$/i,
+    getMessage: (match) =>
+      getLocalized("errorImportSectionCourseNotFound").replace("${courseCode}", match[1]),
+  },
+  {
+    pattern: /^Для секции не найдена группа '(.+)'\.$/i,
+    getMessage: (match) =>
+      getLocalized("errorImportSectionGroupNotFound").replace("${group}", match[1]),
+  },
+  {
+    pattern: /^Слот уже занят заявкой преподавателя (.+)\.$/i,
+    getMessage: (match) =>
+      getLocalized("errorPreferenceSlotOccupied").replace("${teacher}", match[1]),
+  },
+];
+
 const ERROR_CODE_TRANSLATION_KEYS = {
   fill_required_fields: "errorFillRequiredFields",
   invalid_registration_role: "errorInvalidRegistrationRole",
@@ -109,6 +154,28 @@ const RAW_ERROR_TRANSLATION_KEYS = {
     "errorScheduleGenerationRequiresData",
   "Для оптимизатора нужно установить ortools: pip install ortools":
     "errorOptimizerDependencyMissing",
+  "Выбрана некорректная группа": "errorInvalidGroupSelection",
+  "Язык студента должен совпадать с языком обучения группы":
+    "errorStudentLanguageMismatch",
+  "Допустимы только изображения": "profileImageTypeError",
+  "Изображение слишком большое": "profileImageSizeError",
+  "Неподдерживаемая коллекция": "errorUnsupportedCollection",
+  "Некорректный час предпочтения.": "errorPreferenceInvalidHour",
+  "Некорректный час предпочтения": "errorPreferenceInvalidHour",
+  "Некорректный день предпочтения.": "errorPreferenceInvalidDay",
+  "Некорректный день предпочтения": "errorPreferenceInvalidDay",
+  "Вы уже отправили запрос на этот слот.": "errorPreferenceAlreadySubmitted",
+  "Вы уже отправили запрос на этот слот": "errorPreferenceAlreadySubmitted",
+  "Некорректный статус заявки.": "errorPreferenceInvalidStatus",
+  "Некорректный статус заявки": "errorPreferenceInvalidStatus",
+  "Запрос преподавателя не найден.": "errorTeacherPreferenceRequestNotFound",
+  "Запрос преподавателя не найден": "errorTeacherPreferenceRequestNotFound",
+  "Задача генерации не найдена.": "errorGenerationJobNotFound",
+  "Задача генерации не найдена": "errorGenerationJobNotFound",
+  "Некорректное содержимое файла.": "errorImportInvalidContent",
+  "Некорректное содержимое файла": "errorImportInvalidContent",
+  "Расписание ещё не сгенерировано.": "errorScheduleNotGeneratedYet",
+  "Расписание ещё не сгенерировано": "errorScheduleNotGeneratedYet",
   "Not found": "errorNotFound",
   "Method not allowed": "errorMethodNotAllowed",
 };
@@ -134,7 +201,10 @@ const getHttpFallbackMessage = (status) => {
 
 const getTransportErrorMessage = (error) => {
   if (!API_BASE_URL) {
-    return `VITE_API_URL is not configured for this deployment (${window.location.origin}).`;
+    return getLocalized("errorApiUrlNotConfigured").replace(
+      "${origin}",
+      window.location.origin,
+    );
   }
   if (error?.code === "ECONNABORTED") {
     return getLocalized("errorTimeout");
@@ -151,10 +221,9 @@ const getApiErrorMessage = (payload, status) => {
   const rawTranslationKey = payload?.error
     ? RAW_ERROR_TRANSLATION_KEYS[payload.error]
     : null;
-
-  if (errorCode === "bad_request" && payload?.error) {
-    return payload.error;
-  }
+  const patternTranslation = payload?.error
+    ? ERROR_PATTERN_TRANSLATORS.find(({ pattern }) => pattern.test(payload.error))
+    : null;
 
   if (translationKey) {
     if (errorCode === "fill_required_fields" && payload?.details?.fields?.length) {
@@ -178,6 +247,17 @@ const getApiErrorMessage = (payload, status) => {
 
   if (rawTranslationKey) {
     return getLocalized(rawTranslationKey);
+  }
+
+  if (patternTranslation && payload?.error) {
+    const match = payload.error.match(patternTranslation.pattern);
+    if (match) {
+      return patternTranslation.getMessage(match);
+    }
+  }
+
+  if (errorCode === "bad_request" && payload?.error) {
+    return payload.error;
   }
 
   return payload?.error || getHttpFallbackMessage(status);
@@ -339,7 +419,10 @@ api.interceptors.request.use(
     if (!API_BASE_URL) {
       return Promise.reject(
         new Error(
-          `VITE_API_URL is not configured for this deployment (${window.location.origin}).`,
+          getLocalized("errorApiUrlNotConfigured").replace(
+            "${origin}",
+            window.location.origin,
+          ),
         ),
       );
     }

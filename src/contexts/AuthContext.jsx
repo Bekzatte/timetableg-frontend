@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { authAPI, profileAPI } from "../services/api";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { ROLES } from "../constants/roles";
+import { getTranslation } from "../i18n/translations";
 import { AuthContext } from "./AuthContextValue";
 
 export const AuthProvider = ({ children }) => {
@@ -52,6 +53,8 @@ export const AuthProvider = ({ children }) => {
 
   const getErrorMessage = (err, fallback) =>
     err?.response?.data?.error || err?.message || fallback;
+  const getLocalized = (key) =>
+    getTranslation(localStorage.getItem("language") || "ru", key);
 
   const login = async (email, password, role = ROLES.STUDENT) => {
     setIsLoading(true);
@@ -62,7 +65,7 @@ export const AuthProvider = ({ children }) => {
       persistUser(userWithRole);
       return userWithRole;
     } catch (err) {
-      const errorMsg = getErrorMessage(err, "Ошибка при входе");
+      const errorMsg = getErrorMessage(err, getLocalized("errorLoginFallback"));
       setError(errorMsg);
       throw new Error(errorMsg);
     } finally {
@@ -102,7 +105,7 @@ export const AuthProvider = ({ children }) => {
       persistUser(userData);
       return userData;
     } catch (err) {
-      const errorMsg = getErrorMessage(err, "Ошибка при регистрации");
+      const errorMsg = getErrorMessage(err, getLocalized("errorRegisterFallback"));
       setError(errorMsg);
       throw new Error(errorMsg);
     } finally {
@@ -127,7 +130,7 @@ export const AuthProvider = ({ children }) => {
       persistUser(nextUser);
       return nextUser;
     } catch (err) {
-      const errorMsg = getErrorMessage(err, "Ошибка при загрузке профиля");
+      const errorMsg = getErrorMessage(err, getLocalized("errorProfileLoadFallback"));
       setError(errorMsg);
       throw new Error(errorMsg);
     } finally {
@@ -143,7 +146,7 @@ export const AuthProvider = ({ children }) => {
       persistUser(nextUser);
       return nextUser;
     } catch (err) {
-      const errorMsg = getErrorMessage(err, "Ошибка при загрузке фото");
+      const errorMsg = getErrorMessage(err, getLocalized("errorAvatarUploadFallback"));
       setError(errorMsg);
       throw new Error(errorMsg);
     } finally {

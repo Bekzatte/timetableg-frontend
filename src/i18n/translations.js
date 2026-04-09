@@ -241,6 +241,8 @@ export const translations = {
     errorServer: "Сервер қатесі. Кейінірек қайталап көріңіз.",
     errorUnknown: "Сұрауды орындау мүмкін болмады.",
     errorMethodNotAllowed: "Бұл әрекетке рұқсат жоқ.",
+    errorApiUrlNotConfigured:
+      "Бұл орта үшін VITE_API_URL бапталмаған (${origin}).",
     errorTimeout:
       "Сервер әлі жауап бермеді. Егер backend Render-де болса, ол ұйқыдан оянып жатқан болуы мүмкін. 30-60 секунд күтіп, сұрауды тағы бір рет қайталап көріңіз.",
     errorNetwork:
@@ -267,6 +269,11 @@ export const translations = {
     errorInvalidJson: "Қате JSON жіберілді.",
     errorDatabase: "Дерекқор қатесі орын алды.",
     errorInternalServer: "Ішкі сервер қатесі орын алды.",
+    errorLoginFallback: "Кіру қатесі",
+    errorRegisterFallback: "Тіркелу қатесі",
+    errorProfileLoadFallback: "Профильді жүктеу қатесі",
+    errorAvatarUploadFallback: "Фото жүктеу қатесі",
+    errorFileRead: "Файлды оқу мүмкін болмады.",
     errorOptimizerInputInfeasible: "Оптимизатор үшін деректерде қайшылық бар.",
     errorOptimizerDependencyMissing:
       "Кесте генераторы серверде толық орнатылмаған. Backend тәуелділіктерін тексеріңіз.",
@@ -282,10 +289,64 @@ export const translations = {
       "Берілген шектеулермен жарамды кесте табылмады.",
     errorScheduleGenerationRequiresData:
       "Кесте құру үшін мына деректер жетіспейді",
+    errorGenerationRoomsAvailableHint:
+      "Қажетті сабақ түріне сай бос аудиториялар бар екенін тексеріңіз.",
+    errorGenerationNoSuitableRoomsReason:
+      "Пән үшін түрі, сыйымдылығы немесе компьютер саны бойынша сәйкес аудитория табылмады.",
+    errorGenerationRoomCapacityHint:
+      "Аудитория сыйымдылығы топ немесе топша көлемінен кем емес екеніне көз жеткізіңіз.",
+    errorGenerationComputersHint:
+      "Компьютер қажет пәндер үшін зертханаларда computer_count, ал пәндерде requires_computers өрісін толтырыңыз.",
+    errorGenerationSlotsHint:
+      "Егер қолжетімді слоттарға сабақтар тым көп болса, секциялар санын азайтыңыз немесе шектеулерді әлсіретіңіз.",
+    errorGenerationInsufficientSlotsReason:
+      "Берілген шектеулер үшін қолжетімді уақыт слоттары жеткіліксіз.",
+    errorGenerationMissingSectionsHint:
+      "Sections кестесінде пәнді, топты, сабақ санын және сабақ түрін толтырыңыз.",
+    errorGenerationMissingTeachersHint:
+      "Оқытушыларды қосып, оларды пәндерге тағайындаңыз.",
+    errorGenerationMissingRoomsHint:
+      "Түрі, сыйымдылығы және қажет болса компьютерлері бар аудиторияларды қосыңыз.",
+    errorGenerationMissingGroupsHint:
+      "Топтарды, студент санын және оқу тілін қосыңыз.",
     errorInvalidTimeSlot: "Уақыт слоттарының бірінде күн немесе сағат дұрыс берілмеген.",
     errorInvalidTeacher: "Оқытушы жазбасында міндетті ID жоқ.",
     errorInvalidRoom: "Аудитория жазбасында міндетті ID жоқ.",
     errorUnknownTeacher: "Кесте элементіне байланысқан оқытушы табылмады.",
+    errorTeacherDoesNotSupportGroupLanguage:
+      "\"${course}\" пәнінің оқытушысы \"${language}\" топ тілін қолдамайды.",
+    errorTeacherDoesNotSupportGroupLanguageFallback:
+      "Тағайындалған оқытушы топтың оқу тілін қолдамайды.",
+    errorTeacherDoesNotSupportGroupLanguageHint:
+      "Топтың оқу тілін және тағайындалған оқытушының teaching_languages өрісін тексеріңіз.",
+    errorTeacherNotAssigned: "Бұл пән үшін оқытушы табылмады.",
+    errorTeacherNotAssignedHint: "Пәнді ашып, оған оқытушы тағайындаңыз.",
+    errorTeacherNotAssignedForCourse:
+      "\"${course}\" пәні үшін оқытушы тағайындалмаған.",
+    errorStudyCourseMissingForGroup:
+      "\"${group}\" тобы үшін оқу курсы көрсетілмеген.",
+    errorCourseGroupStudyCourseMismatch:
+      "\"${course}\" пәні ${courseYear}-курсқа арналған, бірақ \"${group}\" тобы ${groupCourse}-курс болып көрсетілген.",
+    errorImportSectionCourseNotFound:
+      "Section үшін \"${courseCode}\" кодымен пән табылмады.",
+    errorImportSectionGroupNotFound:
+      "Section үшін \"${group}\" тобы табылмады.",
+    errorInvalidGroupSelection: "Қате топ таңдалған.",
+    errorStudentLanguageMismatch:
+      "Студент тілі топтың оқу тілімен сәйкес келуі керек.",
+    errorUnsupportedCollection: "Бұл коллекцияға әрекет жасауға болмайды.",
+    errorPreferenceInvalidHour: "Қалаулы уақыттың сағаты қате.",
+    errorPreferenceInvalidDay: "Қалаулы уақыттың күні қате.",
+    errorPreferenceAlreadySubmitted:
+      "Сіз бұл слотқа сұрауды әлдеқашан жібергенсіз.",
+    errorPreferenceInvalidStatus: "Сұрау мәртебесі қате.",
+    errorPreferenceSlotOccupied:
+      "Бұл слотты \"${teacher}\" оқытушысының сұрауы алып қойған.",
+    errorTeacherPreferenceRequestNotFound:
+      "Оқытушы сұрауы табылмады.",
+    errorGenerationJobNotFound: "Кесте генерациясы тапсырмасы табылмады.",
+    errorImportInvalidContent: "Файл мазмұны қате немесе бүлінген.",
+    errorScheduleNotGeneratedYet: "Кесте әлі генерацияланбаған.",
     errorInvalidId: "ID сан болуы керек.",
     errorRecordNotFound: "Жазба табылмады.",
 
@@ -641,6 +702,8 @@ export const translations = {
     errorServer: "Ошибка сервера. Попробуйте позже.",
     errorUnknown: "Не удалось выполнить запрос.",
     errorMethodNotAllowed: "Этот метод не поддерживается.",
+    errorApiUrlNotConfigured:
+      "Для этого окружения не настроен VITE_API_URL (${origin}).",
     errorTimeout:
       "Сервер пока не ответил. Если backend на Render, он мог уснуть и сейчас просыпается. Подождите 30-60 секунд и повторите запрос ещё раз.",
     errorNetwork:
@@ -667,6 +730,11 @@ export const translations = {
     errorInvalidJson: "Отправлен некорректный JSON.",
     errorDatabase: "Произошла ошибка базы данных.",
     errorInternalServer: "Произошла внутренняя ошибка сервера.",
+    errorLoginFallback: "Ошибка при входе",
+    errorRegisterFallback: "Ошибка при регистрации",
+    errorProfileLoadFallback: "Ошибка при загрузке профиля",
+    errorAvatarUploadFallback: "Ошибка при загрузке фото",
+    errorFileRead: "Не удалось прочитать файл.",
     errorOptimizerInputInfeasible: "Во входных данных есть конфликт для оптимизатора.",
     errorOptimizerDependencyMissing:
       "Генератор расписания не полностью установлен на сервере. Проверьте backend-зависимости.",
@@ -682,10 +750,63 @@ export const translations = {
       "Не удалось найти допустимое расписание при текущих ограничениях.",
     errorScheduleGenerationRequiresData:
       "Для генерации расписания не хватает данных",
+    errorGenerationRoomsAvailableHint:
+      "Проверьте, что для нужного типа занятия есть доступные аудитории.",
+    errorGenerationNoSuitableRoomsReason:
+      "Для дисциплины не найдено подходящих аудиторий по типу, вместимости или числу компьютеров.",
+    errorGenerationRoomCapacityHint:
+      "Убедитесь, что вместимость аудитории не меньше размера группы или подгруппы.",
+    errorGenerationComputersHint:
+      "Для компьютерных дисциплин заполните computer_count у лабораторий и requires_computers у дисциплин.",
+    errorGenerationSlotsHint:
+      "Сократите количество секций или ослабьте ограничения, если занятий слишком много для доступных слотов.",
+    errorGenerationInsufficientSlotsReason:
+      "Для текущих ограничений недостаточно доступных временных слотов.",
+    errorGenerationMissingSectionsHint:
+      "Заполните Sections: предмет, группа, количество занятий и тип занятия.",
+    errorGenerationMissingTeachersHint:
+      "Добавьте преподавателей и назначьте их дисциплинам.",
+    errorGenerationMissingRoomsHint:
+      "Добавьте доступные аудитории с типом, вместимостью и, при необходимости, компьютерами.",
+    errorGenerationMissingGroupsHint:
+      "Добавьте группы, число студентов и язык обучения.",
     errorInvalidTimeSlot: "В одном из временных слотов неверно передан день или час.",
     errorInvalidTeacher: "В записи преподавателя отсутствует обязательный ID.",
     errorInvalidRoom: "В записи аудитории отсутствует обязательный ID.",
     errorUnknownTeacher: "Для одного из элементов расписания не найден преподаватель.",
+    errorTeacherDoesNotSupportGroupLanguage:
+      "Преподаватель курса \"${course}\" не поддерживает язык группы \"${language}\".",
+    errorTeacherDoesNotSupportGroupLanguageFallback:
+      "Назначенный преподаватель не поддерживает язык обучения группы.",
+    errorTeacherDoesNotSupportGroupLanguageHint:
+      "Проверьте язык группы и поле teaching_languages у назначенного преподавателя.",
+    errorTeacherNotAssigned: "Для этой дисциплины не найден преподаватель.",
+    errorTeacherNotAssignedHint: "Откройте дисциплину и назначьте преподавателя.",
+    errorTeacherNotAssignedForCourse:
+      "Для дисциплины \"${course}\" не назначен преподаватель.",
+    errorStudyCourseMissingForGroup:
+      "Для группы \"${group}\" не указан курс обучения.",
+    errorCourseGroupStudyCourseMismatch:
+      "Дисциплина \"${course}\" предназначена для ${courseYear} курса, но группа \"${group}\" указана как ${groupCourse} курс.",
+    errorImportSectionCourseNotFound:
+      "Для section не найден курс с кодом \"${courseCode}\".",
+    errorImportSectionGroupNotFound:
+      "Для section не найдена группа \"${group}\".",
+    errorInvalidGroupSelection: "Выбрана некорректная группа.",
+    errorStudentLanguageMismatch:
+      "Язык студента должен совпадать с языком обучения группы.",
+    errorUnsupportedCollection: "Эта коллекция не поддерживается.",
+    errorPreferenceInvalidHour: "Некорректно указан час предпочтения.",
+    errorPreferenceInvalidDay: "Некорректно указан день предпочтения.",
+    errorPreferenceAlreadySubmitted: "Вы уже отправили запрос на этот слот.",
+    errorPreferenceInvalidStatus: "Некорректный статус заявки.",
+    errorPreferenceSlotOccupied:
+      "Этот слот уже занят заявкой преподавателя \"${teacher}\".",
+    errorTeacherPreferenceRequestNotFound:
+      "Запрос преподавателя не найден.",
+    errorGenerationJobNotFound: "Задача генерации расписания не найдена.",
+    errorImportInvalidContent: "Содержимое файла некорректно или повреждено.",
+    errorScheduleNotGeneratedYet: "Расписание ещё не сгенерировано.",
     errorInvalidId: "ID должен быть числом.",
     errorRecordNotFound: "Запись не найдена.",
 
@@ -1041,6 +1162,8 @@ export const translations = {
     errorServer: "Server error. Try again later.",
     errorUnknown: "The request could not be completed.",
     errorMethodNotAllowed: "This method is not supported.",
+    errorApiUrlNotConfigured:
+      "VITE_API_URL is not configured for this deployment (${origin}).",
     errorTimeout:
       "The server has not responded yet. If the backend is on Render, it may be waking up from sleep. Wait 30-60 seconds and retry once.",
     errorNetwork:
@@ -1067,6 +1190,11 @@ export const translations = {
     errorInvalidJson: "Invalid JSON was sent.",
     errorDatabase: "A database error occurred.",
     errorInternalServer: "An internal server error occurred.",
+    errorLoginFallback: "Error logging in",
+    errorRegisterFallback: "Error registering",
+    errorProfileLoadFallback: "Error loading profile",
+    errorAvatarUploadFallback: "Error uploading photo",
+    errorFileRead: "Could not read the file.",
     errorOptimizerInputInfeasible: "There is a conflict in the optimizer input data.",
     errorOptimizerDependencyMissing:
       "The schedule generator is not fully installed on the server. Check backend dependencies.",
@@ -1082,10 +1210,64 @@ export const translations = {
       "No valid schedule could be found with the current constraints.",
     errorScheduleGenerationRequiresData:
       "More data is required to generate the schedule",
+    errorGenerationRoomsAvailableHint:
+      "Check that there are available rooms for the required class type.",
+    errorGenerationNoSuitableRoomsReason:
+      "No suitable rooms were found for the discipline by type, capacity, or computer count.",
+    errorGenerationRoomCapacityHint:
+      "Make sure the room capacity is at least as large as the group or subgroup size.",
+    errorGenerationComputersHint:
+      "For computer-based disciplines, fill in laboratory computer_count values and requires_computers on the disciplines.",
+    errorGenerationSlotsHint:
+      "Reduce the number of sections or relax constraints if there are too many classes for the available slots.",
+    errorGenerationInsufficientSlotsReason:
+      "There are not enough available time slots for the current constraints.",
+    errorGenerationMissingSectionsHint:
+      "Fill in Sections with discipline, group, class count, and lesson type.",
+    errorGenerationMissingTeachersHint:
+      "Add teachers and assign them to disciplines.",
+    errorGenerationMissingRoomsHint:
+      "Add available rooms with type, capacity, and computers where needed.",
+    errorGenerationMissingGroupsHint:
+      "Add groups, student counts, and study language.",
     errorInvalidTimeSlot: "One of the time slots has an invalid day or hour.",
     errorInvalidTeacher: "A teacher record is missing the required ID.",
     errorInvalidRoom: "A room record is missing the required ID.",
     errorUnknownTeacher: "A teacher linked to a schedule item could not be found.",
+    errorTeacherDoesNotSupportGroupLanguage:
+      "The teacher for \"${course}\" does not support the group's language \"${language}\".",
+    errorTeacherDoesNotSupportGroupLanguageFallback:
+      "The assigned teacher does not support the group's study language.",
+    errorTeacherDoesNotSupportGroupLanguageHint:
+      "Check the group language and the assigned teacher's teaching_languages field.",
+    errorTeacherNotAssigned: "No teacher was found for this discipline.",
+    errorTeacherNotAssignedHint: "Open the discipline and assign a teacher to it.",
+    errorTeacherNotAssignedForCourse:
+      "No teacher is assigned to the discipline \"${course}\".",
+    errorStudyCourseMissingForGroup:
+      "No study course is specified for group \"${group}\".",
+    errorCourseGroupStudyCourseMismatch:
+      "The discipline \"${course}\" is meant for year ${courseYear}, but group \"${group}\" is marked as year ${groupCourse}.",
+    errorImportSectionCourseNotFound:
+      "No course with code \"${courseCode}\" was found for the section.",
+    errorImportSectionGroupNotFound:
+      "No group named \"${group}\" was found for the section.",
+    errorInvalidGroupSelection: "An invalid group was selected.",
+    errorStudentLanguageMismatch:
+      "The student's language must match the group's study language.",
+    errorUnsupportedCollection: "This collection is not supported.",
+    errorPreferenceInvalidHour: "The preferred hour is invalid.",
+    errorPreferenceInvalidDay: "The preferred day is invalid.",
+    errorPreferenceAlreadySubmitted:
+      "You have already submitted a request for this slot.",
+    errorPreferenceInvalidStatus: "The request status is invalid.",
+    errorPreferenceSlotOccupied:
+      "This slot is already occupied by teacher request \"${teacher}\".",
+    errorTeacherPreferenceRequestNotFound:
+      "The teacher request could not be found.",
+    errorGenerationJobNotFound: "The schedule generation job could not be found.",
+    errorImportInvalidContent: "The file content is invalid or corrupted.",
+    errorScheduleNotGeneratedYet: "The schedule has not been generated yet.",
     errorInvalidId: "ID must be a number.",
     errorRecordNotFound: "Record not found.",
 

@@ -144,7 +144,7 @@ export const TeacherManager = () => {
 
   const columns = [
     { key: "name", label: t("fullName") },
-    { key: "email", label: "Email" },
+    { key: "email", label: t("email") },
     { key: "phone", label: t("phone") },
     { key: "department", label: t("facultyInstitute") },
     {
@@ -179,7 +179,7 @@ export const TeacherManager = () => {
     },
     {
       name: "email",
-      label: "Email",
+      label: t("email"),
       type: "email",
       placeholder: "name@kazatu.edu.kz",
       required: true,
