@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ROLES } from "../constants/roles";
 import { useAuth } from "../hooks/useAuth";
@@ -11,7 +11,6 @@ import { STUDY_LANGUAGES } from "../constants/languages";
 
 const TEACHER_REGISTRATION_MODES = {
   CLAIM: "claim",
-  MANUAL: "manual",
 };
 
 export const RegisterPage = () => {
@@ -36,12 +35,15 @@ export const RegisterPage = () => {
   const [localError, setLocalError] = useState("");
   const [teacherSearchQuery, setTeacherSearchQuery] = useState("");
   const [teacherSearchResults, setTeacherSearchResults] = useState([]);
+  const [hasTeacherSearchAttempt, setHasTeacherSearchAttempt] = useState(false);
   const [selectedTeacherAccount, setSelectedTeacherAccount] = useState(null);
+  const [claimEmail, setClaimEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [claimDebugCode, setClaimDebugCode] = useState("");
   const [isSearchingTeachers, setIsSearchingTeachers] = useState(false);
   const [isRequestingClaimCode, setIsRequestingClaimCode] = useState(false);
   const [isConfirmingClaim, setIsConfirmingClaim] = useState(false);
+  const teacherSearchRequestRef = useRef(0);
 
   useAutoDismiss(localError, setLocalError);
 
@@ -69,7 +71,9 @@ export const RegisterPage = () => {
   const resetTeacherClaimState = () => {
     setTeacherSearchQuery("");
     setTeacherSearchResults([]);
+    setHasTeacherSearchAttempt(false);
     setSelectedTeacherAccount(null);
+    setClaimEmail("");
     setVerificationCode("");
     setClaimDebugCode("");
   };
@@ -122,29 +126,31 @@ export const RegisterPage = () => {
     setPassword("");
     setConfirmPassword("");
     resetTeacherClaimState();
-
-    if (mode === TEACHER_REGISTRATION_MODES.MANUAL) {
-      setDisplayName("");
-      setEmail("");
-      setDepartment("");
-      setTeacherLanguages([]);
-    }
   };
 
-  const handleTeacherSearch = async () => {
-    const query = teacherSearchQuery.trim();
+  const searchTeachers = useCallback(async (query) => {
     setLocalError("");
 
     if (query.length < 2) {
-      setLocalError(t("teacherClaimSearchPlaceholder"));
+      setTeacherSearchResults([]);
+      setHasTeacherSearchAttempt(false);
       return;
     }
 
     try {
+      const requestId = teacherSearchRequestRef.current + 1;
+      teacherSearchRequestRef.current = requestId;
       setIsSearchingTeachers(true);
+      setHasTeacherSearchAttempt(true);
       const results = await teacherClaimAPI.search(query);
-      setTeacherSearchResults(Array.isArray(results) ? results : []);
-      setSelectedTeacherAccount(null);
+      if (teacherSearchRequestRef.current !== requestId) {
+        return;
+      }
+      const nextResults = Array.isArray(results) ? results : [];
+      setTeacherSearchResults(nextResults);
+      setSelectedTeacherAccount((current) =>
+        current && nextResults.some((item) => item.id === current.id) ? current : null,
+      );
       setVerificationCode("");
       setClaimDebugCode("");
     } catch (err) {
@@ -152,13 +158,38 @@ export const RegisterPage = () => {
     } finally {
       setIsSearchingTeachers(false);
     }
+  }, []);
+
+  const handleTeacherSearch = async () => {
+    await searchTeachers(teacherSearchQuery.trim());
   };
+
+  useEffect(() => {
+    if (!isTeacherClaimMode) {
+      return;
+    }
+
+    const query = teacherSearchQuery.trim();
+    if (query.length < 2) {
+      setTeacherSearchResults([]);
+      setHasTeacherSearchAttempt(false);
+      setIsSearchingTeachers(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      searchTeachers(query);
+    }, 350);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isTeacherClaimMode, searchTeachers, teacherSearchQuery]);
 
   const handleTeacherAccountSelect = (teacherAccount) => {
     setSelectedTeacherAccount(teacherAccount);
     setDisplayName(teacherAccount.name || "");
-    setEmail(teacherAccount.email || "");
-    setDepartment(teacherAccount.department || "");
+    setEmail("");
+    setDepartment("");
+    setClaimEmail("");
     setTeacherLanguages(
       String(teacherAccount.teachingLanguages || "ru,kk")
         .split(",")
@@ -181,7 +212,7 @@ export const RegisterPage = () => {
       setLocalError("");
       const result = await teacherClaimAPI.request(
         selectedTeacherAccount.id,
-        selectedTeacherAccount.email,
+        claimEmail.trim().toLowerCase(),
       );
       setClaimDebugCode(result.debugCode || "");
     } catch (err) {
@@ -215,11 +246,11 @@ export const RegisterPage = () => {
         setIsConfirmingClaim(true);
         await teacherClaimAPI.confirm(
           selectedTeacherAccount.id,
-          selectedTeacherAccount.email,
+          claimEmail.trim().toLowerCase(),
           verificationCode,
           password,
         );
-        await login(selectedTeacherAccount.email, password, ROLES.TEACHER);
+        await login(claimEmail.trim().toLowerCase(), password, ROLES.TEACHER);
         navigate("/schedule");
       } catch (err) {
         setLocalError(err.message);
@@ -321,32 +352,15 @@ export const RegisterPage = () => {
             <div className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
               <div>
                 <p className="mb-2 text-sm font-medium text-gray-700">{t("teacher")}</p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2">
                   <button
                     type="button"
                     onClick={() =>
                       handleTeacherRegistrationModeChange(TEACHER_REGISTRATION_MODES.CLAIM)
                     }
-                    className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
-                      teacherRegistrationMode === TEACHER_REGISTRATION_MODES.CLAIM
-                        ? "border-[#014531] bg-[#014531] text-white"
-                        : "border-gray-300 bg-white text-gray-700 hover:border-[#014531]"
-                    }`}
+                    className="rounded-md border border-[#014531] bg-[#014531] px-3 py-2 text-sm font-medium text-white transition"
                   >
                     {t("claimImportedTeacher")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleTeacherRegistrationModeChange(TEACHER_REGISTRATION_MODES.MANUAL)
-                    }
-                    className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
-                      teacherRegistrationMode === TEACHER_REGISTRATION_MODES.MANUAL
-                        ? "border-[#014531] bg-[#014531] text-white"
-                        : "border-gray-300 bg-white text-gray-700 hover:border-[#014531]"
-                    }`}
-                  >
-                    {t("manualTeacherRegistration")}
                   </button>
                 </div>
               </div>
@@ -363,6 +377,12 @@ export const RegisterPage = () => {
                         type="search"
                         value={teacherSearchQuery}
                         onChange={(e) => setTeacherSearchQuery(e.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            handleTeacherSearch();
+                          }
+                        }}
                         placeholder={t("teacherClaimSearchPlaceholder")}
                         className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -393,10 +413,7 @@ export const RegisterPage = () => {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="font-medium text-gray-900">{teacherAccount.name}</p>
-                              <p className="text-sm text-gray-600">{teacherAccount.email}</p>
-                              <p className="mt-1 text-xs text-gray-500">
-                                {teacherAccount.department || "-"}
-                              </p>
+                              <p className="text-sm text-gray-600">{teacherAccount.maskedEmail}</p>
                             </div>
                             <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
                               {t("teacherClaimSelectAccount")}
@@ -405,7 +422,7 @@ export const RegisterPage = () => {
                         </button>
                       ))}
                     </div>
-                  ) : teacherSearchQuery.trim().length >= 2 && !isSearchingTeachers ? (
+                  ) : hasTeacherSearchAttempt && !isSearchingTeachers ? (
                     <div className="rounded-md border border-gray-200 bg-white px-3 py-3 text-sm text-gray-600">
                       {t("teacherClaimSearchEmpty")}
                     </div>
@@ -421,11 +438,22 @@ export const RegisterPage = () => {
                           {selectedTeacherAccount.name}
                         </p>
                         <p className="text-sm text-emerald-800">
-                          {selectedTeacherAccount.email}
+                          {selectedTeacherAccount.maskedEmail}
                         </p>
-                        <p className="text-xs text-emerald-700">
-                          {selectedTeacherAccount.department || "-"}
-                        </p>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-emerald-900">
+                          {t("teacherClaimEmailLabel")}
+                        </label>
+                        <input
+                          type="email"
+                          autoComplete="email"
+                          value={claimEmail}
+                          onChange={(e) => setClaimEmail(e.target.value)}
+                          placeholder={t("teacherClaimEmailPlaceholder")}
+                          className="w-full rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
                       </div>
 
                       <button
@@ -465,7 +493,7 @@ export const RegisterPage = () => {
             </div>
           ) : null}
 
-          {(selectedRole !== ROLES.TEACHER || teacherRegistrationMode === TEACHER_REGISTRATION_MODES.MANUAL) && (
+          {selectedRole !== ROLES.TEACHER && (
             <>
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">

@@ -216,6 +216,8 @@ export const translations = {
     teacherClaimSearchHelp:
       "Excel арқылы импортталған оқытушылар осы жерден өз аккаунтын таба алады.",
     teacherClaimSearchEmpty: "Сәйкес импортталған оқытушы табылмады.",
+    teacherClaimEmailLabel: "Корпоративтік email",
+    teacherClaimEmailPlaceholder: "name@kazatu.edu.kz",
     teacherClaimSelectAccount: "Аккаунтты таңдау",
     teacherClaimSelectedAccount: "Таңдалған оқытушы",
     teacherClaimRequestCode: "Код сұрау",
@@ -251,6 +253,8 @@ export const translations = {
       "Оқытушы үшін email @kazatu.edu.kz доменімен аяқталуы керек.",
     errorTeacherAccountEmailDomainRequired:
       "Оқытушы аккаунтында @kazatu.edu.kz email болуы керек.",
+    errorTeacherClaimRequired:
+      "Импортталған оқытушы үшін аккаунтты іздеу және код арқылы растау қажет.",
     errorTeacherClaimAlreadyCompleted: "Бұл оқытушы аккаунты бұрыннан белсендірілген.",
     errorTeacherClaimEmailMismatch: "Көрсетілген email оқытушы жазбасымен сәйкес емес.",
     errorTeacherClaimCodeInvalid: "Растау коды қате.",
@@ -609,6 +613,8 @@ export const translations = {
     teacherClaimSearchHelp:
       "Преподаватели, импортированные через Excel, могут забрать свой аккаунт здесь.",
     teacherClaimSearchEmpty: "Подходящий импортированный преподаватель не найден.",
+    teacherClaimEmailLabel: "Корпоративный email",
+    teacherClaimEmailPlaceholder: "name@kazatu.edu.kz",
     teacherClaimSelectAccount: "Выбрать аккаунт",
     teacherClaimSelectedAccount: "Выбранный преподаватель",
     teacherClaimRequestCode: "Запросить код",
@@ -644,6 +650,8 @@ export const translations = {
       "Для преподавателя нужен email, оканчивающийся на @kazatu.edu.kz.",
     errorTeacherAccountEmailDomainRequired:
       "У аккаунта преподавателя должен быть email @kazatu.edu.kz.",
+    errorTeacherClaimRequired:
+      "Для импортированного преподавателя нужно подтвердить аккаунт через поиск и код.",
     errorTeacherClaimAlreadyCompleted: "Этот аккаунт преподавателя уже активирован.",
     errorTeacherClaimEmailMismatch: "Указанный email не совпадает с записью преподавателя.",
     errorTeacherClaimCodeInvalid: "Код подтверждения неверный.",
@@ -1002,6 +1010,8 @@ export const translations = {
     teacherClaimSearchHelp:
       "Teachers imported from Excel can claim their account here.",
     teacherClaimSearchEmpty: "No matching imported teacher was found.",
+    teacherClaimEmailLabel: "Corporate email",
+    teacherClaimEmailPlaceholder: "name@kazatu.edu.kz",
     teacherClaimSelectAccount: "Select account",
     teacherClaimSelectedAccount: "Selected teacher",
     teacherClaimRequestCode: "Request code",
@@ -1037,6 +1047,8 @@ export const translations = {
       "Teacher registration requires an email ending with @kazatu.edu.kz.",
     errorTeacherAccountEmailDomainRequired:
       "Teacher accounts must use an @kazatu.edu.kz email.",
+    errorTeacherClaimRequired:
+      "Imported teachers must confirm their account through search and verification code.",
     errorTeacherClaimAlreadyCompleted: "This teacher account has already been activated.",
     errorTeacherClaimEmailMismatch: "The provided email does not match the teacher record.",
     errorTeacherClaimCodeInvalid: "The verification code is invalid.",

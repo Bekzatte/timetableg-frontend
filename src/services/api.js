@@ -45,6 +45,7 @@ const ERROR_CODE_TRANSLATION_KEYS = {
   role_mismatch: "errorRoleMismatch",
   teacher_email_domain_required: "errorTeacherEmailDomainRequired",
   teacher_account_email_domain_required: "errorTeacherAccountEmailDomainRequired",
+  teacher_claim_required: "errorTeacherClaimRequired",
   teacher_claim_already_completed: "errorTeacherClaimAlreadyCompleted",
   teacher_claim_email_mismatch: "errorTeacherClaimEmailMismatch",
   teacher_claim_code_invalid: "errorTeacherClaimCodeInvalid",
@@ -90,6 +91,8 @@ const RAW_ERROR_TRANSLATION_KEYS = {
     "errorTeacherAccountEmailDomainRequired",
   "У аккаунта преподавателя должен быть email @kazatu.edu.kz":
     "errorTeacherAccountEmailDomainRequired",
+  "Для импортированного преподавателя нужно подтвердить аккаунт через поиск и код.":
+    "errorTeacherClaimRequired",
   "Требуется авторизация.": "errorAuthRequired",
   "Требуется авторизация": "errorAuthRequired",
   "Недействительный токен.": "errorInvalidToken",
