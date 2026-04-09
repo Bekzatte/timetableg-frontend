@@ -204,7 +204,7 @@ export const RegisterPage = () => {
     setDisplayName(teacherAccount.name || "");
     setEmail("");
     setDepartment("");
-    setClaimEmail(teacherAccount.email || "");
+    setClaimEmail("");
     setTeacherLanguages(
       String(teacherAccount.teachingLanguages || "ru,kk")
         .split(",")
@@ -266,11 +266,7 @@ export const RegisterPage = () => {
           password,
           selectedTeacherAccount.hasEmail ? "" : claimEmail.trim().toLowerCase(),
         );
-        await login(
-          (selectedTeacherAccount.email || claimEmail).trim().toLowerCase(),
-          password,
-          ROLES.TEACHER,
-        );
+        await login(claimEmail.trim().toLowerCase(), password, ROLES.TEACHER);
         navigate("/schedule");
       } catch (err) {
         setLocalError(err.message);
@@ -451,7 +447,11 @@ export const RegisterPage = () => {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="font-medium text-gray-900">{teacherAccount.name}</p>
-                              <p className="text-sm text-gray-600">{teacherAccount.maskedEmail}</p>
+                              {teacherAccount.maskedEmail ? (
+                                <p className="text-sm text-gray-600">
+                                  {teacherAccount.maskedEmail}
+                                </p>
+                              ) : null}
                             </div>
                           </div>
                         </button>
@@ -472,9 +472,11 @@ export const RegisterPage = () => {
                         <p className="mt-1 text-sm text-emerald-800">
                           {selectedTeacherAccount.name}
                         </p>
-                        <p className="text-sm text-emerald-800">
-                          {selectedTeacherAccount.maskedEmail}
-                        </p>
+                        {selectedTeacherAccount.maskedEmail ? (
+                          <p className="text-sm text-emerald-800">
+                            {selectedTeacherAccount.maskedEmail}
+                          </p>
+                        ) : null}
                       </div>
 
                       {!selectedTeacherAccount.hasEmail ? (
