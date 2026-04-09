@@ -95,7 +95,9 @@ export const TeacherManager = () => {
   const handleSubmit = async (formData, setErrors) => {
     try {
       setIsSubmitting(true);
-      if (!String(formData.email || "").trim().toLowerCase().endsWith("@kazatu.edu.kz")) {
+      const normalizedEmail = String(formData.email || "").trim().toLowerCase();
+
+      if (!normalizedEmail.endsWith("@kazatu.edu.kz")) {
         setErrors((prev) => ({
           ...prev,
           error: t("errorTeacherEmailDomainRequired"),
@@ -106,11 +108,13 @@ export const TeacherManager = () => {
       if (editingTeacher) {
         await teacherAPI.update(editingTeacher.id, {
           ...formData,
+          email: normalizedEmail,
           teaching_languages: formData.teaching_languages || ["ru", "kk"],
         });
       } else {
         await teacherAPI.create({
           ...formData,
+          email: normalizedEmail,
           teaching_languages: formData.teaching_languages || ["ru", "kk"],
         });
       }
@@ -253,7 +257,7 @@ export const TeacherManager = () => {
           </button>
           <button
             onClick={handleClearTeachers}
-            disabled={isClearing}
+            disabled={isClearing || teachers.length === 0}
             className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {isClearing ? t("loading") : t("clearTeachers")}

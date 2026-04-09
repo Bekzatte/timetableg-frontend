@@ -20,6 +20,7 @@ export const DataTable = ({
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const hasSearchQuery = searchQuery.trim().length > 0;
 
   const filteredData = useMemo(() => {
     if (!enableSearch) {
@@ -45,6 +46,8 @@ export const DataTable = ({
       );
     });
   }, [columns, data, enableSearch, searchQuery]);
+  const isFilteredEmpty = data.length > 0 && filteredData.length === 0;
+  const emptyStateMessage = isFilteredEmpty ? t("noResults") : t("noData");
 
   if (isLoading) {
     return <div className="p-4 text-center text-gray-600">{t("loading")}</div>;
@@ -143,7 +146,21 @@ export const DataTable = ({
       {data.length === 0 || filteredData.length === 0 ? (
         <div className="space-y-3 overflow-y-auto pr-1 md:hidden">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm text-center text-gray-500">
-            {t("noData")}
+            <p>{emptyStateMessage}</p>
+            {isFilteredEmpty && (hasSearchQuery || hasActiveFilters) ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  if (onResetFilters) {
+                    onResetFilters();
+                  }
+                }}
+                className="mt-3 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                {t("reset")}
+              </button>
+            ) : null}
           </div>
         </div>
       ) : (
@@ -224,7 +241,23 @@ export const DataTable = ({
                   colSpan={columns.length + (onEdit || onDelete ? 1 : 0)}
                   className="px-4 py-8 text-center text-sm text-gray-500"
                 >
-                  {t("noData")}
+                  <div className="flex flex-col items-center gap-3">
+                    <span>{emptyStateMessage}</span>
+                    {isFilteredEmpty && (hasSearchQuery || hasActiveFilters) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery("");
+                          if (onResetFilters) {
+                            onResetFilters();
+                          }
+                        }}
+                        className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                      >
+                        {t("reset")}
+                      </button>
+                    ) : null}
+                  </div>
                 </td>
               </tr>
             ) : (

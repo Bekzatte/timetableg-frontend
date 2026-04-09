@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Bell, Trash2 } from "lucide-react";
 import { useNotifications } from "../hooks/useNotifications";
 import { useTranslation } from "../hooks/useTranslation";
@@ -23,14 +23,14 @@ const parseMetadata = (value) => {
   }
 };
 
-const formatScheduleBrief = (scheduleItem) => {
+const formatScheduleBrief = (scheduleItem, t) => {
   if (!scheduleItem) {
     return "";
   }
 
   const subgroup = String(scheduleItem.subgroup || "").trim().toUpperCase();
-  const subgroupLabel = subgroup ? `, subgroup ${subgroup}` : "";
-  return `${scheduleItem.course_name || ""} | ${scheduleItem.day || ""} ${scheduleItem.start_hour || ""}:00 | room ${scheduleItem.room_number || ""} | group ${scheduleItem.group_name || ""}${subgroupLabel}`;
+  const subgroupLabel = subgroup ? ` | ${t("subgroup")} ${subgroup}` : "";
+  return `${scheduleItem.course_name || ""} | ${scheduleItem.day || ""} ${scheduleItem.start_hour || ""}:00 | ${t("roomNumber")} ${scheduleItem.room_number || ""} | ${t("groupNumber")} ${scheduleItem.group_name || ""}${subgroupLabel}`;
 };
 
 const formatTimestamp = (value, language) => {
@@ -56,21 +56,21 @@ const getNotificationContent = (item, t) => {
     if (beforeItem && afterItem) {
       return {
         title: t("notificationScheduleChangedTitle"),
-        message: `${t("notificationScheduleUpdated")}: ${t("notificationWas")}: ${formatScheduleBrief(beforeItem)}. ${t("notificationBecame")}: ${formatScheduleBrief(afterItem)}.`,
+        message: `${t("notificationScheduleUpdated")}: ${t("notificationWas")}: ${formatScheduleBrief(beforeItem, t)}. ${t("notificationBecame")}: ${formatScheduleBrief(afterItem, t)}.`,
       };
     }
 
     if (afterItem) {
       return {
         title: t("notificationScheduleChangedTitle"),
-        message: `${t("notificationScheduleAdded")}: ${formatScheduleBrief(afterItem)}.`,
+        message: `${t("notificationScheduleAdded")}: ${formatScheduleBrief(afterItem, t)}.`,
       };
     }
 
     if (beforeItem) {
       return {
         title: t("notificationScheduleChangedTitle"),
-        message: `${t("notificationScheduleRemoved")}: ${formatScheduleBrief(beforeItem)}.`,
+        message: `${t("notificationScheduleRemoved")}: ${formatScheduleBrief(beforeItem, t)}.`,
       };
     }
   }
@@ -90,7 +90,7 @@ const getNotificationContent = (item, t) => {
 
 export default function NotificationsPage() {
   const { t, language } = useTranslation();
-  const isMarkingReadRef = useRef(false);
+  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const {
@@ -102,23 +102,19 @@ export default function NotificationsPage() {
     deleteAll,
   } = useNotifications();
 
-  useEffect(() => {
-    if (unreadCount <= 0 || isMarkingReadRef.current) {
-      return;
-    }
-
-    isMarkingReadRef.current = true;
-    markAllAsRead()
-      .catch(() => {})
-      .finally(() => {
-        isMarkingReadRef.current = false;
-      });
-  }, [markAllAsRead, unreadCount]);
-
   const sortedItems = useMemo(
     () => [...items].sort((left, right) => new Date(right.created_at) - new Date(left.created_at)),
     [items],
   );
+
+  const handleMarkAllRead = async () => {
+    try {
+      setIsMarkingAllRead(true);
+      await markAllAsRead();
+    } finally {
+      setIsMarkingAllRead(false);
+    }
+  };
 
   const handleDeleteAll = async () => {
     try {
@@ -158,6 +154,16 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+              {sortedItems.length > 0 && unreadCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={handleMarkAllRead}
+                  disabled={isMarkingAllRead}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                >
+                  {isMarkingAllRead ? t("loading") : t("notificationsMarkAllRead")}
+                </button>
+              ) : null}
               {sortedItems.length > 0 ? (
                 <button
                   type="button"

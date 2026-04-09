@@ -10,10 +10,12 @@ import {
   roomAPI,
   scheduleAPI,
   sectionAPI,
+  teacherAPI,
 } from "../services/api";
 import { useFetch } from "../hooks/useAPI";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
+import { useAutoDismiss } from "../hooks/useAutoDismiss";
 
 const WEEKDAY_OPTIONS = [
   { value: "monday", labelKey: "monday" },
@@ -146,6 +148,7 @@ export const SchedulePage = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [generationError, setGenerationError] = useState(null);
+  const [pageError, setPageError] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
   const [teacherFilter, setTeacherFilter] = useState("");
   const [roomFilter, setRoomFilter] = useState("");
@@ -158,6 +161,8 @@ export const SchedulePage = () => {
   const { data: sectionsData, execute: executeSections } = useFetch(sectionAPI.getAll);
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
   const { data: coursesData, execute: executeCourses } = useFetch(courseAPI.getAll);
+  const { data: teachersData, execute: executeTeachers } = useFetch(teacherAPI.getAll);
+  useAutoDismiss(pageError, setPageError);
 
   useEffect(() => {
     if (data) {
@@ -171,12 +176,31 @@ export const SchedulePage = () => {
       executeSections();
       executeRooms();
       executeCourses();
+      executeTeachers();
     }
-  }, [execute, executeCourses, executeRooms, executeSections, isAdmin]);
+  }, [execute, executeCourses, executeRooms, executeSections, executeTeachers, isAdmin]);
 
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
   const rooms = Array.isArray(roomsData) ? roomsData : [];
   const courses = Array.isArray(coursesData) ? coursesData : [];
+  const teachers = Array.isArray(teachersData) ? teachersData : [];
+  const hasAssignedCourseTeacher = courses.some((course) => course.instructor_id);
+  const isEntryFormBlocked =
+    sections.length === 0 ||
+    rooms.length === 0 ||
+    courses.length === 0 ||
+    teachers.length === 0 ||
+    !hasAssignedCourseTeacher;
+  const entryFormHint =
+    sections.length === 0
+      ? t("scheduleEntriesNeedSectionsFirst")
+      : rooms.length === 0
+        ? t("scheduleEntriesNeedRoomsFirst")
+        : courses.length === 0
+          ? t("scheduleEntriesNeedCoursesFirst")
+          : teachers.length === 0 || !hasAssignedCourseTeacher
+            ? t("scheduleEntriesNeedAssignedTeachers")
+            : "";
   const filteredSchedule = useMemo(
     () =>
       schedule.filter((entry) => {
@@ -212,6 +236,7 @@ export const SchedulePage = () => {
   const handleGenerateSchedule = async (formData, setErrors) => {
     try {
       setGenerationError(null);
+      setPageError("");
       setIsGenerateOpen(false);
       setIsLoading(true);
       const job = await scheduleAPI.generate(formData);
@@ -240,11 +265,13 @@ export const SchedulePage = () => {
 
     try {
       setIsResetting(true);
+      setPageError("");
       await adminAPI.clearCollection("schedules");
       setSchedule([]);
       await execute();
     } catch (error) {
       console.error(t("errorResetSchedule"), error);
+      setPageError(error.message || t("errorResetSchedule"));
     } finally {
       setIsResetting(false);
     }
@@ -253,6 +280,7 @@ export const SchedulePage = () => {
   const handleExportSchedule = async () => {
     try {
       setIsExporting(true);
+      setPageError("");
       const blob = await scheduleAPI.exportExcel();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -264,6 +292,7 @@ export const SchedulePage = () => {
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error(t("errorExportSchedule"), error);
+      setPageError(error.message || t("errorExportSchedule"));
     } finally {
       setIsExporting(false);
     }
@@ -288,10 +317,12 @@ export const SchedulePage = () => {
     }
 
     try {
+      setPageError("");
       await scheduleAPI.delete(entry.id);
       await refreshSchedule();
     } catch (error) {
       console.error(t("errorDeleteScheduleEntry"), error);
+      setPageError(error.message || t("errorDeleteScheduleEntry"));
     }
   };
 
@@ -470,6 +501,7 @@ export const SchedulePage = () => {
 
   const scheduleActionLabel =
     schedule.length > 0 ? t("regenerateSchedule") : t("generateNewSchedule");
+  const displayedScheduleCount = filteredSchedule.length;
 
   return (
     <div className="relative w-full px-0 py-2 sm:py-4">
@@ -493,6 +525,13 @@ export const SchedulePage = () => {
         {isAdmin && (
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-nowrap sm:items-center">
             <button
+              onClick={() => setIsGenerateOpen(true)}
+              disabled={isLoading}
+              className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RotateCw size={20} /> {scheduleActionLabel}
+            </button>
+            <button
               onClick={handleAddEntry}
               disabled={isLoading}
               className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
@@ -510,21 +549,20 @@ export const SchedulePage = () => {
             ) : null}
             <button
               onClick={handleResetSchedule}
-              disabled={isResetting || isLoading}
+              disabled={isResetting || isLoading || schedule.length === 0}
               className="whitespace-nowrap rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isResetting ? t("loading") : t("resetSchedule")}
             </button>
-            <button
-              onClick={() => setIsGenerateOpen(true)}
-              disabled={isLoading}
-              className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RotateCw size={20} /> {scheduleActionLabel}
-            </button>
           </div>
         )}
       </div>
+
+      {pageError ? (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {pageError}
+        </div>
+      ) : null}
 
       <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
         {schedule.length > 0 ? (
@@ -533,6 +571,15 @@ export const SchedulePage = () => {
           <div className="text-center py-12 text-gray-500">
             <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
             <p>{t("scheduleNotCreated")}</p>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => setIsGenerateOpen(true)}
+                className="mx-auto mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+              >
+                <RotateCw size={18} /> {scheduleActionLabel}
+              </button>
+            ) : null}
           </div>
         )}
       </div>
@@ -543,7 +590,9 @@ export const SchedulePage = () => {
             <h2 className="text-xl font-semibold text-gray-900">
               {t("manageScheduleEntries")}
             </h2>
-            <span className="text-sm text-gray-500">{schedule.length}</span>
+            <span className="text-sm text-gray-500">
+              {displayedScheduleCount}/{schedule.length}
+            </span>
           </div>
           <DataTable
             columns={scheduleColumns}
@@ -677,7 +726,7 @@ export const SchedulePage = () => {
           {generationError?.items?.length ? (
             <div>
               <p className="mb-2 text-sm font-medium text-gray-900">
-                {t("fillAllFields")}
+                {t("description")}
               </p>
               <ul className="list-disc space-y-2 pl-5 text-sm text-gray-700">
                 {generationError.items.map((item) => (
@@ -712,6 +761,8 @@ export const SchedulePage = () => {
           resetKey={editingEntry ? `schedule-entry-${editingEntry.id}` : "schedule-entry-new"}
           submitText={editingEntry ? t("save") : t("add")}
           isLoading={isEntrySaving}
+          isSubmitDisabled={isEntryFormBlocked}
+          submitHint={entryFormHint}
           initialValues={
             editingEntry
               ? {

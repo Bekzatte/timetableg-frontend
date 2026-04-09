@@ -34,8 +34,12 @@ const getInitials = (displayName = "") =>
     .join("") || "?";
 
 const RequireAuth = ({ children, allowedRoles = [] }) => {
-  const { user } = useAuth();
+  const { user, isReady } = useAuth();
   const { t } = useTranslation();
+
+  if (!isReady) {
+    return <div className="py-20 text-center text-gray-500">{t("loading")}</div>;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -48,6 +52,21 @@ const RequireAuth = ({ children, allowedRoles = [] }) => {
         <p>{t("accessDeniedDescription")}</p>
       </div>
     );
+  }
+
+  return children;
+};
+
+const GuestOnly = ({ children }) => {
+  const { user, isAdmin, isReady } = useAuth();
+  const { t } = useTranslation();
+
+  if (!isReady) {
+    return <div className="py-20 text-center text-gray-500">{t("loading")}</div>;
+  }
+
+  if (user) {
+    return <Navigate to={isAdmin ? "/" : "/schedule"} replace />;
   }
 
   return children;
@@ -93,16 +112,21 @@ export default function App() {
     { code: "en", name: "ENG" },
   ];
   const notificationBadge = unreadCount > 99 ? "99+" : unreadCount;
+  const closeAllMenus = () => {
+    setMenuOpen(false);
+    setProfileMenuOpen(false);
+  };
+  const handleLogout = () => {
+    logout();
+    closeAllMenus();
+  };
 
   const notificationLink = notificationsEnabled ? (
     <Link
       to="/notifications"
       className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
       aria-label={t("notifications")}
-      onClick={() => {
-        setMenuOpen(false);
-        setProfileMenuOpen(false);
-      }}
+      onClick={closeAllMenus}
     >
       <Bell size={19} />
       {unreadCount > 0 ? (
@@ -174,7 +198,10 @@ export default function App() {
                   >
                     <button
                       type="button"
-                      onClick={() => setProfileMenuOpen((prev) => !prev)}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setProfileMenuOpen((prev) => !prev);
+                      }}
                       className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition"
                       aria-label={t("profile")}
                     >
@@ -196,10 +223,7 @@ export default function App() {
                         {notificationsEnabled ? (
                           <Link
                             to="/notifications"
-                            onClick={() => {
-                              setProfileMenuOpen(false);
-                              setMenuOpen(false);
-                            }}
+                            onClick={closeAllMenus}
                             className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
                           >
                             {t("notifications")}
@@ -207,21 +231,14 @@ export default function App() {
                         ) : null}
                         <Link
                           to="/profile"
-                          onClick={() => {
-                            setProfileMenuOpen(false);
-                            setMenuOpen(false);
-                          }}
+                          onClick={closeAllMenus}
                           className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
                         >
                           {t("profile")}
                         </Link>
                         <button
                           type="button"
-                          onClick={() => {
-                            logout();
-                            setProfileMenuOpen(false);
-                            setMenuOpen(false);
-                          }}
+                          onClick={handleLogout}
                           className="block w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
                         >
                           {t("logout")}
@@ -279,7 +296,10 @@ export default function App() {
                   >
                     <button
                       type="button"
-                      onClick={() => setProfileMenuOpen((prev) => !prev)}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setProfileMenuOpen((prev) => !prev);
+                      }}
                       className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-300 bg-white/10 transition hover:scale-105"
                       aria-label={t("profile")}
                     >
@@ -301,10 +321,7 @@ export default function App() {
                         {notificationsEnabled ? (
                           <Link
                             to="/notifications"
-                            onClick={() => {
-                              setProfileMenuOpen(false);
-                              setMenuOpen(false);
-                            }}
+                            onClick={closeAllMenus}
                             className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
                           >
                             {t("notifications")}
@@ -312,21 +329,14 @@ export default function App() {
                         ) : null}
                         <Link
                           to="/profile"
-                          onClick={() => {
-                            setProfileMenuOpen(false);
-                            setMenuOpen(false);
-                          }}
+                          onClick={closeAllMenus}
                           className="block px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-[#f4fbf7]"
                         >
                           {t("profile")}
                         </Link>
                         <button
                           type="button"
-                          onClick={() => {
-                            logout();
-                            setProfileMenuOpen(false);
-                            setMenuOpen(false);
-                          }}
+                          onClick={handleLogout}
                           className="block w-full px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
                         >
                           {t("logout")}
@@ -353,7 +363,12 @@ export default function App() {
               )}
 
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
+                type="button"
+                aria-label={menuOpen ? t("close") : t("navigate")}
+                onClick={() => {
+                  setProfileMenuOpen(false);
+                  setMenuOpen((prev) => !prev);
+                }}
                 className="rounded-full p-2 text-white transition hover:bg-white/10 lg:hidden"
               >
                 {menuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -370,7 +385,7 @@ export default function App() {
                     key={item.path}
                     to={item.path}
                     className="block text-white hover:text-yellow-300 transition py-2 px-3 font-medium rounded"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={closeAllMenus}
                   >
                     {item.label}
                   </Link>
@@ -379,7 +394,7 @@ export default function App() {
                   <Link
                     to="/notifications"
                     className="block text-white hover:text-yellow-300 transition py-2 px-3 font-medium rounded"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={closeAllMenus}
                   >
                     {t("notifications")}
                   </Link>
@@ -392,7 +407,7 @@ export default function App() {
                       key={lang.code}
                       onClick={() => {
                         setLanguage(lang.code);
-                        setMenuOpen(false);
+                        closeAllMenus();
                       }}
                       className={`flex-1 rounded-md px-2 py-2 text-xs font-semibold transition duration-200 ${
                         language === lang.code
@@ -410,14 +425,14 @@ export default function App() {
                     <>
                       <Link
                         to="/login"
-                        onClick={() => setMenuOpen(false)}
+                        onClick={closeAllMenus}
                         className="w-full inline-flex justify-center bg-[#014531] border border-white text-white py-2 rounded-md"
                       >
                         {t("login")}
                       </Link>
                       <Link
                         to="/register"
-                        onClick={() => setMenuOpen(false)}
+                        onClick={closeAllMenus}
                         className="w-full inline-flex justify-center bg-[#014531] border border-white text-white py-2 rounded-md"
                       >
                         {t("register")}
@@ -433,8 +448,22 @@ export default function App() {
         {/* Main content */}
         <main className="mx-auto flex-1 w-full max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 xl:px-10">
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/login"
+              element={
+                <GuestOnly>
+                  <LoginPage />
+                </GuestOnly>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <GuestOnly>
+                  <RegisterPage />
+                </GuestOnly>
+              }
+            />
             <Route
                   path="/"
               element={

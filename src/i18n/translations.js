@@ -15,9 +15,9 @@ export const translations = {
 
     // Header & Footer
     title: "Уақыт кестесі",
-    subtitle: "Университет аудандарын басқару жүйесі",
+    subtitle: "Университет кестесін басқару жүйесі",
     copyright:
-      "© 2026 Уақыт кестесі. Университет аудандарының кестесін басқару жүйесі.",
+      "© 2026 Уақыт кестесі. Университет кестесін басқару жүйесі.",
 
     // Dashboard
     dashboard: "Басты бет",
@@ -49,7 +49,7 @@ export const translations = {
     // Teachers
     teacherMgmt: "Оқытушылар бөлімі",
     addTeacher: "Жаңа оқытушы қосу",
-    editTeacher: "Оқытушыны өндеу",
+    editTeacher: "Оқытушыны өңдеу",
     deleteTeacher: "Оқытушыны жою",
     teacherName: "Оқытушының аты",
     facultyInstitute: "Факультет/Институт",
@@ -66,10 +66,10 @@ export const translations = {
     roomMgmt: "Аудиториялар бөлімі",
     addRoom: "Жаңа аудитория қосу",
     addGroup: "Жаңа топ қосу",
-    editRoom: "Аудиторияны өндеу",
+    editRoom: "Аудиторияны өңдеу",
     editGroup: "Топты өңдеу",
     deleteRoom: "Аудиторияны жою",
-    roomNumber: "Аудитория нөмері",
+    roomNumber: "Аудитория нөмірі",
     groupNumber: "Топ нөмірі",
     studentCount: "Студент саны",
     subgroup: "Топша",
@@ -138,6 +138,7 @@ export const translations = {
     error: "Қате",
     success: "Сәтті",
     noData: "Деректер жоқ",
+    noResults: "Іздеу немесе сүзгі бойынша ештеңе табылмады",
     login: "Кіру",
     logout: "Шығу",
     selectRole: "Рөлді таңдаңыз",
@@ -154,7 +155,7 @@ export const translations = {
     passwordTooShort: "Құпия сөз кем дегенде 6 символдан болуы керек",
     noAccount: "Тіркелу есебіңіз жоқ па?",
     registerHere: "Мына жерде тіркеліңіз",
-    alreadyHaveAccount: "Іс портফельіңіз бар ма?",
+    alreadyHaveAccount: "Аккаунтыңыз бар ма?",
     loginHere: "Мына жерде кіріңіз",
     register: "Тіркелу",
     profileWelcome: "Жеке профиліңіз",
@@ -276,14 +277,14 @@ export const translations = {
     phonePlaceholder: "+7 (999) 999-99-99",
 
     // Rooms (additional)
-    roomNumberHeader: "Нөмер",
+    roomNumberHeader: "Нөмір",
     roomType: "Аудитория түрі",
     confirmDeleteRoom: '"${number}" аудиториясын өшіргіңіз келеді ме?',
     errorDeleteRoom: "Аудиторияны өшіру қатесі",
     errorSaveRoom: "Аудиторияны сақтау қатесі",
     lectureHall: "Лекция аудиториясы",
     practicalRoom: "Практикалық аудитория",
-    labHall: "LAB аудитория",
+    labHall: "Зертханалық аудитория",
     equipmentPlaceholder: "Проектор, тақта және т.б.",
     mainBuildingPlaceholder: "Негізгі ғимарат",
 
@@ -297,9 +298,9 @@ export const translations = {
       "Кесте құрылып жатыр. Бұл көбірек уақыт алуы мүмкін.",
     greedyAlgorithm: "Ашқаншыл алгоритм",
     geneticAlgorithm: "Генетикалық алгоритм",
-    simulatedAnnealing: "Имитациялық сойдыру",
+    simulatedAnnealing: "Имитациялық шынықтыру",
     scheduleNotCreated:
-      "Кесте құрылмаған. Кестені құру үшін жоғарыдағы түймесін басыңыз.",
+      "Кесте әлі құрылмаған. Оны жасау үшін жоғарыдағы батырманы басыңыз.",
     generateNewSchedule: "Жаңа кесте құру",
     exportSchedule: "Кестені Excel-ге экспорттау",
     resetSchedule: "Кестені тазалау",
@@ -327,11 +328,17 @@ export const translations = {
     importFileTypeError: "Тек .xlsx форматындағы Excel файлы қолдау табады.",
     clearAllData: "Барлық деректерді тазалау",
     clearAllDataSuccess: "Барлық деректер өшірілді.",
+    scheduleEntriesNeedSectionsFirst: "Қолмен сабақ қоспас бұрын кемінде бір секция қосыңыз.",
+    scheduleEntriesNeedRoomsFirst: "Қолмен сабақ қоспас бұрын кемінде бір аудитория қосыңыз.",
+    scheduleEntriesNeedCoursesFirst: "Қолмен сабақ қоспас бұрын кемінде бір пән қосыңыз.",
+    scheduleEntriesNeedAssignedTeachers:
+      "Қолмен сабақ қоспас бұрын пәндерге оқытушыларды тағайындаңыз.",
     clearCourses: "Пәндерді тазалау",
     clearTeachers: "Оқытушыларды тазалау",
     clearStudents: "Студенттерді тазалау",
     clearRooms: "Аудиторияларды тазалау",
     clearGroups: "Топтарды тазалау",
+    clearSections: "Секцияларды тазалау",
     confirmClearAllData:
       "Барлық пәндер, оқытушылар, аудиториялар, топтар, секциялар және кестелер өшіріледі. Жалғастыру керек пе?",
     confirmClearCourses: "Барлық пәндерді өшіру керек пе?",
@@ -339,6 +346,9 @@ export const translations = {
     confirmClearStudents: "Барлық студенттерді өшіру керек пе?",
     confirmClearRooms: "Барлық аудиторияларды өшіру керек пе?",
     confirmClearGroups: "Барлық топтарды өшіру керек пе?",
+    confirmClearSections: "Барлық секцияларды өшіру керек пе?",
+    sectionsNeedCoursesFirst: "Секция қоспас бұрын кемінде бір пән қосыңыз.",
+    sectionsNeedGroupsFirst: "Секция қоспас бұрын кемінде бір топ қосыңыз.",
 
     // Timetable
     time: "Уақыт",
@@ -499,6 +509,7 @@ export const translations = {
     error: "Ошибка",
     success: "Успешно",
     noData: "Данные отсутствуют",
+    noResults: "Поиск и фильтры не дали результатов",
     login: "Войти",
     logout: "Выйти",
     selectRole: "Выберите роль",
@@ -640,10 +651,10 @@ export const translations = {
 
     // Rooms (additional)
     roomNumberHeader: "Номер",
-    roomType: "Тип комнаты",
-    confirmDeleteRoom: 'Вы уверены, что хотите удалить комнату "${number}"?',
-    errorDeleteRoom: "Ошибка при удалении комнаты",
-    errorSaveRoom: "Ошибка при сохранении комнаты",
+    roomType: "Тип аудитории",
+    confirmDeleteRoom: 'Вы уверены, что хотите удалить аудиторию "${number}"?',
+    errorDeleteRoom: "Ошибка при удалении аудитории",
+    errorSaveRoom: "Ошибка при сохранении аудитории",
     lectureHall: "Лекционная аудитория",
     practicalRoom: "Практическая аудитория",
     labHall: "LAB аудитория",
@@ -662,7 +673,7 @@ export const translations = {
     geneticAlgorithm: "Генетический алгоритм",
     simulatedAnnealing: "Имитация отжига",
     scheduleNotCreated:
-      "Расписание не создано. Нажмите кнопку выше для генерирования.",
+      "Расписание ещё не создано. Нажмите кнопку выше, чтобы сгенерировать его.",
     generateNewSchedule: "Сгенерировать новое расписание",
     exportSchedule: "Экспортировать расписание",
     resetSchedule: "Сбросить расписание",
@@ -690,11 +701,17 @@ export const translations = {
     importFileTypeError: "Поддерживаются только Excel файлы формата .xlsx.",
     clearAllData: "Очистить все данные",
     clearAllDataSuccess: "Все данные удалены.",
+    scheduleEntriesNeedSectionsFirst: "Сначала добавьте хотя бы одну секцию, затем создавайте запись вручную.",
+    scheduleEntriesNeedRoomsFirst: "Сначала добавьте хотя бы одну аудиторию, затем создавайте запись вручную.",
+    scheduleEntriesNeedCoursesFirst: "Сначала добавьте хотя бы одну дисциплину, затем создавайте запись вручную.",
+    scheduleEntriesNeedAssignedTeachers:
+      "Сначала назначьте преподавателей дисциплинам, затем создавайте запись вручную.",
     clearCourses: "Очистить дисциплины",
     clearTeachers: "Очистить преподавателей",
     clearStudents: "Очистить студентов",
     clearRooms: "Очистить аудитории",
     clearGroups: "Очистить группы",
+    clearSections: "Очистить секции",
     confirmClearAllData:
       "Будут удалены все курсы, преподаватели, аудитории, группы, секции и расписания. Продолжить?",
     confirmClearCourses: "Удалить все дисциплины?",
@@ -702,6 +719,9 @@ export const translations = {
     confirmClearStudents: "Удалить всех студентов?",
     confirmClearRooms: "Удалить все аудитории?",
     confirmClearGroups: "Удалить все группы?",
+    confirmClearSections: "Удалить все секции?",
+    sectionsNeedCoursesFirst: "Сначала добавьте хотя бы одну дисциплину, затем создавайте секцию.",
+    sectionsNeedGroupsFirst: "Сначала добавьте хотя бы одну группу, затем создавайте секцию.",
 
     // Timetable
     time: "Время",
@@ -861,6 +881,7 @@ export const translations = {
     error: "Error",
     success: "Success",
     noData: "No data available",
+    noResults: "No records match the current search or filters",
     login: "Login",
     logout: "Logout",
     selectRole: "Select role",
@@ -1051,11 +1072,17 @@ export const translations = {
     importFileTypeError: "Only .xlsx Excel files are supported.",
     clearAllData: "Clear All Data",
     clearAllDataSuccess: "All data has been removed.",
+    scheduleEntriesNeedSectionsFirst: "Add at least one section before creating a manual entry.",
+    scheduleEntriesNeedRoomsFirst: "Add at least one room before creating a manual entry.",
+    scheduleEntriesNeedCoursesFirst: "Add at least one course before creating a manual entry.",
+    scheduleEntriesNeedAssignedTeachers:
+      "Assign teachers to courses before creating a manual entry.",
     clearCourses: "Clear Disciplines",
     clearTeachers: "Clear Teachers",
     clearStudents: "Clear Students",
     clearRooms: "Clear Rooms",
     clearGroups: "Clear Groups",
+    clearSections: "Clear Sections",
     confirmClearAllData:
       "This will delete all courses, teachers, rooms, groups, sections, and schedules. Continue?",
     confirmClearCourses: "Delete all disciplines?",
@@ -1063,6 +1090,9 @@ export const translations = {
     confirmClearStudents: "Delete all students?",
     confirmClearRooms: "Delete all rooms?",
     confirmClearGroups: "Delete all groups?",
+    confirmClearSections: "Delete all sections?",
+    sectionsNeedCoursesFirst: "Add at least one course before creating a section.",
+    sectionsNeedGroupsFirst: "Add at least one group before creating a section.",
 
     // Timetable
     time: "Time",

@@ -254,7 +254,7 @@ export const CourseManager = () => {
           </button>
           <button
             onClick={handleClearCourses}
-            disabled={isClearing}
+            disabled={isClearing || courses.length === 0}
             className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {isClearing ? t("loading") : t("clearCourses")}

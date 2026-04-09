@@ -99,8 +99,8 @@ export const RegisterPage = () => {
     }
 
     try {
-      await register(
-        email,
+      const nextUser = await register(
+        email.trim().toLowerCase(),
         password,
         displayName,
         selectedRole,
@@ -111,7 +111,7 @@ export const RegisterPage = () => {
         studentLanguage,
         selectedRole === ROLES.TEACHER ? teacherLanguages : [],
       );
-      navigate("/");
+      navigate(nextUser?.role === ROLES.ADMIN ? "/" : "/schedule");
     } catch (err) {
       setLocalError(err.message);
     }
@@ -172,6 +172,7 @@ export const RegisterPage = () => {
             </label>
             <input
               type="text"
+              autoComplete="name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={t("enterFullName")}
@@ -185,6 +186,7 @@ export const RegisterPage = () => {
             </label>
             <input
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={emailPlaceholder}
@@ -232,24 +234,6 @@ export const RegisterPage = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
-                  {t("studyLanguage")}
-                </label>
-                <select
-                  value={studentLanguage}
-                  onChange={(e) => setStudentLanguage(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="">{t("selectStudyLanguage")}</option>
-                  {STUDY_LANGUAGES.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {t(item.labelKey)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">
                   {t("groupNumber")}
                 </label>
                 <select
@@ -275,6 +259,17 @@ export const RegisterPage = () => {
                     ))}
                   </select>
                 </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  {t("studyLanguage")}
+                </label>
+                <div className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  {selectedGroup
+                    ? t(selectedGroup.language === "kk" ? "languageKazakh" : "languageRussian")
+                    : t("selectGroup")}
+                </div>
+              </div>
 
               {requiresSubgroup ? (
                 <div>
@@ -345,6 +340,7 @@ export const RegisterPage = () => {
             </label>
             <input
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -358,6 +354,7 @@ export const RegisterPage = () => {
             </label>
             <input
               type="password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"

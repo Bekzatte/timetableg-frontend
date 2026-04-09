@@ -4,7 +4,7 @@ import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { courseAPI, groupAPI, sectionAPI } from "../../services/api";
+import { adminAPI, courseAPI, groupAPI, sectionAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 
@@ -13,6 +13,7 @@ export const SectionManager = () => {
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
+  const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lessonTypeFilter, setLessonTypeFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
@@ -40,6 +41,13 @@ export const SectionManager = () => {
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
   const hasActiveFilters = Boolean(lessonTypeFilter || groupFilter);
+  const isSectionFormBlocked = courses.length === 0 || groups.length === 0;
+  const sectionFormHint =
+    courses.length === 0
+      ? t("sectionsNeedCoursesFirst")
+      : groups.length === 0
+        ? t("sectionsNeedGroupsFirst")
+        : "";
   const filteredSections = useMemo(
     () =>
       sections.filter((section) => {
@@ -58,6 +66,20 @@ export const SectionManager = () => {
   const handleEditSection = (section) => {
     setEditingSection(section);
     setIsModalOpen(true);
+  };
+
+  const handleClearSections = async () => {
+    if (!window.confirm(t("confirmClearSections"))) {
+      return;
+    }
+
+    try {
+      setIsClearing(true);
+      await adminAPI.clearCollection("sections");
+      await execute();
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   const handleSubmit = async (formData, setErrors) => {
@@ -174,12 +196,21 @@ export const SectionManager = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("sections")}
         </h1>
-        <button
-          onClick={handleAddSection}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto"
-        >
-          <Plus size={20} /> {t("addSection")}
-        </button>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <button
+            onClick={handleAddSection}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto"
+          >
+            <Plus size={20} /> {t("addSection")}
+          </button>
+          <button
+            onClick={handleClearSections}
+            disabled={isClearing || sections.length === 0}
+            className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {isClearing ? t("loading") : t("clearSections")}
+          </button>
+        </div>
       </div>
 
       <DataTable
@@ -237,15 +268,18 @@ export const SectionManager = () => {
           fields={formFields}
           onSubmit={handleSubmit}
           resetKey={editingSection ? `section-${editingSection.id}` : "section-new"}
+          isSubmitDisabled={isSectionFormBlocked}
+          submitHint={sectionFormHint}
           initialValues={
             editingSection
               ? {
                   ...editingSection,
                   course_id: editingSection.course_id || "",
                   group_id: editingSection.group_id || "",
+                  classes_count: editingSection.classes_count || 1,
                   lesson_type: editingSection.lesson_type || "lecture",
                 }
-              : { lesson_type: "lecture" }
+              : { classes_count: 1, lesson_type: "lecture" }
           }
           submitText={editingSection ? t("save") : t("add")}
           isLoading={isSubmitting}

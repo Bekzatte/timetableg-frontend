@@ -6,6 +6,8 @@ export const Form = ({
   onSubmit,
   submitText,
   isLoading = false,
+  isSubmitDisabled = false,
+  submitHint = "",
   initialValues = {},
   resetKey = "default",
 }) => {
@@ -21,6 +23,16 @@ export const Form = ({
       setErrors({});
     }
   }, [resetKey, initialValues]);
+
+  const clearFieldError = React.useCallback((fieldName) => {
+    if (!errors[fieldName]) {
+      return;
+    }
+    setErrors((prev) => ({
+      ...prev,
+      [fieldName]: "",
+    }));
+  }, [errors]);
 
   const validate = React.useCallback(() => {
     const nextErrors = {};
@@ -57,13 +69,7 @@ export const Form = ({
       ...prev,
       [name]: value,
     }));
-    // Clear error on input
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
+    clearFieldError(name);
   };
 
   const handleSubmit = (e) => {
@@ -124,10 +130,13 @@ export const Form = ({
               <button
                 type="button"
                 onClick={() =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    [field.name]: prev[field.name] ? 0 : 1,
-                  }))
+                  setFormData((prev) => {
+                    clearFieldError(field.name);
+                    return {
+                      ...prev,
+                      [field.name]: prev[field.name] ? 0 : 1,
+                    };
+                  })
                 }
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
                   formData[field.name] ? "bg-[#014531]" : "bg-gray-300"
@@ -157,10 +166,13 @@ export const Form = ({
                         const nextValues = event.target.checked
                           ? [...currentValues, opt.value]
                           : currentValues.filter((value) => value !== opt.value);
-                        setFormData((prev) => ({
-                          ...prev,
-                          [field.name]: nextValues,
-                        }));
+                        setFormData((prev) => {
+                          clearFieldError(field.name);
+                          return {
+                            ...prev,
+                            [field.name]: nextValues,
+                          };
+                        });
                       }}
                       className="h-4 w-4"
                     />
@@ -185,9 +197,12 @@ export const Form = ({
           )}
         </div>
       ))}
+      {submitHint ? (
+        <p className="text-sm text-amber-700">{submitHint}</p>
+      ) : null}
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={isLoading || isSubmitDisabled}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-medium transition"
       >
         {isLoading ? t("loading") : finalSubmitText}

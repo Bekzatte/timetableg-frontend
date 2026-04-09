@@ -51,6 +51,9 @@ export const Dashboard = () => {
   const rooms = Array.isArray(roomsData) ? roomsData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
+  const hasImportFile = Boolean(importFile);
+  const totalManagedRecords =
+    courses.length + teachers.length + rooms.length + groups.length + sections.length;
   const importSummaryLabels = {
     courses: t("courses"),
     teachers: t("teachers"),
@@ -229,6 +232,7 @@ export const Dashboard = () => {
         },
         cleared: true,
       });
+      setImportFile(null);
     } catch (error) {
       setImportError(error.message || t("errorUnknown"));
     } finally {
@@ -286,18 +290,35 @@ export const Dashboard = () => {
           })}
         </div>
 
-        {/* Info Box */}
-        <div className="bg-white rounded-lg shadow-md p-4 sm:p-8 border">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900">
-            {t("dashboard")}
-          </h2>
-          <p className="text-gray-700 mb-4">{t("subtitle")}</p>
-          <ul className="list-disc list-inside space-y-2 ml-2 text-gray-700">
-            <li className="text-sm sm:text-base">{t("courseMgmt")}</li>
-            <li className="text-sm sm:text-base">{t("teacherMgmt")}</li>
-            <li className="text-sm sm:text-base">{t("roomMgmt")}</li>
-            <li className="text-sm sm:text-base">{t("scheduleMgmt")}</li>
-          </ul>
+        <div className="rounded-lg border bg-white p-4 shadow-md sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                {t("manageContent")}
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm text-gray-600 sm:text-base">
+                {t("subtitle")}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[420px]">
+              <div className="rounded-xl bg-[#f4fbf7] px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-gray-500">{t("courses")}</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900">{courses.length}</p>
+              </div>
+              <div className="rounded-xl bg-[#f4fbf7] px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-gray-500">{t("teachers")}</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900">{teachers.length}</p>
+              </div>
+              <div className="rounded-xl bg-[#f4fbf7] px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-gray-500">{t("rooms")}</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900">{rooms.length}</p>
+              </div>
+              <div className="rounded-xl bg-[#f4fbf7] px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-gray-500">{t("sections")}</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900">{sections.length}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {isAdmin ? (
@@ -333,6 +354,12 @@ export const Dashboard = () => {
                 onChange={(event) => setImportFile(event.target.files?.[0] || null)}
                 className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#014531] file:px-3 file:py-2 file:font-medium file:text-white"
               />
+              {importFile ? (
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  {t("excelImportSelectedFile")}:{" "}
+                  <span className="font-medium">{importFile.name}</span>
+                </div>
+              ) : null}
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 <button
                   type="button"
@@ -349,7 +376,7 @@ export const Dashboard = () => {
                 <button
                   type="button"
                   onClick={handleImport}
-                  disabled={isImporting}
+                  disabled={isImporting || !hasImportFile}
                   className={solidActionButtonClass}
                 >
                   {isImporting ? t("loading") : t("excelImportButton")}
@@ -357,19 +384,13 @@ export const Dashboard = () => {
                 <button
                   type="button"
                   onClick={handleClearAllData}
-                  disabled={isClearingAll}
+                  disabled={isClearingAll || totalManagedRecords === 0}
                   className={dangerActionButtonClass}
                 >
                   {isClearingAll ? t("loading") : t("clearAllData")}
                 </button>
               </div>
             </div>
-
-            {importFile ? (
-              <p className="mt-3 text-sm text-gray-600">
-                {t("excelImportSelectedFile")}: <span className="font-medium">{importFile.name}</span>
-              </p>
-            ) : null}
 
             {importError ? (
               <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

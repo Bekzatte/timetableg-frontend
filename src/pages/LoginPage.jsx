@@ -36,8 +36,8 @@ export const LoginPage = () => {
     }
 
     try {
-      await login(email, password, selectedRole);
-      navigate("/");
+      const nextUser = await login(email.trim().toLowerCase(), password, selectedRole);
+      navigate(nextUser?.role === ROLES.ADMIN ? "/" : "/schedule");
     } catch (err) {
       setLocalError(err.message);
     }
@@ -59,7 +59,7 @@ export const LoginPage = () => {
             <p className="block text-sm font-medium mb-2 text-gray-700">
               {t("loginAs")}
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {roleOptions.map((option) => (
                 <button
                   key={option.value}
@@ -83,6 +83,7 @@ export const LoginPage = () => {
             </label>
             <input
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={emailPlaceholder}
@@ -96,6 +97,7 @@ export const LoginPage = () => {
             </label>
             <input
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"

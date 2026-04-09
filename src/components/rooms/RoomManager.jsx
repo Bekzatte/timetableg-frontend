@@ -227,7 +227,7 @@ export const RoomManager = () => {
           </button>
           <button
             onClick={handleClearRooms}
-            disabled={isClearing}
+            disabled={isClearing || rooms.length === 0}
             className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {isClearing ? t("loading") : t("clearRooms")}
@@ -303,7 +303,7 @@ export const RoomManager = () => {
           fields={formFields}
           onSubmit={handleSubmit}
           resetKey={editingRoom ? `room-${editingRoom.id}` : "room-new"}
-          initialValues={editingRoom ? { ...editingRoom } : { computer_count: 0, available: 0 }}
+          initialValues={editingRoom ? { ...editingRoom } : { computer_count: 0, available: 1 }}
           submitText={editingRoom ? t("save") : t("add")}
           isLoading={isSubmitting}
         />
