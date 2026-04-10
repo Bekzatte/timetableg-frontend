@@ -290,37 +290,6 @@ export const Dashboard = () => {
           })}
         </div>
 
-        <div className="rounded-lg border bg-white p-4 shadow-md sm:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
-                {t("manageContent")}
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm text-gray-600 sm:text-base">
-                {t("subtitle")}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[420px]">
-              <div className="rounded-xl bg-[#f4fbf7] px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-gray-500">{t("courses")}</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">{courses.length}</p>
-              </div>
-              <div className="rounded-xl bg-[#f4fbf7] px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-gray-500">{t("teachers")}</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">{teachers.length}</p>
-              </div>
-              <div className="rounded-xl bg-[#f4fbf7] px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-gray-500">{t("rooms")}</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">{rooms.length}</p>
-              </div>
-              <div className="rounded-xl bg-[#f4fbf7] px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-gray-500">{t("sections")}</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">{sections.length}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {isAdmin ? (
           <div className="mt-8 rounded-lg border bg-white p-4 shadow-md sm:p-8">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
