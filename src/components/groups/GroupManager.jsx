@@ -9,6 +9,12 @@ import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import { STUDY_LANGUAGES } from "../../constants/languages";
 
+const GROUP_PROGRAMMES = [
+  "Компьютерная инженерия",
+  "Бизнес-информатика",
+  "Компьютерная инженерия (СОПР)",
+];
+
 export const GroupManager = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
@@ -52,9 +58,12 @@ export const GroupManager = () => {
       const payload = {
         ...formData,
         student_count: Number(formData.student_count),
-        study_course: Number(formData.study_course),
+        entry_year: formData.entry_year ? Number(formData.entry_year) : null,
+        study_course: formData.study_course ? Number(formData.study_course) : null,
         has_subgroups: formData.has_subgroups ? 1 : 0,
         language: formData.language || "ru",
+        programme: formData.programme || "",
+        specialty_code: formData.specialty_code || "",
       };
       if (editingGroup) {
         await groupAPI.update(editingGroup.id, payload);
@@ -107,7 +116,10 @@ export const GroupManager = () => {
 
   const columns = [
     { key: "name", label: t("groupNumber") },
+    { key: "programme", label: t("programmeName") },
+    { key: "specialty_code", label: t("specialtyCode") },
     { key: "student_count", label: t("studentCount") },
+    { key: "entry_year", label: t("entryYear") },
     { key: "study_course", label: t("studyCourse") },
     {
       key: "language",
@@ -129,11 +141,34 @@ export const GroupManager = () => {
       required: true,
     },
     {
+      name: "programme",
+      label: t("programmeName"),
+      type: "select",
+      placeholder: t("selectProgrammeName"),
+      options: GROUP_PROGRAMMES.map((programme) => ({
+        value: programme,
+        label: programme,
+      })),
+      required: true,
+    },
+    {
+      name: "specialty_code",
+      label: t("specialtyCode"),
+      placeholder: "КИ / БИ / КИ СОПР",
+      required: true,
+    },
+    {
       name: "student_count",
       label: t("studentCount"),
       type: "number",
       placeholder: "25",
       required: true,
+    },
+    {
+      name: "entry_year",
+      label: t("entryYear"),
+      type: "number",
+      placeholder: "2025",
     },
     {
       name: "study_course",
@@ -144,7 +179,6 @@ export const GroupManager = () => {
         value: course,
         label: String(course),
       })),
-      required: true,
     },
     {
       name: "language",
