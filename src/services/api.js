@@ -390,6 +390,14 @@ export const importAPI = {
     api
       .post("/import/excel", { fileName, fileContent })
       .then((response) => response.data),
+  previewRop: (fileName, fileContent) =>
+    api
+      .post("/import/rop/preview", { fileName, fileContent })
+      .then((response) => response.data),
+  importRop: (fileName, fileContent) =>
+    api
+      .post("/import/rop", { fileName, fileContent })
+      .then((response) => response.data),
   downloadTemplate: () =>
     api.get("/import/template", { responseType: "blob" }).then((response) => response.data),
 };
