@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileSpreadsheet, Plus } from "lucide-react";
+import { FileSpreadsheet, FileText, Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
@@ -25,6 +25,14 @@ export const CourseManager = () => {
   const [ropFile, setRopFile] = useState(null);
   const [ropFileContent, setRopFileContent] = useState("");
   const [ropError, setRopError] = useState("");
+  const iupFileInputRef = useRef(null);
+  const [isIupModalOpen, setIsIupModalOpen] = useState(false);
+  const [isIupPreviewLoading, setIsIupPreviewLoading] = useState(false);
+  const [isIupImporting, setIsIupImporting] = useState(false);
+  const [iupPreview, setIupPreview] = useState(null);
+  const [iupFile, setIupFile] = useState(null);
+  const [iupFileContent, setIupFileContent] = useState("");
+  const [iupError, setIupError] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [semesterFilter, setSemesterFilter] = useState("");
   const [courseFilter, setCourseFilter] = useState("");
@@ -152,6 +160,59 @@ export const CourseManager = () => {
       setRopError(error.message);
     } finally {
       setIsRopImporting(false);
+    }
+  };
+
+  const handleIupFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    if (!/\.pdf$/i.test(file.name)) {
+      setIupError(t("iupImportFileTypeError"));
+      setIsIupModalOpen(true);
+      return;
+    }
+
+    try {
+      setIupError("");
+      setIupPreview(null);
+      setIupFile(file);
+      setIsIupModalOpen(true);
+      setIsIupPreviewLoading(true);
+      const fileContent = await readFileAsDataUrl(file);
+      setIupFileContent(fileContent);
+      const preview = await importAPI.previewIup(file.name, fileContent);
+      setIupPreview(preview);
+    } catch (error) {
+      setIupError(error.message);
+    } finally {
+      setIsIupPreviewLoading(false);
+    }
+  };
+
+  const handleImportIup = async () => {
+    if (!iupFile || !iupFileContent) {
+      setIupError(t("iupImportSelectFileError"));
+      return;
+    }
+
+    try {
+      setIupError("");
+      setIsIupImporting(true);
+      await importAPI.importIup(iupFile.name, iupFileContent);
+      await execute();
+      await executeTeachers();
+      setIsIupModalOpen(false);
+      setIupPreview(null);
+      setIupFile(null);
+      setIupFileContent("");
+    } catch (error) {
+      setIupError(error.message);
+    } finally {
+      setIsIupImporting(false);
     }
   };
 
@@ -357,12 +418,26 @@ export const CourseManager = () => {
             className="hidden"
             onChange={handleRopFileChange}
           />
+          <input
+            ref={iupFileInputRef}
+            type="file"
+            accept=".pdf"
+            className="hidden"
+            onChange={handleIupFileChange}
+          />
           <button
             type="button"
             onClick={() => ropFileInputRef.current?.click()}
             className="flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 sm:w-auto"
           >
             <FileSpreadsheet size={20} /> {t("ropImportButton")}
+          </button>
+          <button
+            type="button"
+            onClick={() => iupFileInputRef.current?.click()}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-800 sm:w-auto"
+          >
+            <FileText size={20} /> {t("iupImportButton")}
           </button>
           <button
             onClick={handleAddCourse}
@@ -580,6 +655,121 @@ export const CourseManager = () => {
                   className="rounded-md bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 disabled:opacity-60"
                 >
                   {isRopImporting ? t("loading") : t("ropImportConfirm")}
+                </button>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isIupModalOpen}
+        onClose={() => {
+          if (!isIupImporting) {
+            setIsIupModalOpen(false);
+          }
+        }}
+        title={t("iupImportTitle")}
+      >
+        <div className="space-y-4">
+          {iupFile ? (
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+              <span className="font-semibold">{t("excelImportSelectedFile")}:</span>{" "}
+              {iupFile.name}
+            </div>
+          ) : null}
+
+          {isIupPreviewLoading ? (
+            <div className="py-8 text-center text-gray-500">{t("loading")}</div>
+          ) : null}
+
+          {iupError ? (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {iupError}
+            </div>
+          ) : null}
+
+          {iupPreview ? (
+            <>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-md border border-gray-200 p-3">
+                  <p className="text-xs font-medium uppercase text-gray-500">{t("student")}</p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    {iupPreview.metadata?.studentName || "-"}
+                  </p>
+                </div>
+                <div className="rounded-md border border-gray-200 p-3">
+                  <p className="text-xs font-medium uppercase text-gray-500">
+                    {t("groupNumber")}
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    {iupPreview.metadata?.groupName || "-"}
+                  </p>
+                </div>
+                <div className="rounded-md border border-gray-200 p-3">
+                  <p className="text-xs font-medium uppercase text-gray-500">
+                    {t("programmeName")}
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    {iupPreview.metadata?.programme || "-"}
+                  </p>
+                </div>
+                <div className="rounded-md border border-gray-200 p-3">
+                  <p className="text-xs font-medium uppercase text-gray-500">
+                    {t("instructorsFound")}
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    {iupPreview.totals?.teachers || 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="max-h-56 overflow-auto rounded-md border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        {t("courseCode")}
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        {t("courseName")}
+                      </th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                        {t("instructor")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {(iupPreview.entries || [])
+                      .filter((entry) => entry.lessonType !== "srop")
+                      .slice(0, 10)
+                      .map((entry, index) => (
+                        <tr key={`${entry.courseCode}-${entry.lessonType}-${index}`}>
+                          <td className="px-3 py-2 text-gray-700">{entry.courseCode}</td>
+                          <td className="px-3 py-2 text-gray-900">{entry.courseName}</td>
+                          <td className="px-3 py-2 text-gray-700">{entry.teacherName || "-"}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsIupModalOpen(false)}
+                  disabled={isIupImporting}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleImportIup}
+                  disabled={isIupImporting}
+                  className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {isIupImporting ? t("loading") : t("iupImportConfirm")}
                 </button>
               </div>
             </>

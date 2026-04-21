@@ -23,10 +23,8 @@ export const GroupManager = () => {
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [languageFilter, setLanguageFilter] = useState("");
-  const [subgroupFilter, setSubgroupFilter] = useState("");
   const [courseFilter, setCourseFilter] = useState("");
   const [draftLanguageFilter, setDraftLanguageFilter] = useState("");
-  const [draftSubgroupFilter, setDraftSubgroupFilter] = useState("");
   const [draftCourseFilter, setDraftCourseFilter] = useState("");
   const { data, isLoading, execute } = useFetch(groupAPI.getAll);
 
@@ -39,18 +37,16 @@ export const GroupManager = () => {
     () =>
       groups.filter((group) => {
         const matchesLanguage = !languageFilter || group.language === languageFilter;
-        const matchesSubgroup =
-          !subgroupFilter || String(Number(Boolean(group.has_subgroups))) === subgroupFilter;
         const matchesCourse = !courseFilter || String(group.study_course) === courseFilter;
-        return matchesLanguage && matchesSubgroup && matchesCourse;
+        return matchesLanguage && matchesCourse;
       }),
-    [groups, languageFilter, subgroupFilter, courseFilter],
+    [groups, languageFilter, courseFilter],
   );
   const totalStudents = groups.reduce(
     (sum, group) => sum + (Number(group.student_count) || 0),
     0,
   );
-  const hasActiveFilters = Boolean(languageFilter || subgroupFilter || courseFilter);
+  const hasActiveFilters = Boolean(languageFilter || courseFilter);
 
   const handleSubmit = async (formData, setErrors) => {
     try {
@@ -60,7 +56,7 @@ export const GroupManager = () => {
         student_count: Number(formData.student_count),
         entry_year: formData.entry_year ? Number(formData.entry_year) : null,
         study_course: formData.study_course ? Number(formData.study_course) : null,
-        has_subgroups: formData.has_subgroups ? 1 : 0,
+        has_subgroups: 0,
         language: formData.language || "ru",
         programme: formData.programme || "",
         specialty_code: formData.specialty_code || "",
@@ -126,11 +122,6 @@ export const GroupManager = () => {
       label: t("studyLanguage"),
       render: (value) => t(value === "kk" ? "languageKazakh" : "languageRussian"),
     },
-    {
-      key: "has_subgroups",
-      label: t("subgroups"),
-      render: (value) => (value ? "A / B" : t("no")),
-    },
   ];
 
   const formFields = [
@@ -191,14 +182,6 @@ export const GroupManager = () => {
       })),
       required: true,
     },
-    {
-      name: "has_subgroups",
-      label: t("subgroups"),
-      type: "toggle",
-      required: true,
-      trueLabel: "A / B",
-      falseLabel: t("no"),
-    },
   ];
 
   return (
@@ -246,15 +229,12 @@ export const GroupManager = () => {
         filterDialogTitle={t("filter")}
         onApplyFilters={() => {
           setLanguageFilter(draftLanguageFilter);
-          setSubgroupFilter(draftSubgroupFilter);
           setCourseFilter(draftCourseFilter);
         }}
         onResetFilters={() => {
           setDraftLanguageFilter("");
-          setDraftSubgroupFilter("");
           setDraftCourseFilter("");
           setLanguageFilter("");
-          setSubgroupFilter("");
           setCourseFilter("");
         }}
         filterControls={
@@ -283,15 +263,6 @@ export const GroupManager = () => {
                 </option>
               ))}
             </select>
-            <select
-              value={draftSubgroupFilter}
-              onChange={(event) => setDraftSubgroupFilter(event.target.value)}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-            >
-              <option value="">{t("all")} {t("subgroups").toLowerCase()}</option>
-              <option value="1">A / B</option>
-              <option value="0">{t("no")}</option>
-            </select>
           </>
         }
         onEdit={(group) => {
@@ -309,7 +280,7 @@ export const GroupManager = () => {
           fields={formFields}
           onSubmit={handleSubmit}
           resetKey={editingGroup ? `group-${editingGroup.id}` : "group-new"}
-          initialValues={{ has_subgroups: 0, language: "ru", ...(editingGroup || {}) }}
+          initialValues={{ language: "ru", ...(editingGroup || {}) }}
           submitText={editingGroup ? t("save") : t("add")}
           isLoading={isSubmitting}
         />

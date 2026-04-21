@@ -102,6 +102,7 @@ const ERROR_CODE_TRANSLATION_KEYS = {
   internal_server_error: "errorInternalServer",
   optimizer_input_infeasible: "errorOptimizerInputInfeasible",
   optimizer_dependency_missing: "errorOptimizerDependencyMissing",
+  iup_pdf_dependency_missing: "errorOptimizerDependencyMissing",
   optimizer_requires_teachers: "errorOptimizerRequiresTeachers",
   optimizer_requires_rooms: "errorOptimizerRequiresRooms",
   optimizer_requires_plan_items: "errorOptimizerRequiresPlanItems",
@@ -397,6 +398,14 @@ export const importAPI = {
   importRop: (fileName, fileContent) =>
     api
       .post("/import/rop", { fileName, fileContent })
+      .then((response) => response.data),
+  previewIup: (fileName, fileContent) =>
+    api
+      .post("/import/iup/preview", { fileName, fileContent })
+      .then((response) => response.data),
+  importIup: (fileName, fileContent) =>
+    api
+      .post("/import/iup", { fileName, fileContent })
       .then((response) => response.data),
   downloadTemplate: () =>
     api.get("/import/template", { responseType: "blob" }).then((response) => response.data),
