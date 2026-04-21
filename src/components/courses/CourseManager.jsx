@@ -7,7 +7,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, courseAPI, importAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
-import { DEPARTMENTS } from "../../constants/departments";
+import { EDUCATIONAL_PROGRAMME_GROUPS } from "../../constants/educationalProgrammeGroups";
 import { PROGRAMMES } from "../../constants/programmes";
 
 export const CourseManager = () => {
@@ -270,7 +270,7 @@ export const CourseManager = () => {
     { key: "hours", label: t("hours") },
     { key: "year", label: t("studyCourse") },
     { key: "semester", label: t("semester") },
-    { key: "department", label: t("facultyInstitute") },
+    { key: "department", label: t("educationalProgrammeGroup") },
     { key: "instructor_name", label: t("instructor") },
   ];
 
@@ -347,12 +347,12 @@ export const CourseManager = () => {
     },
     {
       name: "department",
-      label: t("facultyInstitute"),
+      label: t("educationalProgrammeGroup"),
       type: "select",
-      placeholder: t("selectFacultyInstitute"),
-      options: DEPARTMENTS.map((department) => ({
-        value: department,
-        label: department,
+      placeholder: t("selectEducationalProgrammeGroup"),
+      options: EDUCATIONAL_PROGRAMME_GROUPS.map((group) => ({
+        value: group,
+        label: group,
       })),
       required: true,
     },
@@ -384,10 +384,10 @@ export const CourseManager = () => {
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
           <p className="text-sm font-medium text-emerald-700">
-            {t("totalDepartments")}
+            {t("totalEducationalProgrammeGroups")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            {DEPARTMENTS.length}
+            {EDUCATIONAL_PROGRAMME_GROUPS.length}
           </p>
         </div>
       </div>
@@ -456,10 +456,10 @@ export const CourseManager = () => {
               onChange={(event) => setDraftDepartmentFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
-              <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
-              {DEPARTMENTS.map((department) => (
-                <option key={department} value={department}>
-                  {department}
+              <option value="">{t("all")} {t("educationalProgrammeGroup").toLowerCase()}</option>
+              {EDUCATIONAL_PROGRAMME_GROUPS.map((group) => (
+                <option key={group} value={group}>
+                  {group}
                 </option>
               ))}
             </select>
