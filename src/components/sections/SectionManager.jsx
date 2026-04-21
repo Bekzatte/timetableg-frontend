@@ -185,6 +185,13 @@ export const SectionManager = () => {
       required: true,
     },
     {
+      name: "requires_computers_preview",
+      label: t("requiresComputers"),
+      type: "computed",
+      render: (formData) =>
+        formData.lesson_type === "practical" || formData.lesson_type === "lab" ? t("yes") : t("no"),
+    },
+    {
       name: "subgroup_mode",
       label: t("subgroupMode"),
       type: "select",

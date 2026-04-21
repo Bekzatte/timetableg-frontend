@@ -97,7 +97,11 @@ export const Form = ({
             {field.label}
             {field.required && <span className="text-red-500">*</span>}
           </label>
-          {field.type === "textarea" ? (
+          {field.type === "computed" ? (
+            <div className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-900">
+              {field.render ? field.render(formData) : formData[field.name] || "-"}
+            </div>
+          ) : field.type === "textarea" ? (
             <textarea
               name={field.name}
               value={formData[field.name] || ""}
