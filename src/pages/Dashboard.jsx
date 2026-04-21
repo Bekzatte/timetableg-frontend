@@ -45,6 +45,7 @@ export const Dashboard = () => {
   const actionButtonClass =
     "inline-flex h-[46px] w-full items-center justify-center rounded-md px-4 text-sm text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
   const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
+  const slateActionButtonClass = `${actionButtonClass} bg-slate-600 text-white hover:bg-slate-700`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const teachers = Array.isArray(teachersData) ? teachersData : [];
@@ -346,7 +347,7 @@ export const Dashboard = () => {
                   type="button"
                   onClick={() => iupFileInputRef.current?.click()}
                   disabled={isIupImporting}
-                  className={solidActionButtonClass}
+                  className={slateActionButtonClass}
                 >
                   {isIupImporting ? t("loading") : t("iupImportButton")}
                 </button>

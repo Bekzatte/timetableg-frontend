@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileSpreadsheet, FileText, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
@@ -425,20 +425,6 @@ export const CourseManager = () => {
             className="hidden"
             onChange={handleIupFileChange}
           />
-          <button
-            type="button"
-            onClick={() => ropFileInputRef.current?.click()}
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 sm:w-auto"
-          >
-            <FileSpreadsheet size={20} /> {t("ropImportButton")}
-          </button>
-          <button
-            type="button"
-            onClick={() => iupFileInputRef.current?.click()}
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-800 sm:w-auto"
-          >
-            <FileText size={20} /> {t("iupImportButton")}
-          </button>
           <button
             onClick={handleAddCourse}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition w-full sm:w-auto justify-center"
