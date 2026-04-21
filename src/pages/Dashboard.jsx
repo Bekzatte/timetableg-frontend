@@ -4,6 +4,7 @@ import { BookOpen, FileSpreadsheet, FileText, Users, Home, Zap, UsersRound } fro
 import { useAuth } from "../hooks/useAuth";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { useTranslation } from "../hooks/useTranslation";
+import Modal from "../components/ui/Modal";
 import {
   adminAPI,
   courseAPI,
@@ -31,11 +32,23 @@ export const Dashboard = () => {
   const iupFileInputRef = useRef(null);
   const [isRopImporting, setIsRopImporting] = useState(false);
   const [isIupImporting, setIsIupImporting] = useState(false);
+  const [isRopPreviewLoading, setIsRopPreviewLoading] = useState(false);
+  const [isIupPreviewLoading, setIsIupPreviewLoading] = useState(false);
+  const [isRopModalOpen, setIsRopModalOpen] = useState(false);
+  const [isIupModalOpen, setIsIupModalOpen] = useState(false);
+  const [ropPreview, setRopPreview] = useState(null);
+  const [iupPreview, setIupPreview] = useState(null);
+  const [ropFile, setRopFile] = useState(null);
+  const [iupFile, setIupFile] = useState(null);
+  const [ropFileContent, setRopFileContent] = useState("");
+  const [iupFileContent, setIupFileContent] = useState("");
+  const [ropError, setRopError] = useState("");
+  const [iupError, setIupError] = useState("");
   const [isClearingAll, setIsClearingAll] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
   useAutoDismiss(importError, setImportError);
-  useAutoDismiss(importResult, setImportResult, 5000, null);
+  useAutoDismiss(importResult, setImportResult, 30000, null);
   const { data: coursesData, execute: executeCourses } = useFetch(courseAPI.getAll);
   const { data: teachersData, execute: executeTeachers } = useFetch(teacherAPI.getAll);
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
@@ -161,20 +174,54 @@ export const Dashboard = () => {
       return;
     }
 
+    setImportError("");
+    setImportResult(null);
+    setRopError("");
+    setRopPreview(null);
+    setRopFile(file);
+    setIsRopModalOpen(true);
+    setIsRopPreviewLoading(true);
+
+    try {
+      const fileContent = await readFileAsDataUrl(file);
+      setRopFileContent(fileContent);
+      const preview = await importAPI.previewRop(file.name, fileContent);
+      setRopPreview(preview);
+    } catch (error) {
+      setRopError(error.message === "file_read_error" ? t("errorFileRead") : error.message || t("errorUnknown"));
+    } finally {
+      setIsRopPreviewLoading(false);
+    }
+  };
+
+  const handleImportRop = async () => {
+    if (!ropFile || !ropFileContent) {
+      setRopError(t("ropImportSelectFileError"));
+      return;
+    }
+
     setIsRopImporting(true);
+    setRopError("");
     setImportError("");
     setImportResult(null);
 
     try {
-      const fileContent = await readFileAsDataUrl(file);
-      const result = await importAPI.importRop(file.name, fileContent);
+      const result = await importAPI.importRop(ropFile.name, ropFileContent);
       await refreshManagedData();
+      setIsRopModalOpen(false);
+      setRopPreview(null);
+      setRopFile(null);
+      setRopFileContent("");
       setImportResult({
         title: t("ropImportSuccess"),
         details: `${result?.totals?.courses || 0} ${t("courses").toLowerCase()}`,
+        courseLists: {
+          inserted: result?.courseLists?.inserted || [],
+          existing: result?.courseLists?.existing || [],
+        },
       });
     } catch (error) {
-      setImportError(error.message === "file_read_error" ? t("errorFileRead") : error.message || t("errorUnknown"));
+      setRopError(error.message || t("errorUnknown"));
     } finally {
       setIsRopImporting(false);
     }
@@ -191,20 +238,54 @@ export const Dashboard = () => {
       return;
     }
 
+    setImportError("");
+    setImportResult(null);
+    setIupError("");
+    setIupPreview(null);
+    setIupFile(file);
+    setIsIupModalOpen(true);
+    setIsIupPreviewLoading(true);
+
+    try {
+      const fileContent = await readFileAsDataUrl(file);
+      setIupFileContent(fileContent);
+      const preview = await importAPI.previewIup(file.name, fileContent);
+      setIupPreview(preview);
+    } catch (error) {
+      setIupError(error.message === "file_read_error" ? t("errorFileRead") : error.message || t("errorUnknown"));
+    } finally {
+      setIsIupPreviewLoading(false);
+    }
+  };
+
+  const handleImportIup = async () => {
+    if (!iupFile || !iupFileContent) {
+      setIupError(t("iupImportSelectFileError"));
+      return;
+    }
+
     setIsIupImporting(true);
+    setIupError("");
     setImportError("");
     setImportResult(null);
 
     try {
-      const fileContent = await readFileAsDataUrl(file);
-      const result = await importAPI.importIup(file.name, fileContent);
+      const result = await importAPI.importIup(iupFile.name, iupFileContent);
       await refreshManagedData();
+      setIsIupModalOpen(false);
+      setIupPreview(null);
+      setIupFile(null);
+      setIupFileContent("");
       setImportResult({
         title: t("iupImportSuccess"),
         details: `${result?.totals?.lessonEntries || 0} ${t("lessonEntries").toLowerCase()}`,
+        courseLists: {
+          existing: result?.stats?.courseLists?.existing || [],
+          missing: result?.stats?.courseLists?.missing || [],
+        },
       });
     } catch (error) {
-      setImportError(error.message === "file_read_error" ? t("errorFileRead") : error.message || t("errorUnknown"));
+      setIupError(error.message || t("errorUnknown"));
     } finally {
       setIsIupImporting(false);
     }
@@ -231,6 +312,33 @@ export const Dashboard = () => {
     } finally {
       setIsClearingAll(false);
     }
+  };
+
+  const formatCourseItem = (course) => {
+    const code = course.code ? `${course.code} - ` : "";
+    const semester = course.semester ? ` (${t("semester")}: ${course.semester})` : "";
+    return `${code}${course.name || "-"}${semester}`;
+  };
+
+  const renderCourseList = (title, items) => {
+    if (!items?.length) {
+      return null;
+    }
+
+    return (
+      <div className="mt-3">
+        <p className="font-medium text-emerald-900">
+          {title}: {items.length}
+        </p>
+        <ul className="mt-2 max-h-40 list-disc space-y-1 overflow-auto pl-5 text-emerald-800">
+          {items.map((course, index) => (
+            <li key={`${course.code}-${course.name}-${course.semester}-${index}`}>
+              {formatCourseItem(course)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   };
 
   return (
@@ -325,10 +433,10 @@ export const Dashboard = () => {
                 <button
                   type="button"
                   onClick={() => ropFileInputRef.current?.click()}
-                  disabled={isRopImporting}
+                  disabled={isRopPreviewLoading || isRopImporting}
                   className={solidActionButtonClass}
                 >
-                  {isRopImporting ? t("loading") : t("ropImportButton")}
+                  {isRopPreviewLoading || isRopImporting ? t("loading") : t("ropImportButton")}
                 </button>
                  <p className="mt-4 text-sm text-gray-700">{t("ropImportGuide")}</p>
               </div>
@@ -346,10 +454,10 @@ export const Dashboard = () => {
                 <button
                   type="button"
                   onClick={() => iupFileInputRef.current?.click()}
-                  disabled={isIupImporting}
+                  disabled={isIupPreviewLoading || isIupImporting}
                   className={slateActionButtonClass}
                 >
-                  {isIupImporting ? t("loading") : t("iupImportButton")}
+                  {isIupPreviewLoading || isIupImporting ? t("loading") : t("iupImportButton")}
                 </button>
                 <p className="mt-4 text-sm text-gray-700">{t("iupImportGuide")}</p>
               </div>
@@ -394,10 +502,246 @@ export const Dashboard = () => {
               <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
                 <p className="font-semibold">{importResult.title}</p>
                 {importResult.details ? <p className="mt-1">{importResult.details}</p> : null}
+                {renderCourseList(t("importCoursesAdded"), importResult.courseLists?.inserted)}
+                {renderCourseList(t("importCoursesAlreadyExist"), importResult.courseLists?.existing)}
+                {renderCourseList(t("importCoursesMissing"), importResult.courseLists?.missing)}
               </div>
             ) : null}
           </div>
         ) : null}
+
+        <Modal
+          isOpen={isRopModalOpen}
+          onClose={() => {
+            if (!isRopImporting) {
+              setIsRopModalOpen(false);
+            }
+          }}
+          title={t("ropImportTitle")}
+          size="lg"
+        >
+          <div className="space-y-4">
+            {ropFile ? (
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                <span className="font-semibold">{t("selectedFile")}:</span>{" "}
+                {ropFile.name}
+              </div>
+            ) : null}
+
+            {isRopPreviewLoading ? (
+              <div className="py-8 text-center text-gray-500">{t("loading")}</div>
+            ) : null}
+
+            {ropError ? (
+              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {ropError}
+              </div>
+            ) : null}
+
+            {ropPreview ? (
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <p className="text-xs font-medium uppercase text-gray-500">
+                      {t("programmeName")}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900">
+                      {ropPreview.metadata?.programme || "-"}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <p className="text-xs font-medium uppercase text-gray-500">
+                      {t("studyCourse")}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900">
+                      {ropPreview.metadata?.studyYear || "-"}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <p className="text-xs font-medium uppercase text-gray-500">
+                      {t("semester")}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900">
+                      {ropPreview.metadata?.academicPeriods?.join(", ") || "-"}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <p className="text-xs font-medium uppercase text-gray-500">
+                      {t("courses")}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900">
+                      {ropPreview.totals?.courses || 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="max-h-56 overflow-auto rounded-md border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          {t("courseCode")}
+                        </th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          {t("courseName")}
+                        </th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          {t("credits")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {(ropPreview.courses || []).slice(0, 8).map((course) => (
+                        <tr key={`${course.code}-${course.name}`}>
+                          <td className="px-3 py-2 text-gray-700">{course.code}</td>
+                          <td className="px-3 py-2 text-gray-900">{course.name}</td>
+                          <td className="px-3 py-2 text-gray-700">{course.credits || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsRopModalOpen(false)}
+                    disabled={isRopImporting}
+                    className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    {t("cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleImportRop}
+                    disabled={isRopImporting}
+                    className="rounded-md bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {isRopImporting ? t("loading") : t("ropImportConfirm")}
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={isIupModalOpen}
+          onClose={() => {
+            if (!isIupImporting) {
+              setIsIupModalOpen(false);
+            }
+          }}
+          title={t("iupImportTitle")}
+          size="lg"
+        >
+          <div className="space-y-4">
+            {iupFile ? (
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                <span className="font-semibold">{t("selectedFile")}:</span>{" "}
+                {iupFile.name}
+              </div>
+            ) : null}
+
+            {isIupPreviewLoading ? (
+              <div className="py-8 text-center text-gray-500">{t("loading")}</div>
+            ) : null}
+
+            {iupError ? (
+              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {iupError}
+              </div>
+            ) : null}
+
+            {iupPreview ? (
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <p className="text-xs font-medium uppercase text-gray-500">
+                      {t("groupNumber")}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900">
+                      {iupPreview.metadata?.groupName || "-"}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <p className="text-xs font-medium uppercase text-gray-500">
+                      {t("programmeName")}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900">
+                      {iupPreview.metadata?.programme || "-"}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <p className="text-xs font-medium uppercase text-gray-500">
+                      {t("instructorsFound")}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900">
+                      {iupPreview.totals?.teachers || 0}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-gray-200 p-3">
+                    <p className="text-xs font-medium uppercase text-gray-500">
+                      {t("lessonEntries")}
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-900">
+                      {iupPreview.totals?.lessonEntries || iupPreview.entries?.length || 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="max-h-56 overflow-auto rounded-md border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          {t("courseCode")}
+                        </th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          {t("courseName")}
+                        </th>
+                        <th className="px-3 py-2 text-left font-semibold text-gray-700">
+                          {t("instructor")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {(iupPreview.entries || [])
+                        .filter((entry) => entry.lessonType !== "srop")
+                        .slice(0, 10)
+                        .map((entry, index) => (
+                          <tr key={`${entry.courseCode}-${entry.lessonType}-${index}`}>
+                            <td className="px-3 py-2 text-gray-700">{entry.courseCode}</td>
+                            <td className="px-3 py-2 text-gray-900">{entry.courseName}</td>
+                            <td className="px-3 py-2 text-gray-700">{entry.teacherName || "-"}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsIupModalOpen(false)}
+                    disabled={isIupImporting}
+                    className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    {t("cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleImportIup}
+                    disabled={isIupImporting}
+                    className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-800 disabled:opacity-60"
+                  >
+                    {isIupImporting ? t("loading") : t("iupImportConfirm")}
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </Modal>
       </div>
     </div>
   );

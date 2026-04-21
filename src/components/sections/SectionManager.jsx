@@ -133,6 +133,11 @@ export const SectionManager = () => {
     { key: "group_name", label: t("groupNumber") },
     { key: "classes_count", label: t("classesCount") },
     { key: "lesson_type", label: t("lessonType"), render: (value) => t(value || "lecture") },
+    {
+      key: "requires_computers",
+      label: t("requiresComputers"),
+      render: (_value, section) => (section.lesson_type === "practical" || section.lesson_type === "lab" ? t("yes") : t("no")),
+    },
     { key: "subgroup_mode", label: t("subgroupMode"), render: (value) => t(value || "auto") },
     { key: "subgroup_count", label: t("subgroupCount") },
   ];
