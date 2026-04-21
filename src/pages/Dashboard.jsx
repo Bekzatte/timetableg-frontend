@@ -321,7 +321,6 @@ export const Dashboard = () => {
                     <p className="text-sm text-gray-600">{t("ropImportFormats")}</p>
                   </div>
                 </div>
-                <p className="mb-4 text-sm text-gray-700">{t("ropImportGuide")}</p>
                 <button
                   type="button"
                   onClick={() => ropFileInputRef.current?.click()}
@@ -330,6 +329,7 @@ export const Dashboard = () => {
                 >
                   {isRopImporting ? t("loading") : t("ropImportButton")}
                 </button>
+                 <p className="mt-4 text-sm text-gray-700">{t("ropImportGuide")}</p>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
@@ -342,7 +342,6 @@ export const Dashboard = () => {
                     <p className="text-sm text-gray-600">{t("iupImportFormats")}</p>
                   </div>
                 </div>
-                <p className="mb-4 text-sm text-gray-700">{t("iupImportGuide")}</p>
                 <button
                   type="button"
                   onClick={() => iupFileInputRef.current?.click()}
@@ -351,6 +350,7 @@ export const Dashboard = () => {
                 >
                   {isIupImporting ? t("loading") : t("iupImportButton")}
                 </button>
+                <p className="mt-4 text-sm text-gray-700">{t("iupImportGuide")}</p>
               </div>
             </div>
 
