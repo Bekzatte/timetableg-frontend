@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Users, Home, Zap, UsersRound } from "lucide-react";
+import { BookOpen, FileSpreadsheet, FileText, Users, Home, Zap, UsersRound } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { useTranslation } from "../hooks/useTranslation";
@@ -27,9 +27,10 @@ const readFileAsDataUrl = (file) =>
 export const Dashboard = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
-  const [importFile, setImportFile] = useState(null);
-  const [isImporting, setIsImporting] = useState(false);
-  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
+  const ropFileInputRef = useRef(null);
+  const iupFileInputRef = useRef(null);
+  const [isRopImporting, setIsRopImporting] = useState(false);
+  const [isIupImporting, setIsIupImporting] = useState(false);
   const [isClearingAll, setIsClearingAll] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState(null);
@@ -43,7 +44,6 @@ export const Dashboard = () => {
   const { execute: executeSchedules } = useFetch(scheduleAPI.getAll);
   const actionButtonClass =
     "inline-flex h-[46px] w-full items-center justify-center rounded-md px-4 text-sm text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
-  const outlineActionButtonClass = `${actionButtonClass} border border-[#014531] text-[#014531] hover:bg-[#f4fbf7]`;
   const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
   const courses = Array.isArray(coursesData) ? coursesData : [];
@@ -51,16 +51,8 @@ export const Dashboard = () => {
   const rooms = Array.isArray(roomsData) ? roomsData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
-  const hasImportFile = Boolean(importFile);
   const totalManagedRecords =
     courses.length + teachers.length + rooms.length + groups.length + sections.length;
-  const importSummaryLabels = {
-    courses: t("courses"),
-    teachers: t("teachers"),
-    rooms: t("rooms"),
-    groups: t("groups"),
-    sections: t("sections"),
-  };
 
   useEffect(() => {
     executeCourses();
@@ -146,59 +138,74 @@ export const Dashboard = () => {
     },
   ];
 
-  const handleImport = async () => {
-    if (!importFile) {
-      setImportError(t("importSelectFileError"));
+  const refreshManagedData = async () => {
+    await Promise.all([
+      executeCourses(),
+      executeTeachers(),
+      executeRooms(),
+      executeGroups(),
+      executeSections(),
+      executeSchedules(),
+    ]);
+  };
+
+  const handleRopFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+    if (!/\.(xls|xlsx)$/i.test(file.name)) {
+      setImportError(t("ropImportFileTypeError"));
       return;
     }
 
-    if (!importFile.name.toLowerCase().endsWith(".xlsx")) {
-      setImportError(t("importFileTypeError"));
-      return;
-    }
-
-    setIsImporting(true);
+    setIsRopImporting(true);
     setImportError("");
     setImportResult(null);
 
     try {
-      const fileContent = await readFileAsDataUrl(importFile);
-      const result = await importAPI.importExcel(importFile.name, fileContent);
-      await Promise.all([
-        executeCourses(),
-        executeTeachers(),
-        executeRooms(),
-        executeGroups(),
-        executeSections(),
-        executeSchedules(),
-      ]);
-      setImportResult(result);
-      setImportFile(null);
+      const fileContent = await readFileAsDataUrl(file);
+      const result = await importAPI.importRop(file.name, fileContent);
+      await refreshManagedData();
+      setImportResult({
+        title: t("ropImportSuccess"),
+        details: `${result?.totals?.courses || 0} ${t("courses").toLowerCase()}`,
+      });
     } catch (error) {
       setImportError(error.message === "file_read_error" ? t("errorFileRead") : error.message || t("errorUnknown"));
     } finally {
-      setIsImporting(false);
+      setIsRopImporting(false);
     }
   };
 
-  const handleDownloadTemplate = async () => {
-    setIsDownloadingTemplate(true);
+  const handleIupFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+    if (!/\.(pdf|xls|xlsx)$/i.test(file.name)) {
+      setImportError(t("iupImportFileTypeError"));
+      return;
+    }
+
+    setIsIupImporting(true);
     setImportError("");
+    setImportResult(null);
 
     try {
-      const blob = await importAPI.downloadTemplate();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = "timetable-import-template.xlsx";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
+      const fileContent = await readFileAsDataUrl(file);
+      const result = await importAPI.importIup(file.name, fileContent);
+      await refreshManagedData();
+      setImportResult({
+        title: t("iupImportSuccess"),
+        details: `${result?.totals?.lessonEntries || 0} ${t("lessonEntries").toLowerCase()}`,
+      });
     } catch (error) {
-      setImportError(error.message || t("errorUnknown"));
+      setImportError(error.message === "file_read_error" ? t("errorFileRead") : error.message || t("errorUnknown"));
     } finally {
-      setIsDownloadingTemplate(false);
+      setIsIupImporting(false);
     }
   };
 
@@ -213,26 +220,11 @@ export const Dashboard = () => {
 
     try {
       await adminAPI.clearAllData();
-      await Promise.all([
-        executeCourses(),
-        executeTeachers(),
-        executeRooms(),
-        executeGroups(),
-        executeSections(),
-        executeSchedules(),
-      ]);
+      await refreshManagedData();
       setImportResult({
-        totals: { inserted: 0, updated: 0 },
-        summary: {
-          courses: { inserted: 0, updated: 0 },
-          teachers: { inserted: 0, updated: 0 },
-          rooms: { inserted: 0, updated: 0 },
-          groups: { inserted: 0, updated: 0 },
-          sections: { inserted: 0, updated: 0 },
-        },
+        title: t("clearAllDataSuccess"),
         cleared: true,
       });
-      setImportFile(null);
     } catch (error) {
       setImportError(error.message || t("errorUnknown"));
     } finally {
@@ -295,70 +287,100 @@ export const Dashboard = () => {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {t("excelImportTitle")}
+                  {t("academicImportTitle")}
                 </h2>
                 <p className="mt-2 text-sm text-gray-600">
-                  {t("excelImportDescription")}
+                  {t("academicImportDescription")}
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 rounded-lg bg-[#f4fbf7] p-4 text-sm text-gray-700">
-              <p className="font-semibold text-gray-900">
-                {t("excelImportSheetFormat")}
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-5">
-                <li>{t("excelImportCoursesColumns")}</li>
-                <li>{t("excelImportTeachersColumns")}</li>
-                <li>{t("excelImportRoomsColumns")}</li>
-                <li>{t("excelImportGroupsColumns")}</li>
-                <li>{t("excelImportSectionsColumns")}</li>
-              </ul>
-            </div>
-
-            <div className="mt-6 space-y-3">
+            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
               <input
+                ref={ropFileInputRef}
                 type="file"
-                accept=".xlsx"
-                onChange={(event) => setImportFile(event.target.files?.[0] || null)}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#014531] file:px-3 file:py-2 file:font-medium file:text-white"
+                accept=".xls,.xlsx"
+                onChange={handleRopFileChange}
+                className="hidden"
               />
-              {importFile ? (
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                  {t("excelImportSelectedFile")}:{" "}
-                  <span className="font-medium">{importFile.name}</span>
+              <input
+                ref={iupFileInputRef}
+                type="file"
+                accept=".pdf,.xls,.xlsx"
+                onChange={handleIupFileChange}
+                className="hidden"
+              />
+
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-5">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                    <FileSpreadsheet size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{t("ropImportButton")}</h3>
+                    <p className="text-sm text-gray-600">{t("ropImportFormats")}</p>
+                  </div>
                 </div>
-              ) : null}
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <p className="mb-4 text-sm text-gray-700">{t("ropImportGuide")}</p>
                 <button
                   type="button"
-                  onClick={handleDownloadTemplate}
-                  disabled={isDownloadingTemplate}
-                  className={
-                    isDownloadingTemplate
-                      ? solidActionButtonClass
-                      : outlineActionButtonClass
-                  }
-                >
-                  {isDownloadingTemplate ? t("loading") : t("excelTemplateButton")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleImport}
-                  disabled={isImporting || !hasImportFile}
+                  onClick={() => ropFileInputRef.current?.click()}
+                  disabled={isRopImporting}
                   className={solidActionButtonClass}
                 >
-                  {isImporting ? t("loading") : t("excelImportButton")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClearAllData}
-                  disabled={isClearingAll || totalManagedRecords === 0}
-                  className={dangerActionButtonClass}
-                >
-                  {isClearingAll ? t("loading") : t("clearAllData")}
+                  {isRopImporting ? t("loading") : t("ropImportButton")}
                 </button>
               </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-md bg-slate-200 text-slate-700">
+                    <FileText size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{t("iupImportButton")}</h3>
+                    <p className="text-sm text-gray-600">{t("iupImportFormats")}</p>
+                  </div>
+                </div>
+                <p className="mb-4 text-sm text-gray-700">{t("iupImportGuide")}</p>
+                <button
+                  type="button"
+                  onClick={() => iupFileInputRef.current?.click()}
+                  disabled={isIupImporting}
+                  className={solidActionButtonClass}
+                >
+                  {isIupImporting ? t("loading") : t("iupImportButton")}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-lg bg-[#f4fbf7] p-4 text-sm text-gray-700">
+              <p className="font-semibold text-gray-900">{t("importReferenceTitle")}</p>
+              <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                <div>
+                  <p className="font-medium text-gray-900">{t("importReferenceRopTitle")}</p>
+                  <p className="mt-1">{t("importReferenceRopText")}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">{t("importReferenceIupTitle")}</p>
+                  <p className="mt-1">{t("importReferenceIupText")}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">{t("importReferenceFlowTitle")}</p>
+                  <p className="mt-1">{t("importReferenceFlowText")}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={handleClearAllData}
+                disabled={isClearingAll || totalManagedRecords === 0}
+                className={dangerActionButtonClass}
+              >
+                {isClearingAll ? t("loading") : t("clearAllData")}
+              </button>
             </div>
 
             {importError ? (
@@ -368,26 +390,10 @@ export const Dashboard = () => {
             ) : null}
 
             {importResult ? (
-              importResult.cleared ? (
-                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                  <p className="font-semibold">{t("clearAllDataSuccess")}</p>
-                </div>
-              ) : (
-                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                  <p className="font-semibold">{t("excelImportSuccess")}</p>
-                  <p className="mt-1">
-                    {t("excelImportTotals")} {importResult.totals.inserted} / {importResult.totals.updated}
-                  </p>
-                  <ul className="mt-3 list-disc space-y-1 pl-5">
-                    {Object.entries(importResult.summary || {}).map(([key, value]) => (
-                      <li key={key}>
-                        {importSummaryLabels[key] || key}: +{value?.inserted || 0}, ~
-                        {value?.updated || 0}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )
+              <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                <p className="font-semibold">{importResult.title}</p>
+                {importResult.details ? <p className="mt-1">{importResult.details}</p> : null}
+              </div>
             ) : null}
           </div>
         ) : null}

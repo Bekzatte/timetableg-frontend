@@ -387,10 +387,6 @@ export const notificationsAPI = {
 };
 
 export const importAPI = {
-  importExcel: (fileName, fileContent) =>
-    api
-      .post("/import/excel", { fileName, fileContent })
-      .then((response) => response.data),
   previewRop: (fileName, fileContent) =>
     api
       .post("/import/rop/preview", { fileName, fileContent })
@@ -407,8 +403,6 @@ export const importAPI = {
     api
       .post("/import/iup", { fileName, fileContent })
       .then((response) => response.data),
-  downloadTemplate: () =>
-    api.get("/import/template", { responseType: "blob" }).then((response) => response.data),
 };
 
 export const adminAPI = {

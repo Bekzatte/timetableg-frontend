@@ -170,7 +170,7 @@ export const CourseManager = () => {
       return;
     }
 
-    if (!/\.pdf$/i.test(file.name)) {
+    if (!/\.(pdf|xls|xlsx)$/i.test(file.name)) {
       setIupError(t("iupImportFileTypeError"));
       setIsIupModalOpen(true);
       return;
@@ -421,7 +421,7 @@ export const CourseManager = () => {
           <input
             ref={iupFileInputRef}
             type="file"
-            accept=".pdf"
+            accept=".pdf,.xls,.xlsx"
             className="hidden"
             onChange={handleIupFileChange}
           />
@@ -560,7 +560,7 @@ export const CourseManager = () => {
         <div className="space-y-4">
           {ropFile ? (
             <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-              <span className="font-semibold">{t("excelImportSelectedFile")}:</span>{" "}
+              <span className="font-semibold">{t("selectedFile")}:</span>{" "}
               {ropFile.name}
             </div>
           ) : null}
@@ -674,7 +674,7 @@ export const CourseManager = () => {
         <div className="space-y-4">
           {iupFile ? (
             <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-              <span className="font-semibold">{t("excelImportSelectedFile")}:</span>{" "}
+              <span className="font-semibold">{t("selectedFile")}:</span>{" "}
               {iupFile.name}
             </div>
           ) : null}
@@ -692,12 +692,6 @@ export const CourseManager = () => {
           {iupPreview ? (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-md border border-gray-200 p-3">
-                  <p className="text-xs font-medium uppercase text-gray-500">{t("student")}</p>
-                  <p className="mt-1 font-semibold text-gray-900">
-                    {iupPreview.metadata?.studentName || "-"}
-                  </p>
-                </div>
                 <div className="rounded-md border border-gray-200 p-3">
                   <p className="text-xs font-medium uppercase text-gray-500">
                     {t("groupNumber")}
