@@ -133,6 +133,8 @@ export const SectionManager = () => {
     { key: "group_name", label: t("groupNumber") },
     { key: "classes_count", label: t("classesCount") },
     { key: "lesson_type", label: t("lessonType"), render: (value) => t(value || "lecture") },
+    { key: "subgroup_mode", label: t("subgroupMode"), render: (value) => t(value || "auto") },
+    { key: "subgroup_count", label: t("subgroupCount") },
   ];
 
   const formFields = [
@@ -176,6 +178,23 @@ export const SectionManager = () => {
         { value: "lab", label: t("lab") },
       ],
       required: true,
+    },
+    {
+      name: "subgroup_mode",
+      label: t("subgroupMode"),
+      type: "select",
+      placeholder: t("selectSubgroupMode"),
+      options: [
+        { value: "auto", label: t("auto") },
+        { value: "none", label: t("none") },
+        { value: "forced", label: t("forced") },
+      ],
+    },
+    {
+      name: "subgroup_count",
+      label: t("subgroupCount"),
+      type: "number",
+      placeholder: "2",
     },
   ];
 
@@ -278,8 +297,10 @@ export const SectionManager = () => {
                   group_id: editingSection.group_id || "",
                   classes_count: editingSection.classes_count || 1,
                   lesson_type: editingSection.lesson_type || "lecture",
+                  subgroup_mode: editingSection.subgroup_mode || "auto",
+                  subgroup_count: editingSection.subgroup_count || 1,
                 }
-              : { classes_count: 1, lesson_type: "lecture" }
+              : { classes_count: 1, lesson_type: "lecture", subgroup_mode: "auto", subgroup_count: 1 }
           }
           submitText={editingSection ? t("save") : t("add")}
           isLoading={isSubmitting}
