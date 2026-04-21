@@ -164,6 +164,8 @@ export const CourseManager = () => {
       setIsSubmitting(true);
       const payload = {
         ...formData,
+        credits: formData.credits ? Number(formData.credits) : null,
+        hours: formData.hours ? Number(formData.hours) : null,
         year: Number(formData.year),
         semester: Number(formData.semester),
         instructor_id: formData.instructor_id ? Number(formData.instructor_id) : null,
@@ -202,6 +204,8 @@ export const CourseManager = () => {
     { key: "code", label: t("courseCode") },
     { key: "name", label: t("courseName") },
     { key: "programme", label: t("programmeName") },
+    { key: "cycle", label: t("disciplineCycle") },
+    { key: "component", label: t("disciplineComponent") },
     { key: "credits", label: t("credits") },
     { key: "hours", label: t("hours") },
     { key: "year", label: t("studyCourse") },
@@ -227,6 +231,35 @@ export const CourseManager = () => {
       label: t("courseName"),
       placeholder: t("enterCourseName"),
       required: true,
+    },
+    {
+      name: "credits",
+      label: t("credits"),
+      type: "number",
+      placeholder: "5",
+      required: true,
+    },
+    {
+      name: "hours",
+      label: t("hours"),
+      type: "number",
+      placeholder: "150",
+      required: true,
+    },
+    {
+      name: "cycle",
+      label: t("disciplineCycle"),
+      placeholder: t("enterDisciplineCycle"),
+    },
+    {
+      name: "component",
+      label: t("disciplineComponent"),
+      type: "select",
+      placeholder: t("selectDisciplineComponent"),
+      options: ["ОК", "ВК", "КВ", "ЖК", "ТК"].map((component) => ({
+        value: component,
+        label: component,
+      })),
     },
     {
       name: "year",
@@ -424,6 +457,10 @@ export const CourseManager = () => {
             editingCourse
               ? {
                   ...editingCourse,
+                  credits: editingCourse.credits || "",
+                  hours: editingCourse.hours || "",
+                  cycle: editingCourse.cycle || "",
+                  component: editingCourse.component || "",
                   year: editingCourse.year || "",
                   programme: editingCourse.programme || "",
                   instructor_id: editingCourse.instructor_id || "",
