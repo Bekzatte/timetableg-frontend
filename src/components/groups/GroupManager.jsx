@@ -55,7 +55,7 @@ export const GroupManager = () => {
         student_count: Number(formData.student_count),
         entry_year: formData.entry_year ? Number(formData.entry_year) : null,
         study_course: formData.study_course ? Number(formData.study_course) : null,
-        has_subgroups: 0,
+        has_subgroups: formData.has_subgroups ? 1 : 0,
         language: formData.language || "ru",
         programme: formData.programme || "",
         specialty_code: formData.specialty_code || "",
@@ -114,6 +114,11 @@ export const GroupManager = () => {
     { key: "programme", label: t("programmeName") },
     { key: "specialty_code", label: t("specialtyCode") },
     { key: "student_count", label: t("studentCount") },
+    {
+      key: "has_subgroups",
+      label: t("subgroups"),
+      render: (value) => (value ? t("yes") : t("no")),
+    },
     { key: "entry_year", label: t("entryYear") },
     { key: "study_course", label: t("studyCourse") },
     {
@@ -153,6 +158,13 @@ export const GroupManager = () => {
       type: "number",
       placeholder: "25",
       required: true,
+    },
+    {
+      name: "has_subgroups",
+      label: t("subgroups"),
+      type: "toggle",
+      trueLabel: t("yes"),
+      falseLabel: t("no"),
     },
     {
       name: "entry_year",
