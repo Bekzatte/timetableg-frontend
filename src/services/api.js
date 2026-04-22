@@ -273,6 +273,8 @@ export const courseAPI = {
 
 export const courseComponentAPI = {
   getAll: () => api.get("/course_components"),
+  create: (data) => api.post("/course_components", data),
+  delete: (id) => api.delete(`/course_components/${id}`),
 };
 
 export const teacherAPI = {

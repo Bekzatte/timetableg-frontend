@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
-import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, courseAPI, courseComponentAPI, importAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
@@ -13,6 +12,28 @@ import {
   getCanonicalProgrammeName,
   getProgrammeLabel,
 } from "../../constants/programmes";
+
+const EDITABLE_LESSON_TYPES = ["lecture", "practical", "lab", "practice", "srop"];
+
+const emptyCourseForm = {
+  code: "",
+  name: "",
+  programme: "",
+  cycle: "",
+  component: "",
+  credits: "",
+  hours: "",
+  year: "",
+  semester: "",
+  department: "",
+};
+
+const emptyComponentDrafts = () =>
+  EDITABLE_LESSON_TYPES.map((lessonType) => ({
+    lessonType,
+    hours: "",
+    teacherId: "",
+  }));
 
 export const CourseManager = () => {
   const { t, language } = useTranslation();
@@ -42,6 +63,9 @@ export const CourseManager = () => {
   const [semesterFilter, setSemesterFilter] = useState("");
   const [draftDepartmentFilter, setDraftDepartmentFilter] = useState("");
   const [draftSemesterFilter, setDraftSemesterFilter] = useState("");
+  const [courseFormData, setCourseFormData] = useState(emptyCourseForm);
+  const [componentDrafts, setComponentDrafts] = useState(() => emptyComponentDrafts());
+  const [courseFormErrors, setCourseFormErrors] = useState({});
   const { data, isLoading, execute } = useFetch(courseAPI.getAll);
   const {
     data: teachersData,
@@ -98,13 +122,50 @@ export const CourseManager = () => {
     [courses, activeCourseYear, departmentFilter, semesterFilter],
   );
 
+  const lessonTypeLabels = {
+    lecture: t("lecture"),
+    practical: t("practical"),
+    lab: t("lab"),
+    practice: t("practice"),
+    srop: t("srop"),
+  };
+
+  const buildComponentDrafts = (course) => {
+    const existingComponents = componentsByCourseId.get(String(course.id)) || [];
+    return EDITABLE_LESSON_TYPES.map((lessonType) => {
+      const component = existingComponents.find((item) => item.lesson_type === lessonType);
+      return {
+        lessonType,
+        hours: component?.hours ?? "",
+        teacherId: component?.teacher_id ?? "",
+      };
+    });
+  };
+
   const handleAddCourse = () => {
     setEditingCourse(null);
+    setCourseFormData(emptyCourseForm);
+    setComponentDrafts(emptyComponentDrafts());
+    setCourseFormErrors({});
     setIsModalOpen(true);
   };
 
   const handleEditCourse = (course) => {
     setEditingCourse(course);
+    setCourseFormData({
+      code: course.code || "",
+      name: course.name || "",
+      programme: course.programme || "",
+      cycle: course.cycle || "",
+      component: course.component || "",
+      credits: course.credits || "",
+      hours: course.hours || "",
+      year: course.year || "",
+      semester: course.semester || "",
+      department: course.department || "",
+    });
+    setComponentDrafts(buildComponentDrafts(course));
+    setCourseFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -251,32 +312,103 @@ export const CourseManager = () => {
     }
   };
 
-  const handleSubmit = async (formData, setErrors) => {
-    const selectedTeacher = teachers.find(
-      (teacher) => String(teacher.id) === String(formData.instructor_id),
+  const updateCourseField = (fieldName, value) => {
+    setCourseFormData((prev) => ({ ...prev, [fieldName]: value }));
+    setCourseFormErrors((prev) => ({ ...prev, [fieldName]: "", error: "" }));
+  };
+
+  const updateComponentDraft = (lessonType, fieldName, value) => {
+    setComponentDrafts((current) =>
+      current.map((draft) =>
+        draft.lessonType === lessonType ? { ...draft, [fieldName]: value } : draft,
+      ),
     );
+    setCourseFormErrors((prev) => ({ ...prev, components: "", error: "" }));
+  };
+
+  const validateCourseForm = () => {
+    const nextErrors = {};
+    ["code", "name", "programme", "credits", "hours", "year", "semester", "department"].forEach((fieldName) => {
+      if (courseFormData[fieldName] === undefined || courseFormData[fieldName] === null || String(courseFormData[fieldName]).trim() === "") {
+        nextErrors[fieldName] = t("fillAllFields");
+      }
+    });
+
+    componentDrafts.forEach((draft) => {
+      const hours = Number(draft.hours || 0);
+      if (hours > 0 && draft.lessonType !== "srop" && !draft.teacherId) {
+        nextErrors.components = t("fillAllFields");
+      }
+    });
+
+    return nextErrors;
+  };
+
+  const saveCourseComponents = async (course) => {
+    const existingComponents = editingCourse
+      ? componentsByCourseId.get(String(editingCourse.id)) || []
+      : [];
+    await Promise.all(existingComponents.map((component) => courseComponentAPI.delete(component.id)));
+
+    const componentPayloads = componentDrafts
+      .map((draft) => ({
+        ...draft,
+        hours: Number(draft.hours || 0),
+      }))
+      .filter((draft) => draft.hours > 0)
+      .map((draft) => {
+        const teacher = teachers.find((item) => String(item.id) === String(draft.teacherId));
+        return {
+          course_id: course.id,
+          course_code: course.code,
+          course_name: course.name,
+          programme: course.programme,
+          study_year: course.year,
+          academic_period: course.semester,
+          semester: course.semester,
+          lesson_type: draft.lessonType,
+          hours: draft.hours,
+          weekly_classes: Math.max(1, Math.round(draft.hours / 15)),
+          teacher_id: teacher?.id || null,
+          teacher_name: teacher?.name || "",
+        };
+      });
+
+    await Promise.all(componentPayloads.map((payload) => courseComponentAPI.create(payload)));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const validationErrors = validateCourseForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setCourseFormErrors(validationErrors);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
       const payload = {
-        ...formData,
-        credits: formData.credits ? Number(formData.credits) : null,
-        hours: formData.hours ? Number(formData.hours) : null,
-        year: Number(formData.year),
-        semester: Number(formData.semester),
-        instructor_id: formData.instructor_id ? Number(formData.instructor_id) : null,
-        instructor_name: selectedTeacher?.name || "",
+        ...courseFormData,
+        credits: courseFormData.credits ? Number(courseFormData.credits) : null,
+        hours: courseFormData.hours ? Number(courseFormData.hours) : null,
+        year: Number(courseFormData.year),
+        semester: Number(courseFormData.semester),
+        instructor_id: null,
+        instructor_name: "",
       };
+      let response;
       if (editingCourse) {
-        await courseAPI.update(editingCourse.id, payload);
+        response = await courseAPI.update(editingCourse.id, payload);
       } else {
-        await courseAPI.create(payload);
+        response = await courseAPI.create(payload);
       }
+      const savedCourse = response.data || response;
+      await saveCourseComponents(savedCourse);
       await execute();
       await executeCourseComponents();
       setIsModalOpen(false);
     } catch (error) {
-      setErrors((prev) => ({
+      setCourseFormErrors((prev) => ({
         ...prev,
         error: error.message,
       }));
@@ -307,7 +439,6 @@ export const CourseManager = () => {
     { key: "year", label: t("studyCourse") },
     { key: "semester", label: t("semester") },
     { key: "department", label: t("educationalProgrammeGroup") },
-    { key: "instructor_name", label: t("instructor") },
   ];
 
   const lessonTypeShortLabels = {
@@ -316,7 +447,6 @@ export const CourseManager = () => {
     lab: "LAB",
     practice: "PR",
     srop: "SROP",
-    sro: "SRO",
   };
 
   const renderCourseComponents = (course) => {
@@ -337,9 +467,6 @@ export const CourseManager = () => {
               <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("courseName")}</th>
               <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("lessonType")}</th>
               <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("hours")}</th>
-              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("classesCount")}</th>
-              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("semester")}</th>
-              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("requiresComputers")}</th>
               <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("teacherName")}</th>
             </tr>
           </thead>
@@ -353,9 +480,6 @@ export const CourseManager = () => {
                   </td>
                   <td className="px-3 py-2 text-gray-700">{t(component.lesson_type || "lecture")}</td>
                   <td className="px-3 py-2 text-gray-700">{component.hours ?? "-"}</td>
-                  <td className="px-3 py-2 text-gray-700">{component.weekly_classes ?? "-"}</td>
-                  <td className="px-3 py-2 text-gray-700">{component.academic_period || component.semester || "-"}</td>
-                  <td className="px-3 py-2 text-gray-700">{component.requires_computers ? t("yes") : t("no")}</td>
                   <td className="px-3 py-2 text-gray-700">{component.teacher_name || "-"}</td>
                 </tr>
               );
@@ -365,103 +489,6 @@ export const CourseManager = () => {
       </div>
     );
   };
-
-  const formFields = [
-    {
-      name: "code",
-      label: t("courseCode"),
-      placeholder: t("enterCourseCode"),
-      required: true,
-    },
-    {
-      name: "name",
-      label: t("courseName"),
-      placeholder: t("enterCourseName"),
-      required: true,
-    },
-    {
-      name: "credits",
-      label: t("credits"),
-      type: "number",
-      placeholder: "5",
-      required: true,
-    },
-    {
-      name: "hours",
-      label: t("hours"),
-      type: "number",
-      placeholder: "150",
-      required: true,
-    },
-    {
-      name: "cycle",
-      label: t("disciplineCycle"),
-      placeholder: t("enterDisciplineCycle"),
-    },
-    {
-      name: "component",
-      label: t("disciplineComponent"),
-      type: "select",
-      placeholder: t("selectDisciplineComponent"),
-      options: ["ОК", "ВК", "КВ", "ЖК", "ТК"].map((component) => ({
-        value: component,
-        label: component,
-      })),
-    },
-    {
-      name: "year",
-      label: t("studyCourse"),
-      type: "select",
-      placeholder: t("selectStudyCourse"),
-      options: [1, 2, 3, 4, 5, 6].map((course) => ({
-        value: course,
-        label: String(course),
-      })),
-      required: true,
-    },
-    {
-      name: "semester",
-      label: t("semester"),
-      type: "number",
-      placeholder: "1",
-      required: true,
-    },
-    {
-      name: "programme",
-      label: t("programmeName"),
-      type: "select",
-      placeholder: t("selectProgrammeName"),
-      options: PROGRAMMES.map((programme) => ({
-        value: getCanonicalProgrammeName(programme),
-        label: getProgrammeLabel(programme, language),
-      })),
-      required: true,
-    },
-    {
-      name: "department",
-      label: t("educationalProgrammeGroup"),
-      type: "select",
-      placeholder: t("selectEducationalProgrammeGroup"),
-      options: EDUCATIONAL_PROGRAMME_GROUPS.map((group) => ({
-        value: group,
-        label: group,
-      })),
-      required: true,
-    },
-    {
-      name: "instructor_id",
-      label: t("instructor"),
-      type: "select",
-      placeholder: isTeachersLoading
-        ? t("loading")
-        : t("selectInstructor"),
-      options: teachers.map((teacher) => ({
-        value: teacher.id,
-        label: teacher.name,
-      })),
-      required: true,
-    },
-  ];
 
   return (
     <div className="p-4 sm:p-6 w-full bg-white">
@@ -609,28 +636,206 @@ export const CourseManager = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingCourse ? t("editCourse") : t("addCourse")}
+        size="lg"
       >
-        <Form
-          fields={formFields}
-          onSubmit={handleSubmit}
-          resetKey={editingCourse ? `course-${editingCourse.id}` : "course-new"}
-          initialValues={
-            editingCourse
-              ? {
-                  ...editingCourse,
-                  credits: editingCourse.credits || "",
-                  hours: editingCourse.hours || "",
-                  cycle: editingCourse.cycle || "",
-                  component: editingCourse.component || "",
-                  year: editingCourse.year || "",
-                  programme: editingCourse.programme || "",
-                  instructor_id: editingCourse.instructor_id || "",
-                }
-              : {}
-          }
-          submitText={editingCourse ? t("save") : t("add")}
-          isLoading={isSubmitting}
-        />
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {courseFormErrors.error ? (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {courseFormErrors.error}
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {t("courseCode")}<span className="text-red-500">*</span>
+              <input
+                type="text"
+                value={courseFormData.code}
+                onChange={(event) => updateCourseField("code", event.target.value)}
+                placeholder={t("enterCourseCode")}
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${courseFormErrors.code ? "border-red-500" : "border-gray-300"}`}
+              />
+              {courseFormErrors.code ? <span className="mt-1 block text-sm text-red-600">{courseFormErrors.code}</span> : null}
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("courseName")}<span className="text-red-500">*</span>
+              <input
+                type="text"
+                value={courseFormData.name}
+                onChange={(event) => updateCourseField("name", event.target.value)}
+                placeholder={t("enterCourseName")}
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${courseFormErrors.name ? "border-red-500" : "border-gray-300"}`}
+              />
+              {courseFormErrors.name ? <span className="mt-1 block text-sm text-red-600">{courseFormErrors.name}</span> : null}
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("programmeName")}<span className="text-red-500">*</span>
+              <select
+                value={courseFormData.programme}
+                onChange={(event) => updateCourseField("programme", event.target.value)}
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${courseFormErrors.programme ? "border-red-500" : "border-gray-300"}`}
+              >
+                <option value="">{t("selectProgrammeName")}</option>
+                {PROGRAMMES.map((programme) => (
+                  <option key={getCanonicalProgrammeName(programme)} value={getCanonicalProgrammeName(programme)}>
+                    {getProgrammeLabel(programme, language)}
+                  </option>
+                ))}
+              </select>
+              {courseFormErrors.programme ? <span className="mt-1 block text-sm text-red-600">{courseFormErrors.programme}</span> : null}
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("disciplineCycle")}
+              <input
+                type="text"
+                value={courseFormData.cycle}
+                onChange={(event) => updateCourseField("cycle", event.target.value)}
+                placeholder={t("enterDisciplineCycle")}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("disciplineComponent")}
+              <select
+                value={courseFormData.component}
+                onChange={(event) => updateCourseField("component", event.target.value)}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">{t("selectDisciplineComponent")}</option>
+                {["ОК", "ВК", "КВ", "ЖК", "ТК"].map((component) => (
+                  <option key={component} value={component}>{component}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("credits")}<span className="text-red-500">*</span>
+              <input
+                type="number"
+                value={courseFormData.credits}
+                onChange={(event) => updateCourseField("credits", event.target.value)}
+                placeholder="5"
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${courseFormErrors.credits ? "border-red-500" : "border-gray-300"}`}
+              />
+              {courseFormErrors.credits ? <span className="mt-1 block text-sm text-red-600">{courseFormErrors.credits}</span> : null}
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("hours")}<span className="text-red-500">*</span>
+              <input
+                type="number"
+                value={courseFormData.hours}
+                onChange={(event) => updateCourseField("hours", event.target.value)}
+                placeholder="150"
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${courseFormErrors.hours ? "border-red-500" : "border-gray-300"}`}
+              />
+              {courseFormErrors.hours ? <span className="mt-1 block text-sm text-red-600">{courseFormErrors.hours}</span> : null}
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("studyCourse")}<span className="text-red-500">*</span>
+              <select
+                value={courseFormData.year}
+                onChange={(event) => updateCourseField("year", event.target.value)}
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${courseFormErrors.year ? "border-red-500" : "border-gray-300"}`}
+              >
+                <option value="">{t("selectStudyCourse")}</option>
+                {[1, 2, 3, 4, 5, 6].map((course) => (
+                  <option key={course} value={course}>{course}</option>
+                ))}
+              </select>
+              {courseFormErrors.year ? <span className="mt-1 block text-sm text-red-600">{courseFormErrors.year}</span> : null}
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("semester")}<span className="text-red-500">*</span>
+              <input
+                type="number"
+                value={courseFormData.semester}
+                onChange={(event) => updateCourseField("semester", event.target.value)}
+                placeholder="1"
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${courseFormErrors.semester ? "border-red-500" : "border-gray-300"}`}
+              />
+              {courseFormErrors.semester ? <span className="mt-1 block text-sm text-red-600">{courseFormErrors.semester}</span> : null}
+            </label>
+
+            <label className="block text-sm font-medium text-gray-700">
+              {t("educationalProgrammeGroup")}<span className="text-red-500">*</span>
+              <select
+                value={courseFormData.department}
+                onChange={(event) => updateCourseField("department", event.target.value)}
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${courseFormErrors.department ? "border-red-500" : "border-gray-300"}`}
+              >
+                <option value="">{t("selectEducationalProgrammeGroup")}</option>
+                {EDUCATIONAL_PROGRAMME_GROUPS.map((group) => (
+                  <option key={group} value={group}>{group}</option>
+                ))}
+              </select>
+              {courseFormErrors.department ? <span className="mt-1 block text-sm text-red-600">{courseFormErrors.department}</span> : null}
+            </label>
+          </div>
+
+          <details open className="rounded-md border border-gray-200 bg-gray-50">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-900">
+              {t("lessonType")} / {t("teacherName")}
+            </summary>
+            <div className="overflow-x-auto border-t border-gray-200 bg-white">
+              <table className="min-w-[620px] w-full text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("lessonType")}</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("hours")}</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("teacherName")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {componentDrafts.map((draft) => (
+                    <tr key={draft.lessonType}>
+                      <td className="px-3 py-2 font-medium text-gray-900">{lessonTypeLabels[draft.lessonType] || draft.lessonType}</td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          min="0"
+                          value={draft.hours}
+                          onChange={(event) => updateComponentDraft(draft.lessonType, "hours", event.target.value)}
+                          className="w-28 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <select
+                          value={draft.teacherId}
+                          onChange={(event) => updateComponentDraft(draft.lessonType, "teacherId", event.target.value)}
+                          disabled={isTeachersLoading}
+                          className="w-full min-w-[220px] rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                        >
+                          <option value="">{isTeachersLoading ? t("loading") : t("selectInstructor")}</option>
+                          {teachers.map((teacher) => (
+                            <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {courseFormErrors.components ? (
+              <p className="px-4 py-2 text-sm text-red-600">{courseFormErrors.components}</p>
+            ) : null}
+          </details>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full rounded-md bg-blue-600 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? t("loading") : editingCourse ? t("save") : t("add")}
+          </button>
+        </form>
       </Modal>
 
       <Modal

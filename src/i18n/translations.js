@@ -113,6 +113,8 @@ export const translations = {
     lecture: "Лекция",
     practical: "Практикалық",
     lab: "Зертхана",
+    practice: "Практика",
+    srop: "СРОП",
     seminar: "Семинар",
 
     // Schedule
@@ -620,6 +622,8 @@ export const translations = {
     lecture: "Лекция",
     practical: "Практика",
     lab: "Лаборатория",
+    practice: "Практика",
+    srop: "СРОП",
     seminar: "Семинар",
 
     // Schedule
@@ -1127,6 +1131,8 @@ export const translations = {
     lecture: "Lecture",
     practical: "Practical",
     lab: "Laboratory",
+    practice: "Practice",
+    srop: "SROP",
     seminar: "Seminar",
 
     // Schedule
