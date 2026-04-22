@@ -627,28 +627,6 @@ export const Dashboard = () => {
                   </table>
                 </div>
 
-                {iupPreview.courseLists?.missing?.length ? (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                    <p className="font-semibold">{t("iupMissingCoursesWarning")}</p>
-                    <ul className="mt-2 max-h-28 list-disc overflow-auto pl-5">
-                      {iupPreview.courseLists.missing.slice(0, 8).map((course, index) => (
-                        <li key={`${course.code}-${course.semester}-${index}`}>
-                          {course.code} - {course.name} ({t("semester")}: {course.semester || "-"})
-                        </li>
-                      ))}
-                    </ul>
-                    <label className="mt-3 flex items-start gap-2">
-                      <input
-                        type="checkbox"
-                        checked={createMissingIupCourses}
-                        onChange={(event) => setCreateMissingIupCourses(event.target.checked)}
-                        className="mt-1 h-4 w-4 rounded border-amber-300 text-amber-700 focus:ring-amber-600"
-                      />
-                      <span>{t("iupCreateMissingCourses")}</span>
-                    </label>
-                  </div>
-                ) : null}
-
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <button
                     type="button"
@@ -766,6 +744,28 @@ export const Dashboard = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {iupPreview.courseLists?.missing?.length ? (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                    <p className="font-semibold">{t("iupMissingCoursesWarning")}</p>
+                    <ul className="mt-2 max-h-28 list-disc overflow-auto pl-5">
+                      {iupPreview.courseLists.missing.slice(0, 8).map((course, index) => (
+                        <li key={`${course.code}-${course.semester}-${index}`}>
+                          {course.code} - {course.name} ({t("semester")}: {course.semester || "-"})
+                        </li>
+                      ))}
+                    </ul>
+                    <label className="mt-3 flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={createMissingIupCourses}
+                        onChange={(event) => setCreateMissingIupCourses(event.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-amber-300 text-amber-700 focus:ring-amber-600"
+                      />
+                      <span>{t("iupCreateMissingCourses")}</span>
+                    </label>
+                  </div>
+                ) : null}
 
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <button
