@@ -25,6 +25,11 @@ const WEEKDAY_OPTIONS = [
   { value: "friday", labelKey: "friday" },
 ];
 
+const SCHEDULE_SEMESTER_OPTIONS = [
+  { value: 1, labelKey: "fallScheduleSemester" },
+  { value: 2, labelKey: "springScheduleSemester" },
+];
+
 const JOB_ERROR_CODE_TRANSLATION_KEYS = {
   optimizer_dependency_missing: "errorOptimizerDependencyMissing",
   optimizer_requires_teachers: "errorOptimizerRequiresTeachers",
@@ -415,13 +420,13 @@ export const SchedulePage = () => {
   const formFields = [
     {
       name: "semester",
-      label: t("semester"),
+      label: t("scheduleSemester"),
       type: "select",
-      placeholder: t("semester"),
-      options: [
-        { value: 1, label: "1" },
-        { value: 2, label: "2" },
-      ],
+      placeholder: t("scheduleSemester"),
+      options: SCHEDULE_SEMESTER_OPTIONS.map((item) => ({
+        value: item.value,
+        label: t(item.labelKey),
+      })),
       required: true,
     },
     {

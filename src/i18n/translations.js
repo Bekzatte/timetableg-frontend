@@ -113,7 +113,7 @@ export const translations = {
     lecture: "Лекция",
     practical: "Практикалық",
     lab: "Зертхана",
-    practice: "Практика",
+    practice: "Практика (оқу/өндірістік/дипломалды)",
     srop: "СРОП",
     seminar: "Семинар",
 
@@ -422,6 +422,9 @@ export const translations = {
 
     // Schedule (additional)
     semester: "Семестр",
+    scheduleSemester: "Кесте семестрі",
+    fallScheduleSemester: "Күзгі семестр (1, 3, 5, 7 академиялық кезеңдер)",
+    springScheduleSemester: "Көктемгі семестр (2, 4, 6, 8 академиялық кезеңдер)",
     year: "Жыл",
     studyCourse: "Курс",
     selectStudyCourse: "Курсты таңдаңыз",
@@ -622,7 +625,7 @@ export const translations = {
     lecture: "Лекция",
     practical: "Практика",
     lab: "Лаборатория",
-    practice: "Практика",
+    practice: "Практика (учебная/производственная/преддипломная)",
     srop: "СРОП",
     seminar: "Семинар",
 
@@ -932,6 +935,9 @@ export const translations = {
 
     // Schedule (additional)
     semester: "Семестр",
+    scheduleSemester: "Семестр расписания",
+    fallScheduleSemester: "Осенний семестр (1, 3, 5, 7 академические периоды)",
+    springScheduleSemester: "Весенний семестр (2, 4, 6, 8 академические периоды)",
     year: "Год",
     studyCourse: "Курс",
     selectStudyCourse: "Выберите курс",
@@ -1131,7 +1137,7 @@ export const translations = {
     lecture: "Lecture",
     practical: "Practical",
     lab: "Laboratory",
-    practice: "Practice",
+    practice: "Practice (educational/internship/pre-diploma)",
     srop: "SROP",
     seminar: "Seminar",
 
@@ -1441,6 +1447,9 @@ export const translations = {
 
     // Schedule (additional)
     semester: "Semester",
+    scheduleSemester: "Schedule Semester",
+    fallScheduleSemester: "Fall semester (academic periods 1, 3, 5, 7)",
+    springScheduleSemester: "Spring semester (academic periods 2, 4, 6, 8)",
     year: "Year",
     studyCourse: "Course",
     selectStudyCourse: "Select course",
