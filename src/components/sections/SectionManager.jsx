@@ -7,19 +7,18 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, courseAPI, groupAPI, sectionAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
-import { PROGRAMMES } from "../../constants/programmes";
 
 export const SectionManager = () => {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingSections, setIsGeneratingSections] = useState(false);
   const [generateResult, setGenerateResult] = useState(null);
   const [generateError, setGenerateError] = useState("");
+  const [activeStudyCourse, setActiveStudyCourse] = useState("all");
   const [lessonTypeFilter, setLessonTypeFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
   const [draftLessonTypeFilter, setDraftLessonTypeFilter] = useState("");
@@ -49,9 +48,31 @@ export const SectionManager = () => {
   }, [execute, executeCourses, executeGroups, executeTeachers]);
 
   const sections = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  const courses = Array.isArray(coursesData) ? coursesData : [];
-  const groups = Array.isArray(groupsData) ? groupsData : [];
-  const teachers = Array.isArray(teachersData) ? teachersData : [];
+  const courses = useMemo(() => (Array.isArray(coursesData) ? coursesData : []), [coursesData]);
+  const groups = useMemo(() => (Array.isArray(groupsData) ? groupsData : []), [groupsData]);
+  const teachers = useMemo(() => (Array.isArray(teachersData) ? teachersData : []), [teachersData]);
+  const courseById = useMemo(
+    () => new Map(courses.map((course) => [String(course.id), course])),
+    [courses],
+  );
+  const studyCourseTabs = useMemo(() => {
+    const years = [...new Set(
+      sections
+        .map((section) => Number(courseById.get(String(section.course_id))?.year))
+        .filter((year) => Number.isFinite(year) && year > 0),
+    )].sort((left, right) => left - right);
+
+    return [
+      { value: "all", label: t("all"), count: sections.length },
+      ...years.map((year) => ({
+        value: String(year),
+        label: `${year} ${t("studyCourse").toLowerCase()}`,
+        count: sections.filter(
+          (section) => Number(courseById.get(String(section.course_id))?.year) === year,
+        ).length,
+      })),
+    ];
+  }, [courseById, sections, t]);
   const hasActiveFilters = Boolean(lessonTypeFilter || groupFilter);
   const isSectionFormBlocked = courses.length === 0 || groups.length === 0;
   const sectionFormHint =
@@ -63,11 +84,13 @@ export const SectionManager = () => {
   const filteredSections = useMemo(
     () =>
       sections.filter((section) => {
+        const sectionStudyCourse = String(courseById.get(String(section.course_id))?.year || "");
+        const matchesStudyCourse = activeStudyCourse === "all" || sectionStudyCourse === activeStudyCourse;
         const matchesLessonType = !lessonTypeFilter || section.lesson_type === lessonTypeFilter;
         const matchesGroup = !groupFilter || String(section.group_id) === groupFilter;
-        return matchesLessonType && matchesGroup;
+        return matchesStudyCourse && matchesLessonType && matchesGroup;
       }),
-    [sections, lessonTypeFilter, groupFilter],
+    [sections, courseById, activeStudyCourse, lessonTypeFilter, groupFilter],
   );
 
   const handleAddSection = () => {
@@ -75,24 +98,16 @@ export const SectionManager = () => {
     setIsModalOpen(true);
   };
 
-  const handleGenerateSections = async (formData, setErrors) => {
+  const handleGenerateSections = async () => {
     try {
       setIsGeneratingSections(true);
       setGenerateError("");
       setGenerateResult(null);
-      const result = await sectionAPI.generate({
-        semester: Number(formData.semester),
-        study_course: Number(formData.study_course),
-        programme: formData.programme,
-      });
+      const result = await sectionAPI.generate({});
       await execute();
       setGenerateResult(result);
     } catch (error) {
       setGenerateError(error.message);
-      setErrors((prev) => ({
-        ...prev,
-        error: error.message,
-      }));
     } finally {
       setIsGeneratingSections(false);
     }
@@ -263,42 +278,6 @@ export const SectionManager = () => {
       placeholder: "2",
     },
   ];
-  const generateFields = [
-    {
-      name: "programme",
-      label: t("programmeName"),
-      type: "select",
-      placeholder: t("selectProgrammeName"),
-      options: PROGRAMMES.map((programme) => ({
-        value: programme.labels.ru,
-        label: programme.labels[language] || programme.labels.en,
-      })),
-      required: true,
-    },
-    {
-      name: "study_course",
-      label: t("studyCourse"),
-      type: "select",
-      placeholder: t("selectStudyCourse"),
-      options: [1, 2, 3, 4, 5, 6].map((course) => ({
-        value: course,
-        label: String(course),
-      })),
-      required: true,
-    },
-    {
-      name: "semester",
-      label: t("semester"),
-      type: "select",
-      placeholder: t("semester"),
-      options: [1, 2, 3, 4, 5, 6, 7, 8].map((semester) => ({
-        value: semester,
-        label: String(semester),
-      })),
-      required: true,
-    },
-  ];
-
   return (
     <div className="p-6 bg-white">
       <div className="mb-6 grid grid-cols-1 gap-4">
@@ -318,14 +297,11 @@ export const SectionManager = () => {
         </h1>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <button
-            onClick={() => {
-              setGenerateResult(null);
-              setGenerateError("");
-              setIsGenerateModalOpen(true);
-            }}
+            onClick={handleGenerateSections}
+            disabled={isGeneratingSections}
             className="flex items-center justify-center gap-2 rounded-md bg-[#014531] px-4 py-2 text-white transition hover:bg-[#013726] w-full sm:w-auto"
           >
-            <Plus size={20} /> {t("generateSections")}
+            <Plus size={20} /> {isGeneratingSections ? t("loading") : t("generateSections")}
           </button>
           <button
             onClick={handleAddSection}
@@ -340,6 +316,61 @@ export const SectionManager = () => {
           >
             {isClearing ? t("loading") : t("clearSections")}
           </button>
+        </div>
+      </div>
+
+      {generateError ? (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {generateError}
+        </div>
+      ) : null}
+
+      {generateResult ? (
+        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          <p className="font-semibold">{t("sectionsGenerated")}</p>
+          <p className="mt-1">
+            {t("created")}: {generateResult.inserted || 0}. {t("updated")}: {generateResult.updated || 0}.
+          </p>
+          {generateResult.missing?.groups || generateResult.missing?.components ? (
+            <p className="mt-2 text-amber-700">
+              {generateResult.missing?.groups ? t("sectionsGenerateNoGroups") : ""}
+              {generateResult.missing?.groups && generateResult.missing?.components ? " " : ""}
+              {generateResult.missing?.components ? t("sectionsGenerateNoComponents") : ""}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mb-5 overflow-x-auto">
+        <div
+          role="tablist"
+          aria-label={t("studyCourse")}
+          className="inline-flex min-w-full gap-2 rounded-lg border border-gray-200 bg-gray-50 p-1 sm:min-w-0"
+        >
+          {studyCourseTabs.map((tab) => {
+            const isActive = activeStudyCourse === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveStudyCourse(tab.value)}
+                className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition ${
+                  isActive
+                    ? "bg-[#014531] text-white shadow-sm"
+                    : "text-gray-700 hover:bg-white"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs ${
+                  isActive ? "bg-white/20 text-white" : "bg-white text-gray-600"
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -419,45 +450,6 @@ export const SectionManager = () => {
         />
       </Modal>
 
-      <Modal
-        isOpen={isGenerateModalOpen}
-        onClose={() => {
-          if (!isGeneratingSections) {
-            setIsGenerateModalOpen(false);
-          }
-        }}
-        title={t("generateSections")}
-      >
-        <div className="space-y-4">
-          <Form
-            fields={generateFields}
-            onSubmit={handleGenerateSections}
-            resetKey="generate-sections"
-            submitText={t("generateSections")}
-            isLoading={isGeneratingSections}
-          />
-          {generateError ? (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {generateError}
-            </div>
-          ) : null}
-          {generateResult ? (
-            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-              <p className="font-semibold">{t("sectionsGenerated")}</p>
-              <p className="mt-1">
-                {t("created")}: {generateResult.inserted || 0}. {t("updated")}: {generateResult.updated || 0}.
-              </p>
-              {generateResult.missing?.groups || generateResult.missing?.components ? (
-                <p className="mt-2 text-amber-700">
-                  {generateResult.missing?.groups ? t("sectionsGenerateNoGroups") : ""}
-                  {generateResult.missing?.groups && generateResult.missing?.components ? " " : ""}
-                  {generateResult.missing?.components ? t("sectionsGenerateNoComponents") : ""}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </Modal>
     </div>
   );
 };

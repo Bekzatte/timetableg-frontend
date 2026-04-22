@@ -8,7 +8,11 @@ import { adminAPI, courseAPI, courseComponentAPI, importAPI, teacherAPI } from "
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import { EDUCATIONAL_PROGRAMME_GROUPS } from "../../constants/educationalProgrammeGroups";
-import { PROGRAMMES } from "../../constants/programmes";
+import {
+  PROGRAMMES,
+  getCanonicalProgrammeName,
+  getProgrammeLabel,
+} from "../../constants/programmes";
 
 export const CourseManager = () => {
   const { t, language } = useTranslation();
@@ -428,8 +432,8 @@ export const CourseManager = () => {
       type: "select",
       placeholder: t("selectProgrammeName"),
       options: PROGRAMMES.map((programme) => ({
-        value: programme.labels.ru,
-        label: programme.labels[language] || programme.labels.en,
+        value: getCanonicalProgrammeName(programme),
+        label: getProgrammeLabel(programme, language),
       })),
       required: true,
     },

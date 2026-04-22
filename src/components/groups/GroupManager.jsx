@@ -8,15 +8,14 @@ import { adminAPI, groupAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import { STUDY_LANGUAGES } from "../../constants/languages";
-
-const GROUP_PROGRAMMES = [
-  "Компьютерная инженерия",
-  "Бизнес-информатика",
-  "Компьютерная инженерия (СОПР)",
-];
+import {
+  PROGRAMMES,
+  getCanonicalProgrammeName,
+  getProgrammeLabel,
+} from "../../constants/programmes";
 
 export const GroupManager = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
@@ -136,9 +135,9 @@ export const GroupManager = () => {
       label: t("programmeName"),
       type: "select",
       placeholder: t("selectProgrammeName"),
-      options: GROUP_PROGRAMMES.map((programme) => ({
-        value: programme,
-        label: programme,
+      options: PROGRAMMES.map((programme) => ({
+        value: getCanonicalProgrammeName(programme),
+        label: getProgrammeLabel(programme, language),
       })),
       required: true,
     },

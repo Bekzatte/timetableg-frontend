@@ -42,6 +42,7 @@ export const Dashboard = () => {
   const [iupFile, setIupFile] = useState(null);
   const [ropFileContent, setRopFileContent] = useState("");
   const [iupFileContent, setIupFileContent] = useState("");
+  const [createMissingIupCourses, setCreateMissingIupCourses] = useState(false);
   const [ropError, setRopError] = useState("");
   const [iupError, setIupError] = useState("");
   const [isClearingAll, setIsClearingAll] = useState(false);
@@ -251,6 +252,7 @@ export const Dashboard = () => {
       setIupFileContent(fileContent);
       const preview = await importAPI.previewIup(file.name, fileContent);
       setIupPreview(preview);
+      setCreateMissingIupCourses(false);
     } catch (error) {
       setIupError(error.message === "file_read_error" ? t("errorFileRead") : error.message || t("errorUnknown"));
     } finally {
@@ -270,17 +272,21 @@ export const Dashboard = () => {
     setImportResult(null);
 
     try {
-      const result = await importAPI.importIup(iupFile.name, iupFileContent);
+      const result = await importAPI.importIup(iupFile.name, iupFileContent, {
+        createMissingCourses: createMissingIupCourses,
+      });
       await refreshManagedData();
       setIsIupModalOpen(false);
       setIupPreview(null);
       setIupFile(null);
       setIupFileContent("");
+      setCreateMissingIupCourses(false);
       setImportResult({
         title: t("iupImportSuccess"),
         details: `${result?.totals?.lessonEntries || 0} ${t("iupEntriesSaved")}`,
         type: "iup",
         courseLists: {
+          inserted: result?.stats?.courseLists?.inserted || [],
           existing: result?.stats?.courseLists?.existing || [],
           missing: result?.stats?.courseLists?.missing || [],
         },
@@ -608,6 +614,28 @@ export const Dashboard = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {iupPreview.courseLists?.missing?.length ? (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                    <p className="font-semibold">{t("iupMissingCoursesWarning")}</p>
+                    <ul className="mt-2 max-h-28 list-disc overflow-auto pl-5">
+                      {iupPreview.courseLists.missing.slice(0, 8).map((course, index) => (
+                        <li key={`${course.code}-${course.semester}-${index}`}>
+                          {course.code} - {course.name} ({t("semester")}: {course.semester || "-"})
+                        </li>
+                      ))}
+                    </ul>
+                    <label className="mt-3 flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={createMissingIupCourses}
+                        onChange={(event) => setCreateMissingIupCourses(event.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-amber-300 text-amber-700 focus:ring-amber-600"
+                      />
+                      <span>{t("iupCreateMissingCourses")}</span>
+                    </label>
+                  </div>
+                ) : null}
 
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <button

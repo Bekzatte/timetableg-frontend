@@ -404,9 +404,9 @@ export const importAPI = {
     api
       .post("/import/iup/preview", { fileName, fileContent })
       .then((response) => response.data),
-  importIup: (fileName, fileContent) =>
+  importIup: (fileName, fileContent, options = {}) =>
     api
-      .post("/import/iup", { fileName, fileContent })
+      .post("/import/iup", { fileName, fileContent, ...options })
       .then((response) => response.data),
 };
 
@@ -446,7 +446,7 @@ api.interceptors.request.use(
       );
     }
 
-    const user = localStorage.getItem("user");
+    const user = sessionStorage.getItem("user") || localStorage.getItem("user");
     if (user) {
       try {
         const parsedUser = JSON.parse(user);
@@ -454,7 +454,7 @@ api.interceptors.request.use(
           config.headers.Authorization = `Bearer ${parsedUser.token}`;
         }
       } catch (e) {
-        console.error("Error parsing user from localStorage:", e);
+        console.error("Error parsing user from browser storage:", e);
       }
     }
     return config;

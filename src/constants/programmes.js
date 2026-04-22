@@ -40,3 +40,9 @@ export const PROGRAMMES = [
     },
   },
 ];
+
+export const getProgrammeLabel = (programme, language = "ru") =>
+  programme.labels[language] || programme.labels.ru || programme.labels.en;
+
+export const getCanonicalProgrammeName = (programme) =>
+  (programme.labels.ru || programme.labels.en || "").replace(/\s*\([^)]*\)\s*$/, "");

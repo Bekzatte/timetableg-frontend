@@ -26,7 +26,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "../backend/.venv/bin/python ../backend/server.py",
+      command: "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3 ../backend/server.py",
       cwd: ".",
       url: `http://127.0.0.1:${backendPort}/api/health`,
       timeout: 120000,
@@ -36,6 +36,8 @@ export default defineConfig({
         SQLITE_DB_FILE: "/tmp/timetable-playwright.sqlite",
         BACKEND_HOST: "127.0.0.1",
         PORT: String(backendPort),
+        PYTHONPATH: "../backend/.venv/lib/python3.12/site-packages",
+        ALLOWED_ORIGINS: `http://127.0.0.1:${frontendPort}`,
       },
     },
     {

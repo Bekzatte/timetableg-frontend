@@ -16,15 +16,17 @@ export const AuthProvider = ({ children }) => {
   const persistUser = (nextUser) => {
     setUser(nextUser);
     if (nextUser) {
-      localStorage.setItem("user", JSON.stringify(nextUser));
+      sessionStorage.setItem("user", JSON.stringify(nextUser));
+      localStorage.removeItem("user");
       return;
     }
+    sessionStorage.removeItem("user");
     localStorage.removeItem("user");
   };
 
-  // Загрузить данные из localStorage при инициализации
+  // Session storage keeps the bearer token out of long-lived browser storage.
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user") || localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -42,7 +44,7 @@ export const AuthProvider = ({ children }) => {
             setIsReady(true);
           });
       } catch (e) {
-        console.error("Error loading user from localStorage:", e);
+        console.error("Error loading user from browser storage:", e);
         persistUser(null);
         setIsReady(true);
       }
