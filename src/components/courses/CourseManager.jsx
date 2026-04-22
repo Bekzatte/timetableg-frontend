@@ -13,7 +13,7 @@ import {
   getProgrammeLabel,
 } from "../../constants/programmes";
 
-const EDITABLE_LESSON_TYPES = ["lecture", "practical", "lab", "practice", "srop"];
+const EDITABLE_LESSON_TYPES = ["lecture", "practical", "lab", "srop"];
 
 const emptyCourseForm = {
   code: "",
