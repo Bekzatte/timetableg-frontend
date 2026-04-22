@@ -328,7 +328,7 @@ export const translations = {
     errorGenerationRoomCapacityHint:
       "Аудитория сыйымдылығы топ немесе топша көлемінен кем емес екеніне көз жеткізіңіз.",
     errorGenerationComputersHint:
-      "Компьютер қажет пәндер үшін зертханаларда computer_count, ал пәндерде requires_computers өрісін толтырыңыз.",
+      "Практика және зертхана секциялары үшін компьютерлері бар кабинеттерді көрсетіңіз.",
     errorGenerationSlotsHint:
       "Егер қолжетімді слоттарға сабақтар тым көп болса, секциялар санын азайтыңыз немесе шектеулерді әлсіретіңіз.",
     errorGenerationInsufficientSlotsReason:
@@ -443,11 +443,14 @@ export const translations = {
     importReferenceFlowTitle: "Реті",
     importReferenceFlowText: "Алдымен РОП, кейін топтар мен ИУП. Келесі қадам - секцияларды автоматты құру.",
     ropImportSuccess: "РОП сәтті импортталды.",
-    iupImportSuccess: "ИУП сәтті импортталды.",
+    iupImportSuccess: "ИУП деректері сақталды.",
     lessonEntries: "сабақ жолдары",
+    iupEntriesSaved: "ИУП жолы сақталды/жаңартылды",
     importCoursesAdded: "Қосылған пәндер",
     importCoursesAlreadyExist: "Бұрыннан бар пәндер",
     importCoursesMissing: "Базада табылмаған пәндер",
+    iupCoursesMatched: "ИУП пәндері базада табылды",
+    iupCoursesMissing: "ИУП пәндері базада табылмады",
     clearAllData: "Барлық деректерді тазалау",
     clearAllDataSuccess: "Барлық деректер өшірілді.",
     scheduleEntriesNeedSectionsFirst: "Қолмен сабақ қоспас бұрын кемінде бір секция қосыңыз.",
@@ -822,7 +825,7 @@ export const translations = {
     errorGenerationRoomCapacityHint:
       "Убедитесь, что вместимость аудитории не меньше размера группы или подгруппы.",
     errorGenerationComputersHint:
-      "Для компьютерных дисциплин заполните computer_count у лабораторий и requires_computers у дисциплин.",
+      "Для практики и лабораторных секций укажите кабинеты с компьютерами.",
     errorGenerationSlotsHint:
       "Сократите количество секций или ослабьте ограничения, если занятий слишком много для доступных слотов.",
     errorGenerationInsufficientSlotsReason:
@@ -937,11 +940,14 @@ export const translations = {
     importReferenceFlowTitle: "Порядок",
     importReferenceFlowText: "Сначала РОП, затем группы и ИУП. Следующий шаг - автосоздание секций.",
     ropImportSuccess: "РОП успешно импортирован.",
-    iupImportSuccess: "ИУП успешно импортирован.",
+    iupImportSuccess: "Данные ИУП сохранены.",
     lessonEntries: "строк занятий",
+    iupEntriesSaved: "строк ИУП сохранено/обновлено",
     importCoursesAdded: "Добавленные предметы",
     importCoursesAlreadyExist: "Предметы уже есть",
     importCoursesMissing: "Предметы не найдены в базе",
+    iupCoursesMatched: "Предметы из ИУП найдены в базе",
+    iupCoursesMissing: "Предметы из ИУП не найдены в базе",
     clearAllData: "Очистить все данные",
     clearAllDataSuccess: "Все данные удалены.",
     scheduleEntriesNeedSectionsFirst: "Сначала добавьте хотя бы одну секцию, затем создавайте запись вручную.",
@@ -1315,7 +1321,7 @@ export const translations = {
     errorGenerationRoomCapacityHint:
       "Make sure the room capacity is at least as large as the group or subgroup size.",
     errorGenerationComputersHint:
-      "For computer-based disciplines, fill in laboratory computer_count values and requires_computers on the disciplines.",
+      "For practical and lab sections, provide rooms with enough computers.",
     errorGenerationSlotsHint:
       "Reduce the number of sections or relax constraints if there are too many classes for the available slots.",
     errorGenerationInsufficientSlotsReason:
@@ -1430,11 +1436,14 @@ export const translations = {
     importReferenceFlowTitle: "Order",
     importReferenceFlowText: "Import ROP first, then groups and IUP. The next step is automatic section generation.",
     ropImportSuccess: "ROP imported successfully.",
-    iupImportSuccess: "IUP imported successfully.",
+    iupImportSuccess: "IUP data saved.",
     lessonEntries: "lesson entries",
+    iupEntriesSaved: "IUP rows saved/updated",
     importCoursesAdded: "Added courses",
     importCoursesAlreadyExist: "Courses already exist",
     importCoursesMissing: "Courses not found in database",
+    iupCoursesMatched: "IUP courses found in database",
+    iupCoursesMissing: "IUP courses not found in database",
     clearAllData: "Clear All Data",
     clearAllDataSuccess: "All data has been removed.",
     scheduleEntriesNeedSectionsFirst: "Add at least one section before creating a manual entry.",

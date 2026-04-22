@@ -214,7 +214,7 @@ export const Dashboard = () => {
       setRopFileContent("");
       setImportResult({
         title: t("ropImportSuccess"),
-        details: `${result?.totals?.courses || 0} ${t("courses").toLowerCase()}`,
+        details: `${t("importCoursesAdded")}: ${result?.totals?.inserted || 0}. ${t("importCoursesAlreadyExist")}: ${result?.totals?.updated || 0}.`,
         courseLists: {
           inserted: result?.courseLists?.inserted || [],
           existing: result?.courseLists?.existing || [],
@@ -278,7 +278,8 @@ export const Dashboard = () => {
       setIupFileContent("");
       setImportResult({
         title: t("iupImportSuccess"),
-        details: `${result?.totals?.lessonEntries || 0} ${t("lessonEntries").toLowerCase()}`,
+        details: `${result?.totals?.lessonEntries || 0} ${t("iupEntriesSaved")}`,
+        type: "iup",
         courseLists: {
           existing: result?.stats?.courseLists?.existing || [],
           missing: result?.stats?.courseLists?.missing || [],
@@ -503,8 +504,14 @@ export const Dashboard = () => {
                 <p className="font-semibold">{importResult.title}</p>
                 {importResult.details ? <p className="mt-1">{importResult.details}</p> : null}
                 {renderCourseList(t("importCoursesAdded"), importResult.courseLists?.inserted)}
-                {renderCourseList(t("importCoursesAlreadyExist"), importResult.courseLists?.existing)}
-                {renderCourseList(t("importCoursesMissing"), importResult.courseLists?.missing)}
+                {renderCourseList(
+                  importResult.type === "iup" ? t("iupCoursesMatched") : t("importCoursesAlreadyExist"),
+                  importResult.courseLists?.existing,
+                )}
+                {renderCourseList(
+                  importResult.type === "iup" ? t("iupCoursesMissing") : t("importCoursesMissing"),
+                  importResult.courseLists?.missing,
+                )}
               </div>
             ) : null}
           </div>
