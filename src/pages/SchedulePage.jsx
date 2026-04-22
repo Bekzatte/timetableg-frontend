@@ -203,13 +203,14 @@ export const SchedulePage = () => {
   const rooms = Array.isArray(roomsData) ? roomsData : [];
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const teachers = Array.isArray(teachersData) ? teachersData : [];
-  const hasAssignedCourseTeacher = courses.some((course) => course.instructor_id);
+  const hasAssignedTeacher = sections.some((section) => section.teacher_id) ||
+    courses.some((course) => course.instructor_id);
   const isEntryFormBlocked =
     sections.length === 0 ||
     rooms.length === 0 ||
     courses.length === 0 ||
     teachers.length === 0 ||
-    !hasAssignedCourseTeacher;
+    !hasAssignedTeacher;
   const entryFormHint =
     sections.length === 0
       ? t("scheduleEntriesNeedSectionsFirst")
@@ -217,7 +218,7 @@ export const SchedulePage = () => {
         ? t("scheduleEntriesNeedRoomsFirst")
         : courses.length === 0
           ? t("scheduleEntriesNeedCoursesFirst")
-          : teachers.length === 0 || !hasAssignedCourseTeacher
+          : teachers.length === 0 || !hasAssignedTeacher
             ? t("scheduleEntriesNeedAssignedTeachers")
             : "";
   const filteredSchedule = useMemo(
@@ -369,8 +370,12 @@ export const SchedulePage = () => {
         section_id: Number(selectedSection.id),
         course_id: Number(selectedSection.course_id),
         course_name: selectedSection.course_name,
-        teacher_id: selectedCourse.instructor_id ? Number(selectedCourse.instructor_id) : null,
-        teacher_name: selectedCourse.instructor_name || "",
+        teacher_id: selectedSection.teacher_id
+          ? Number(selectedSection.teacher_id)
+          : selectedCourse.instructor_id
+            ? Number(selectedCourse.instructor_id)
+            : null,
+        teacher_name: selectedSection.teacher_name || selectedCourse.instructor_name || "",
         room_id: Number(selectedRoom.id),
         room_number: selectedRoom.number,
         group_id: Number(selectedSection.group_id),

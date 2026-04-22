@@ -271,6 +271,10 @@ export const courseAPI = {
   delete: (id) => api.delete(`/disciplines/${id}`),
 };
 
+export const courseComponentAPI = {
+  getAll: () => api.get("/course_components"),
+};
+
 export const teacherAPI = {
   getAll: () => api.get("/teachers"),
   create: (data) => api.post("/teachers", data),
@@ -413,6 +417,7 @@ export const adminAPI = {
 
 export default {
   courseAPI,
+  courseComponentAPI,
   teacherAPI,
   roomAPI,
   groupAPI,

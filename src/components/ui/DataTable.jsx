@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Trash2, Edit2, Filter } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
+import { Trash2, Edit2, Filter, ChevronDown } from "lucide-react";
 import { useTranslation } from "../../hooks/useTranslation";
 import Modal from "./Modal";
 
@@ -16,11 +16,32 @@ export const DataTable = ({
   onResetFilters = null,
   hasActiveFilters = false,
   filterDialogTitle = null,
+  renderExpandedRow = null,
+  getRowCanExpand = null,
 }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [expandedRowIds, setExpandedRowIds] = useState(() => new Set());
   const hasSearchQuery = searchQuery.trim().length > 0;
+  const hasExpandableRows = typeof renderExpandedRow === "function";
+  const actionsColSpan = (onEdit || onDelete) ? 1 : 0;
+  const totalColSpan = columns.length + actionsColSpan + (hasExpandableRows ? 1 : 0);
+
+  const getRowKey = (row, rowIndex) => String(row.id ?? rowIndex);
+  const canExpandRow = (row) => hasExpandableRows && (getRowCanExpand ? getRowCanExpand(row) : true);
+  const toggleRow = (row, rowIndex) => {
+    const key = getRowKey(row, rowIndex);
+    setExpandedRowIds((current) => {
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
   const filteredData = useMemo(() => {
     if (!enableSearch) {
@@ -170,6 +191,20 @@ export const DataTable = ({
               key={row.id ?? rowIndex}
               className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
             >
+              {hasExpandableRows ? (
+                <button
+                  type="button"
+                  onClick={() => toggleRow(row, rowIndex)}
+                  disabled={!canExpandRow(row)}
+                  className="mb-3 inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ChevronDown
+                    size={16}
+                    className={`transition ${expandedRowIds.has(getRowKey(row, rowIndex)) ? "rotate-180" : ""}`}
+                  />
+                  {t("details")}
+                </button>
+              ) : null}
               <div className="space-y-3">
                 {columns.map((col) => (
                   <div
@@ -205,6 +240,11 @@ export const DataTable = ({
                   )}
                 </div>
               )}
+              {hasExpandableRows && expandedRowIds.has(getRowKey(row, rowIndex)) ? (
+                <div className="mt-4 border-t border-gray-100 pt-4">
+                  {renderExpandedRow(row)}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
@@ -212,6 +252,7 @@ export const DataTable = ({
       <div className="hidden max-h-[65vh] overflow-auto rounded-lg border border-gray-200 shadow-md md:block">
         <table className="min-w-[860px] w-full border-collapse table-auto">
           <colgroup>
+            {hasExpandableRows && <col style={{ width: "48px" }} />}
             {columns.map((_, i) => (
               <col key={`col-${i}`} />
             ))}
@@ -219,6 +260,7 @@ export const DataTable = ({
           </colgroup>
           <thead>
             <tr className="sticky top-0 z-10 border-b border-gray-200 bg-blue-50">
+              {hasExpandableRows && <th className="px-2 py-3" />}
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -238,7 +280,7 @@ export const DataTable = ({
             {filteredData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (onEdit || onDelete ? 1 : 0)}
+                  colSpan={totalColSpan}
                   className="px-4 py-8 text-center text-sm text-gray-500"
                 >
                   <div className="flex flex-col items-center gap-3">
@@ -261,45 +303,72 @@ export const DataTable = ({
                 </td>
               </tr>
             ) : (
-              filteredData.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition"
-                >
-                  {columns.map((col) => (
-                    <td
-                      key={col.key}
-                      className="px-4 py-3 text-sm text-gray-900 align-top whitespace-normal break-words"
-                    >
-                      {col.render ? col.render(row[col.key], row) : (row[col.key] ?? "-")}
-                    </td>
-                  ))}
-                  {(onEdit || onDelete) && (
-                    <td className="px-3 py-3 text-sm text-center">
-                      <div className="flex gap-2 justify-center">
-                        {onEdit && (
+              filteredData.map((row, rowIndex) => {
+                const rowKey = getRowKey(row, rowIndex);
+                const isExpanded = expandedRowIds.has(rowKey);
+                const isExpandable = canExpandRow(row);
+                return (
+                  <Fragment key={rowKey}>
+                    <tr className="border-b border-gray-200 hover:bg-gray-50 transition">
+                      {hasExpandableRows && (
+                        <td className="px-2 py-3 text-center align-top">
                           <button
-                            onClick={() => onEdit(row)}
-                            className="p-1.5 rounded transition duration-200 hover:scale-110 text-blue-600 hover:bg-blue-50"
-                            title={t("edit")}
+                            type="button"
+                            onClick={() => toggleRow(row, rowIndex)}
+                            disabled={!isExpandable}
+                            className="rounded p-1.5 text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            title={t("details")}
                           >
-                            <Edit2 size={18} />
+                            <ChevronDown
+                              size={18}
+                              className={`transition ${isExpanded ? "rotate-180" : ""}`}
+                            />
                           </button>
-                        )}
-                        {onDelete && (
-                          <button
-                            onClick={() => onDelete(row)}
-                            className="p-1.5 rounded transition duration-200 hover:scale-110 text-red-600 hover:bg-red-50"
-                            title={t("delete")}
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))
+                        </td>
+                      )}
+                      {columns.map((col) => (
+                        <td
+                          key={col.key}
+                          className="px-4 py-3 text-sm text-gray-900 align-top whitespace-normal break-words"
+                        >
+                          {col.render ? col.render(row[col.key], row) : (row[col.key] ?? "-")}
+                        </td>
+                      ))}
+                      {(onEdit || onDelete) && (
+                        <td className="px-3 py-3 text-sm text-center">
+                          <div className="flex gap-2 justify-center">
+                            {onEdit && (
+                              <button
+                                onClick={() => onEdit(row)}
+                                className="p-1.5 rounded transition duration-200 hover:scale-110 text-blue-600 hover:bg-blue-50"
+                                title={t("edit")}
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                            )}
+                            {onDelete && (
+                              <button
+                                onClick={() => onDelete(row)}
+                                className="p-1.5 rounded transition duration-200 hover:scale-110 text-red-600 hover:bg-red-50"
+                                title={t("delete")}
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                    {hasExpandableRows && isExpanded ? (
+                      <tr className="border-b border-gray-200 bg-gray-50">
+                        <td colSpan={totalColSpan} className="px-4 py-4">
+                          {renderExpandedRow(row)}
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })
             )}
           </tbody>
         </table>

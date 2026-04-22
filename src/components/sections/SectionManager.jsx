@@ -4,7 +4,7 @@ import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { adminAPI, courseAPI, groupAPI, sectionAPI } from "../../services/api";
+import { adminAPI, courseAPI, groupAPI, sectionAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 
@@ -30,16 +30,23 @@ export const SectionManager = () => {
     isLoading: isGroupsLoading,
     execute: executeGroups,
   } = useFetch(groupAPI.getAll);
+  const {
+    data: teachersData,
+    isLoading: isTeachersLoading,
+    execute: executeTeachers,
+  } = useFetch(teacherAPI.getAll);
 
   useEffect(() => {
     execute();
     executeCourses();
     executeGroups();
-  }, [execute, executeCourses, executeGroups]);
+    executeTeachers();
+  }, [execute, executeCourses, executeGroups, executeTeachers]);
 
   const sections = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
+  const teachers = Array.isArray(teachersData) ? teachersData : [];
   const hasActiveFilters = Boolean(lessonTypeFilter || groupFilter);
   const isSectionFormBlocked = courses.length === 0 || groups.length === 0;
   const sectionFormHint =
@@ -89,6 +96,9 @@ export const SectionManager = () => {
     const selectedGroup = groups.find(
       (group) => String(group.id) === String(formData.group_id),
     );
+    const selectedTeacher = teachers.find(
+      (teacher) => String(teacher.id) === String(formData.teacher_id),
+    );
 
     try {
       setIsSubmitting(true);
@@ -98,6 +108,8 @@ export const SectionManager = () => {
         group_id: Number(formData.group_id),
         course_name: selectedCourse?.name || "",
         group_name: selectedGroup?.name || "",
+        teacher_id: formData.teacher_id ? Number(formData.teacher_id) : null,
+        teacher_name: selectedTeacher?.name || "",
       };
 
       if (editingSection) {
@@ -133,6 +145,7 @@ export const SectionManager = () => {
     { key: "group_name", label: t("groupNumber") },
     { key: "classes_count", label: t("classesCount") },
     { key: "lesson_type", label: t("lessonType"), render: (value) => t(value || "lecture") },
+    { key: "teacher_name", label: t("teacherName"), render: (value) => value || "-" },
     {
       key: "requires_computers",
       label: t("requiresComputers"),
@@ -183,6 +196,19 @@ export const SectionManager = () => {
         { value: "lab", label: t("lab") },
       ],
       required: true,
+    },
+    {
+      name: "teacher_id",
+      label: t("teacherName"),
+      type: "select",
+      placeholder: isTeachersLoading ? t("loading") : t("autoTeacherFromIup"),
+      options: [
+        { value: "", label: t("autoTeacherFromIup") },
+        ...teachers.map((teacher) => ({
+          value: teacher.id,
+          label: teacher.name,
+        })),
+      ],
     },
     {
       name: "requires_computers_preview",
@@ -309,10 +335,11 @@ export const SectionManager = () => {
                   group_id: editingSection.group_id || "",
                   classes_count: editingSection.classes_count || 1,
                   lesson_type: editingSection.lesson_type || "lecture",
+                  teacher_id: editingSection.teacher_id || "",
                   subgroup_mode: editingSection.subgroup_mode || "auto",
                   subgroup_count: editingSection.subgroup_count || 1,
                 }
-              : { classes_count: 1, lesson_type: "lecture", subgroup_mode: "auto", subgroup_count: 1 }
+              : { classes_count: 1, lesson_type: "lecture", teacher_id: "", subgroup_mode: "auto", subgroup_count: 1 }
           }
           submitText={editingSection ? t("save") : t("add")}
           isLoading={isSubmitting}

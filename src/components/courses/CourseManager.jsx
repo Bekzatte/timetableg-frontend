@@ -4,7 +4,7 @@ import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { adminAPI, courseAPI, importAPI, teacherAPI } from "../../services/api";
+import { adminAPI, courseAPI, courseComponentAPI, importAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import { EDUCATIONAL_PROGRAMME_GROUPS } from "../../constants/educationalProgrammeGroups";
@@ -33,36 +33,65 @@ export const CourseManager = () => {
   const [iupFile, setIupFile] = useState(null);
   const [iupFileContent, setIupFileContent] = useState("");
   const [iupError, setIupError] = useState("");
+  const [activeCourseYear, setActiveCourseYear] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [semesterFilter, setSemesterFilter] = useState("");
-  const [courseFilter, setCourseFilter] = useState("");
   const [draftDepartmentFilter, setDraftDepartmentFilter] = useState("");
   const [draftSemesterFilter, setDraftSemesterFilter] = useState("");
-  const [draftCourseFilter, setDraftCourseFilter] = useState("");
   const { data, isLoading, execute } = useFetch(courseAPI.getAll);
   const {
     data: teachersData,
     isLoading: isTeachersLoading,
     execute: executeTeachers,
   } = useFetch(teacherAPI.getAll);
+  const { data: courseComponentsData, execute: executeCourseComponents } = useFetch(courseComponentAPI.getAll);
 
   useEffect(() => {
     execute();
     executeTeachers();
-  }, [execute, executeTeachers]);
+    executeCourseComponents();
+  }, [execute, executeTeachers, executeCourseComponents]);
 
   const courses = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const teachers = Array.isArray(teachersData) ? teachersData : [];
-  const hasActiveFilters = Boolean(departmentFilter || semesterFilter || courseFilter);
+  const courseComponents = useMemo(
+    () => (Array.isArray(courseComponentsData) ? courseComponentsData : []),
+    [courseComponentsData],
+  );
+  const componentsByCourseId = useMemo(() => {
+    const grouped = new Map();
+    courseComponents.forEach((component) => {
+      const key = String(component.course_id);
+      grouped.set(key, [...(grouped.get(key) || []), component]);
+    });
+    return grouped;
+  }, [courseComponents]);
+  const courseYearTabs = useMemo(() => {
+    const years = [...new Set(
+      courses
+        .map((course) => Number(course.year))
+        .filter((year) => Number.isFinite(year) && year > 0),
+    )].sort((left, right) => left - right);
+
+    return [
+      { value: "all", label: t("all"), count: courses.length },
+      ...years.map((year) => ({
+        value: String(year),
+        label: `${year} ${t("studyCourse").toLowerCase()}`,
+        count: courses.filter((course) => Number(course.year) === year).length,
+      })),
+    ];
+  }, [courses, t]);
+  const hasActiveFilters = Boolean(departmentFilter || semesterFilter);
   const filteredCourses = useMemo(
     () =>
       courses.filter((course) => {
+        const matchesActiveYear = activeCourseYear === "all" || String(course.year) === activeCourseYear;
         const matchesDepartment = !departmentFilter || course.department === departmentFilter;
         const matchesSemester = !semesterFilter || String(course.semester) === semesterFilter;
-        const matchesCourse = !courseFilter || String(course.year) === courseFilter;
-        return matchesDepartment && matchesSemester && matchesCourse;
+        return matchesActiveYear && matchesDepartment && matchesSemester;
       }),
-    [courses, departmentFilter, semesterFilter, courseFilter],
+    [courses, activeCourseYear, departmentFilter, semesterFilter],
   );
 
   const handleAddCourse = () => {
@@ -152,6 +181,7 @@ export const CourseManager = () => {
       setIsRopImporting(true);
       await importAPI.importRop(ropFile.name, ropFileContent);
       await execute();
+      await executeCourseComponents();
       setIsRopModalOpen(false);
       setRopPreview(null);
       setRopFile(null);
@@ -205,6 +235,7 @@ export const CourseManager = () => {
       await importAPI.importIup(iupFile.name, iupFileContent);
       await execute();
       await executeTeachers();
+      await executeCourseComponents();
       setIsIupModalOpen(false);
       setIupPreview(null);
       setIupFile(null);
@@ -238,6 +269,7 @@ export const CourseManager = () => {
         await courseAPI.create(payload);
       }
       await execute();
+      await executeCourseComponents();
       setIsModalOpen(false);
     } catch (error) {
       setErrors((prev) => ({
@@ -273,6 +305,62 @@ export const CourseManager = () => {
     { key: "department", label: t("educationalProgrammeGroup") },
     { key: "instructor_name", label: t("instructor") },
   ];
+
+  const lessonTypeShortLabels = {
+    lecture: "L",
+    practical: "P",
+    lab: "LAB",
+    practice: "PR",
+    srop: "SROP",
+    sro: "SRO",
+  };
+
+  const renderCourseComponents = (course) => {
+    const components = componentsByCourseId.get(String(course.id)) || [];
+    if (!components.length) {
+      return (
+        <div className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-500">
+          {t("noCourseComponents")}
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-auto rounded-md border border-gray-200 bg-white">
+        <table className="min-w-[720px] w-full text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("courseName")}</th>
+              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("lessonType")}</th>
+              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("hours")}</th>
+              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("classesCount")}</th>
+              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("semester")}</th>
+              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("requiresComputers")}</th>
+              <th className="px-3 py-2 text-left font-semibold text-gray-700">{t("teacherName")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {components.map((component) => {
+              const shortLabel = lessonTypeShortLabels[component.lesson_type] || component.lesson_type?.toUpperCase();
+              return (
+                <tr key={component.id} className="bg-white">
+                  <td className="px-3 py-2 font-medium text-gray-900">
+                    {course.name} ({shortLabel})
+                  </td>
+                  <td className="px-3 py-2 text-gray-700">{t(component.lesson_type || "lecture")}</td>
+                  <td className="px-3 py-2 text-gray-700">{component.hours ?? "-"}</td>
+                  <td className="px-3 py-2 text-gray-700">{component.weekly_classes ?? "-"}</td>
+                  <td className="px-3 py-2 text-gray-700">{component.academic_period || component.semester || "-"}</td>
+                  <td className="px-3 py-2 text-gray-700">{component.requires_computers ? t("yes") : t("no")}</td>
+                  <td className="px-3 py-2 text-gray-700">{component.teacher_name || "-"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   const formFields = [
     {
@@ -427,6 +515,41 @@ export const CourseManager = () => {
         </div>
       </div>
 
+      <div className="mb-5 overflow-x-auto">
+        <div
+          role="tablist"
+          aria-label={t("studyCourse")}
+          className="inline-flex min-w-full gap-2 rounded-lg border border-gray-200 bg-gray-50 p-1 sm:min-w-0"
+        >
+          {courseYearTabs.map((tab) => {
+            const isActive = activeCourseYear === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveCourseYear(tab.value)}
+                className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition ${
+                  isActive
+                    ? "bg-[#014531] text-white shadow-sm"
+                    : "text-gray-700 hover:bg-white"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs ${
+                    isActive ? "bg-white/20 text-white" : "bg-white text-gray-600"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <DataTable
         columns={columns}
         data={filteredCourses}
@@ -436,18 +559,17 @@ export const CourseManager = () => {
         enableSearch
         hasActiveFilters={hasActiveFilters}
         filterDialogTitle={t("filter")}
+        renderExpandedRow={renderCourseComponents}
+        getRowCanExpand={(course) => (componentsByCourseId.get(String(course.id)) || []).length > 0}
         onApplyFilters={() => {
           setDepartmentFilter(draftDepartmentFilter);
           setSemesterFilter(draftSemesterFilter);
-          setCourseFilter(draftCourseFilter);
         }}
         onResetFilters={() => {
           setDraftDepartmentFilter("");
           setDraftSemesterFilter("");
-          setDraftCourseFilter("");
           setDepartmentFilter("");
           setSemesterFilter("");
-          setCourseFilter("");
         }}
         filterControls={
           <>
@@ -460,18 +582,6 @@ export const CourseManager = () => {
               {EDUCATIONAL_PROGRAMME_GROUPS.map((group) => (
                 <option key={group} value={group}>
                   {group}
-                </option>
-              ))}
-            </select>
-            <select
-              value={draftCourseFilter}
-              onChange={(event) => setDraftCourseFilter(event.target.value)}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-            >
-              <option value="">{t("all")} {t("studyCourse").toLowerCase()}</option>
-              {[1, 2, 3, 4, 5, 6].map((course) => (
-                <option key={course} value={course}>
-                  {course}
                 </option>
               ))}
             </select>
