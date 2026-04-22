@@ -8,6 +8,7 @@ import Modal from "../components/ui/Modal";
 import {
   adminAPI,
   courseAPI,
+  courseComponentAPI,
   importAPI,
   groupAPI,
   roomAPI,
@@ -51,6 +52,8 @@ export const Dashboard = () => {
   useAutoDismiss(importError, setImportError);
   useAutoDismiss(importResult, setImportResult, 30000, null);
   const { data: coursesData, execute: executeCourses } = useFetch(courseAPI.getAll);
+  const { data: courseComponentsData, execute: executeCourseComponents } =
+    useFetch(courseComponentAPI.getAll);
   const { data: teachersData, execute: executeTeachers } = useFetch(teacherAPI.getAll);
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
   const { data: groupsData, execute: executeGroups } = useFetch(groupAPI.getAll);
@@ -62,15 +65,22 @@ export const Dashboard = () => {
   const slateActionButtonClass = `${actionButtonClass} bg-slate-600 text-white hover:bg-slate-700`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
   const courses = Array.isArray(coursesData) ? coursesData : [];
+  const courseComponents = Array.isArray(courseComponentsData) ? courseComponentsData : [];
   const teachers = Array.isArray(teachersData) ? teachersData : [];
   const rooms = Array.isArray(roomsData) ? roomsData : [];
   const groups = Array.isArray(groupsData) ? groupsData : [];
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
   const totalManagedRecords =
-    courses.length + teachers.length + rooms.length + groups.length + sections.length;
+    courses.length +
+    courseComponents.length +
+    teachers.length +
+    rooms.length +
+    groups.length +
+    sections.length;
 
   useEffect(() => {
     executeCourses();
+    executeCourseComponents();
     executeTeachers();
     executeRooms();
     executeGroups();
@@ -78,6 +88,7 @@ export const Dashboard = () => {
     executeSchedules();
   }, [
     executeCourses,
+    executeCourseComponents,
     executeTeachers,
     executeRooms,
     executeGroups,
@@ -156,6 +167,7 @@ export const Dashboard = () => {
   const refreshManagedData = async () => {
     await Promise.all([
       executeCourses(),
+      executeCourseComponents(),
       executeTeachers(),
       executeRooms(),
       executeGroups(),
