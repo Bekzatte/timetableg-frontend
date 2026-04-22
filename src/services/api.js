@@ -301,6 +301,7 @@ export const sectionAPI = {
   getAll: () => api.get("/sections"),
   create: (data) => api.post("/sections", data),
   update: (id, data) => api.put(`/sections/${id}`, data),
+  generate: (data) => api.post("/sections/generate", data).then((response) => response.data),
 };
 
 export const scheduleAPI = {

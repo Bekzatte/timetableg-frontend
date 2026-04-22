@@ -7,14 +7,19 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, courseAPI, groupAPI, sectionAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
+import { PROGRAMMES } from "../../constants/programmes";
 
 export const SectionManager = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingSections, setIsGeneratingSections] = useState(false);
+  const [generateResult, setGenerateResult] = useState(null);
+  const [generateError, setGenerateError] = useState("");
   const [lessonTypeFilter, setLessonTypeFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
   const [draftLessonTypeFilter, setDraftLessonTypeFilter] = useState("");
@@ -68,6 +73,29 @@ export const SectionManager = () => {
   const handleAddSection = () => {
     setEditingSection(null);
     setIsModalOpen(true);
+  };
+
+  const handleGenerateSections = async (formData, setErrors) => {
+    try {
+      setIsGeneratingSections(true);
+      setGenerateError("");
+      setGenerateResult(null);
+      const result = await sectionAPI.generate({
+        semester: Number(formData.semester),
+        study_course: Number(formData.study_course),
+        programme: formData.programme,
+      });
+      await execute();
+      setGenerateResult(result);
+    } catch (error) {
+      setGenerateError(error.message);
+      setErrors((prev) => ({
+        ...prev,
+        error: error.message,
+      }));
+    } finally {
+      setIsGeneratingSections(false);
+    }
   };
 
   const handleEditSection = (section) => {
@@ -235,6 +263,41 @@ export const SectionManager = () => {
       placeholder: "2",
     },
   ];
+  const generateFields = [
+    {
+      name: "programme",
+      label: t("programmeName"),
+      type: "select",
+      placeholder: t("selectProgrammeName"),
+      options: PROGRAMMES.map((programme) => ({
+        value: programme.labels.ru,
+        label: programme.labels[language] || programme.labels.en,
+      })),
+      required: true,
+    },
+    {
+      name: "study_course",
+      label: t("studyCourse"),
+      type: "select",
+      placeholder: t("selectStudyCourse"),
+      options: [1, 2, 3, 4, 5, 6].map((course) => ({
+        value: course,
+        label: String(course),
+      })),
+      required: true,
+    },
+    {
+      name: "semester",
+      label: t("semester"),
+      type: "select",
+      placeholder: t("semester"),
+      options: [1, 2, 3, 4, 5, 6, 7, 8].map((semester) => ({
+        value: semester,
+        label: String(semester),
+      })),
+      required: true,
+    },
+  ];
 
   return (
     <div className="p-6 bg-white">
@@ -254,6 +317,16 @@ export const SectionManager = () => {
           {t("sections")}
         </h1>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <button
+            onClick={() => {
+              setGenerateResult(null);
+              setGenerateError("");
+              setIsGenerateModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 rounded-md bg-[#014531] px-4 py-2 text-white transition hover:bg-[#013726] w-full sm:w-auto"
+          >
+            <Plus size={20} /> {t("generateSections")}
+          </button>
           <button
             onClick={handleAddSection}
             className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto"
@@ -344,6 +417,46 @@ export const SectionManager = () => {
           submitText={editingSection ? t("save") : t("add")}
           isLoading={isSubmitting}
         />
+      </Modal>
+
+      <Modal
+        isOpen={isGenerateModalOpen}
+        onClose={() => {
+          if (!isGeneratingSections) {
+            setIsGenerateModalOpen(false);
+          }
+        }}
+        title={t("generateSections")}
+      >
+        <div className="space-y-4">
+          <Form
+            fields={generateFields}
+            onSubmit={handleGenerateSections}
+            resetKey="generate-sections"
+            submitText={t("generateSections")}
+            isLoading={isGeneratingSections}
+          />
+          {generateError ? (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {generateError}
+            </div>
+          ) : null}
+          {generateResult ? (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+              <p className="font-semibold">{t("sectionsGenerated")}</p>
+              <p className="mt-1">
+                {t("created")}: {generateResult.inserted || 0}. {t("updated")}: {generateResult.updated || 0}.
+              </p>
+              {generateResult.missing?.groups || generateResult.missing?.components ? (
+                <p className="mt-2 text-amber-700">
+                  {generateResult.missing?.groups ? t("sectionsGenerateNoGroups") : ""}
+                  {generateResult.missing?.groups && generateResult.missing?.components ? " " : ""}
+                  {generateResult.missing?.components ? t("sectionsGenerateNoComponents") : ""}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </Modal>
     </div>
   );
