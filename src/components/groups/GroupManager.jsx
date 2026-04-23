@@ -48,19 +48,8 @@ export const GroupManager = () => {
   const hasActiveFilters = Boolean(languageFilter || courseFilter);
 
   const getModalSubgroupStatus = (group) => {
-    const labels = String(group?.generated_subgroups || "")
-      .split(",")
-      .map((item) => item.trim().toUpperCase())
-      .filter(Boolean);
-
-    if (labels.includes("A") && labels.includes("B")) {
-      return "auto";
-    }
-    if (labels.includes("A")) {
-      return "A";
-    }
-    if (labels.includes("B")) {
-      return "B";
+    if (group?.auto_has_subgroups || group?.has_subgroups) {
+      return "ab";
     }
     return "auto";
   };
@@ -76,7 +65,7 @@ export const GroupManager = () => {
         specialty_code: formData.specialty_code || "",
         entry_year: formData.entry_year ? Number(formData.entry_year) : null,
         study_course: formData.study_course ? Number(formData.study_course) : null,
-        has_subgroups: formData.subgroup_status === "auto" ? 0 : 1,
+        has_subgroups: formData.subgroup_status === "ab" ? 1 : 0,
       };
       if (editingGroup) {
         await groupAPI.update(editingGroup.id, payload);
@@ -128,15 +117,10 @@ export const GroupManager = () => {
   }
 
   const renderAutoSubgroupStatus = (_value, row) => {
-    const labels = String(row.generated_subgroups || "")
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    if (labels.length > 0) {
+    if (row.auto_has_subgroups || row.has_subgroups) {
       return (
         <span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
-          {`${t("autoSubgroupsSplit")}: ${labels.join(" / ")}`}
+          {`${t("subgroups")} A/B`}
         </span>
       );
     }
@@ -210,8 +194,7 @@ export const GroupManager = () => {
       placeholder: t("autoSubgroupsStatus"),
       options: [
         { value: "auto", label: t("auto") },
-        { value: "A", label: "A" },
-        { value: "B", label: "B" },
+        { value: "ab", label: "A/B" },
       ],
       required: true,
     },
