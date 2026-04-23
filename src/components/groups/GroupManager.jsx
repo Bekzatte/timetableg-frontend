@@ -47,18 +47,36 @@ export const GroupManager = () => {
   );
   const hasActiveFilters = Boolean(languageFilter || courseFilter);
 
+  const getModalSubgroupStatus = (group) => {
+    const labels = String(group?.generated_subgroups || "")
+      .split(",")
+      .map((item) => item.trim().toUpperCase())
+      .filter(Boolean);
+
+    if (labels.includes("A") && labels.includes("B")) {
+      return "auto";
+    }
+    if (labels.includes("A")) {
+      return "A";
+    }
+    if (labels.includes("B")) {
+      return "B";
+    }
+    return "auto";
+  };
+
   const handleSubmit = async (formData, setErrors) => {
     try {
       setIsSubmitting(true);
       const payload = {
-        ...formData,
+        name: formData.name,
         student_count: Number(formData.student_count),
-        entry_year: formData.entry_year ? Number(formData.entry_year) : null,
-        study_course: formData.study_course ? Number(formData.study_course) : null,
-        has_subgroups: formData.has_subgroups ? 1 : 0,
         language: formData.language || "ru",
         programme: formData.programme || "",
         specialty_code: formData.specialty_code || "",
+        entry_year: formData.entry_year ? Number(formData.entry_year) : null,
+        study_course: formData.study_course ? Number(formData.study_course) : null,
+        has_subgroups: formData.subgroup_status === "auto" ? 0 : 1,
       };
       if (editingGroup) {
         await groupAPI.update(editingGroup.id, payload);
@@ -186,11 +204,16 @@ export const GroupManager = () => {
       required: true,
     },
     {
-      name: "has_subgroups",
-      label: t("subgroups"),
-      type: "toggle",
-      trueLabel: t("yes"),
-      falseLabel: t("no"),
+      name: "subgroup_status",
+      label: t("autoSubgroupsStatus"),
+      type: "select",
+      placeholder: t("autoSubgroupsStatus"),
+      options: [
+        { value: "auto", label: t("auto") },
+        { value: "A", label: "A" },
+        { value: "B", label: "B" },
+      ],
+      required: true,
     },
     {
       name: "entry_year",
@@ -317,7 +340,11 @@ export const GroupManager = () => {
           fields={formFields}
           onSubmit={handleSubmit}
           resetKey={editingGroup ? `group-${editingGroup.id}` : "group-new"}
-          initialValues={{ language: "ru", ...(editingGroup || {}) }}
+          initialValues={{
+            language: "ru",
+            subgroup_status: editingGroup ? getModalSubgroupStatus(editingGroup) : "auto",
+            ...(editingGroup || {}),
+          }}
           submitText={editingGroup ? t("save") : t("add")}
           isLoading={isSubmitting}
         />
