@@ -71,7 +71,10 @@ export const TimetableGrid = ({ schedule = [] }) => {
                             {item.subgroup ? ` • ${item.subgroup}` : ""}
                           </div>
                           <div>{item.teacher_name}</div>
-                          <div>{item.room_number}</div>
+                          <div>
+                            {item.room_number}
+                            {item.room_programme_mismatch ? ` (${t("externalProgrammeRoom")})` : ""}
+                          </div>
                         </div>
                       ))}
                     </div>

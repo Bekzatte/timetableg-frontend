@@ -7,19 +7,23 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, roomAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
-import { DEPARTMENTS } from "../../constants/departments";
+import {
+  PROGRAMMES,
+  getCanonicalProgrammeName,
+  getProgrammeLabel,
+} from "../../constants/programmes";
 
 export const RoomManager = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [programmeFilter, setProgrammeFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
-  const [draftDepartmentFilter, setDraftDepartmentFilter] = useState("");
+  const [draftProgrammeFilter, setDraftProgrammeFilter] = useState("");
   const [draftTypeFilter, setDraftTypeFilter] = useState("");
   const [draftAvailabilityFilter, setDraftAvailabilityFilter] = useState("");
   const { data, isLoading, execute } = useFetch(roomAPI.getAll);
@@ -32,16 +36,16 @@ export const RoomManager = () => {
   const filteredRooms = useMemo(
     () =>
       rooms.filter((room) => {
-        const matchesDepartment = !departmentFilter || room.department === departmentFilter;
+        const matchesProgramme = !programmeFilter || room.programme === programmeFilter;
         const matchesType = !typeFilter || room.type === typeFilter;
         const matchesAvailability =
           !availabilityFilter || String(Number(Boolean(room.available))) === availabilityFilter;
-        return matchesDepartment && matchesType && matchesAvailability;
+        return matchesProgramme && matchesType && matchesAvailability;
       }),
-    [rooms, departmentFilter, typeFilter, availabilityFilter],
+    [rooms, programmeFilter, typeFilter, availabilityFilter],
   );
   const availableRoomsCount = rooms.filter((room) => room.available).length;
-  const hasActiveFilters = Boolean(departmentFilter || typeFilter || availabilityFilter);
+  const hasActiveFilters = Boolean(programmeFilter || typeFilter || availabilityFilter);
 
   const handleAddRoom = () => {
     setEditingRoom(null);
@@ -121,7 +125,7 @@ export const RoomManager = () => {
     { key: "number", label: t("roomNumberHeader") },
     { key: "capacity", label: t("capacity") },
     { key: "computer_count", label: t("computerCount") },
-    { key: "department", label: t("facultyInstitute") },
+    { key: "programme", label: t("programmeName") },
     { key: "type", label: t("type") },
     {
       key: "available",
@@ -162,13 +166,13 @@ export const RoomManager = () => {
       required: true,
     },
     {
-      name: "department",
-      label: t("facultyInstitute"),
+      name: "programme",
+      label: t("programmeName"),
       type: "select",
-      placeholder: t("selectFacultyInstitute"),
-      options: DEPARTMENTS.map((department) => ({
-        value: department,
-        label: department,
+      placeholder: t("selectProgrammeName"),
+      options: PROGRAMMES.map((programme) => ({
+        value: getCanonicalProgrammeName(programme),
+        label: getProgrammeLabel(programme, language),
       })),
       required: true,
     },
@@ -245,31 +249,34 @@ export const RoomManager = () => {
         hasActiveFilters={hasActiveFilters}
         filterDialogTitle={t("filter")}
         onApplyFilters={() => {
-          setDepartmentFilter(draftDepartmentFilter);
+          setProgrammeFilter(draftProgrammeFilter);
           setTypeFilter(draftTypeFilter);
           setAvailabilityFilter(draftAvailabilityFilter);
         }}
         onResetFilters={() => {
-          setDraftDepartmentFilter("");
+          setDraftProgrammeFilter("");
           setDraftTypeFilter("");
           setDraftAvailabilityFilter("");
-          setDepartmentFilter("");
+          setProgrammeFilter("");
           setTypeFilter("");
           setAvailabilityFilter("");
         }}
         filterControls={
           <>
             <select
-              value={draftDepartmentFilter}
-              onChange={(event) => setDraftDepartmentFilter(event.target.value)}
+              value={draftProgrammeFilter}
+              onChange={(event) => setDraftProgrammeFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
-              <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
-              {DEPARTMENTS.map((department) => (
-                <option key={department} value={department}>
-                  {department}
-                </option>
-              ))}
+              <option value="">{t("all")} {t("programmeName").toLowerCase()}</option>
+              {PROGRAMMES.map((programme) => {
+                const value = getCanonicalProgrammeName(programme);
+                return (
+                  <option key={value} value={value}>
+                    {getProgrammeLabel(programme, language)}
+                  </option>
+                );
+              })}
             </select>
             <select
               value={draftTypeFilter}

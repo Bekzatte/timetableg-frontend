@@ -521,7 +521,14 @@ export const SchedulePage = () => {
     { key: "course_name", label: t("courseName") },
     { key: "group_name", label: t("groupNumber"), render: (value, row) => `${value}${row.subgroup ? ` • ${row.subgroup}` : ""}` },
     { key: "teacher_name", label: t("teacherName") },
-    { key: "room_number", label: t("roomNumber") },
+    {
+      key: "room_number",
+      label: t("roomNumber"),
+      render: (value, row) =>
+        row.room_programme_mismatch
+          ? `${value} (${t("externalProgrammeRoom")})`
+          : value,
+    },
     { key: "day", label: t("day"), render: (value) => t(getWeekdayValue(value)) },
     { key: "start_hour", label: t("startTime"), render: (value) => `${value}:00` },
     { key: "semester", label: t("semester") },
