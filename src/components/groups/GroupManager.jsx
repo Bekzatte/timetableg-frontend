@@ -109,6 +109,27 @@ export const GroupManager = () => {
     );
   }
 
+  const renderAutoSubgroupStatus = (_value, row) => {
+    const labels = String(row.generated_subgroups || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    if (labels.length > 0) {
+      return (
+        <span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
+          {`${t("autoSubgroupsSplit")}: ${labels.join(" / ")}`}
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+        {t("autoSubgroupsNotSplit")}
+      </span>
+    );
+  };
+
   const columns = [
     { key: "name", label: t("groupNumber") },
     { key: "programme", label: t("programmeName") },
@@ -118,6 +139,11 @@ export const GroupManager = () => {
       key: "has_subgroups",
       label: t("subgroups"),
       render: (value) => (value ? t("yes") : t("no")),
+    },
+    {
+      key: "auto_has_subgroups",
+      label: t("autoSubgroupsStatus"),
+      render: renderAutoSubgroupStatus,
     },
     { key: "entry_year", label: t("entryYear") },
     { key: "study_course", label: t("studyCourse") },
