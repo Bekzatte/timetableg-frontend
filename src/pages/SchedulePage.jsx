@@ -4,14 +4,7 @@ import TimetableGrid from "../components/timetable/TimetableGrid";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
 import Form from "../components/ui/Form";
-import {
-  adminAPI,
-  courseAPI,
-  roomAPI,
-  scheduleAPI,
-  sectionAPI,
-  teacherAPI,
-} from "../services/api";
+import { courseAPI, roomAPI, scheduleAPI, sectionAPI, teacherAPI } from "../services/api";
 import { useFetch } from "../hooks/useAPI";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
@@ -163,7 +156,10 @@ const formatGenerationError = (job, t) => {
 export const SchedulePage = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
+  const currentYear = new Date().getFullYear();
   const [schedule, setSchedule] = useState([]);
+  const [scheduleSemester, setScheduleSemester] = useState(1);
+  const [scheduleYear, setScheduleYear] = useState(currentYear);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
@@ -195,14 +191,23 @@ export const SchedulePage = () => {
   }, [data]);
 
   useEffect(() => {
-    execute();
+    execute({ semester: scheduleSemester, year: scheduleYear });
     if (isAdmin) {
       executeSections();
       executeRooms();
       executeCourses();
       executeTeachers();
     }
-  }, [execute, executeCourses, executeRooms, executeSections, executeTeachers, isAdmin]);
+  }, [
+    execute,
+    executeCourses,
+    executeRooms,
+    executeSections,
+    executeTeachers,
+    isAdmin,
+    scheduleSemester,
+    scheduleYear,
+  ]);
 
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
   const rooms = Array.isArray(roomsData) ? roomsData : [];
@@ -253,7 +258,7 @@ export const SchedulePage = () => {
   };
 
   const refreshSchedule = async () => {
-    const nextSchedule = await execute();
+    const nextSchedule = await execute({ semester: scheduleSemester, year: scheduleYear });
     setSchedule(nextSchedule || []);
     return nextSchedule || [];
   };
@@ -291,9 +296,9 @@ export const SchedulePage = () => {
     try {
       setIsResetting(true);
       setPageError("");
-      await adminAPI.clearCollection("schedules");
+      await scheduleAPI.reset({ semester: scheduleSemester, year: scheduleYear });
       setSchedule([]);
-      await execute();
+      await refreshSchedule();
     } catch (error) {
       console.error(t("errorResetSchedule"), error);
       setPageError(error.message || t("errorResetSchedule"));
@@ -306,7 +311,7 @@ export const SchedulePage = () => {
     try {
       setIsExporting(true);
       setPageError("");
-      const blob = await scheduleAPI.exportExcel();
+      const blob = await scheduleAPI.exportExcel({ semester: scheduleSemester, year: scheduleYear });
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -561,8 +566,26 @@ export const SchedulePage = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("scheduleMgmt")}
         </h1>
-        {isAdmin && (
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+          <select
+            value={scheduleSemester}
+            onChange={(event) => setScheduleSemester(Number(event.target.value))}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 sm:w-auto"
+          >
+            {SCHEDULE_SEMESTER_OPTIONS.map((item) => (
+              <option key={item.value} value={item.value}>
+                {t(item.labelKey)}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            value={scheduleYear}
+            onChange={(event) => setScheduleYear(Number(event.target.value) || currentYear)}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 sm:w-28"
+          />
+          {isAdmin ? (
+            <>
             <button
               onClick={() => setIsGenerateOpen(true)}
               disabled={isLoading}
@@ -593,8 +616,9 @@ export const SchedulePage = () => {
             >
               {isResetting ? t("loading") : t("resetSchedule")}
             </button>
-          </div>
-        )}
+            </>
+          ) : null}
+        </div>
       </div>
 
       {pageError ? (
@@ -602,6 +626,12 @@ export const SchedulePage = () => {
           {pageError}
         </div>
       ) : null}
+
+      <div className="mb-4 rounded-md border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        {t("scheduleScopeNotice")
+          .replace("${semester}", t(scheduleSemester === 1 ? "fallScheduleSemester" : "springScheduleSemester"))
+          .replace("${year}", String(scheduleYear))}
+      </div>
 
       <div
         data-testid="schedule-content"
@@ -751,7 +781,7 @@ export const SchedulePage = () => {
           resetKey={`schedule-generate-${schedule.length > 0 ? "regenerate" : "new"}`}
           submitText={schedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule")}
           isLoading={isLoading}
-          initialValues={{ semester: 1, year: new Date().getFullYear() }}
+          initialValues={{ semester: scheduleSemester, year: scheduleYear }}
         />
       </Modal>
 
@@ -819,8 +849,8 @@ export const SchedulePage = () => {
                 }
               : {
                   start_hour: 8,
-                  semester: 1,
-                  year: new Date().getFullYear(),
+                  semester: scheduleSemester,
+                  year: scheduleYear,
                   subgroup: "",
                   weekday: "monday",
                 }

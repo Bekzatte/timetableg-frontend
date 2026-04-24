@@ -420,7 +420,6 @@ export const translations = {
     errorSaveRoom: "Аудиторияны сақтау қатесі",
     lectureHall: "Лекция аудиториясы",
     practicalRoom: "Практикалық аудитория",
-    labHall: "Зертханалық аудитория",
     equipmentPlaceholder: "Проектор, тақта және т.б.",
     mainBuildingPlaceholder: "Негізгі ғимарат",
 
@@ -443,7 +442,9 @@ export const translations = {
     generateNewSchedule: "Жаңа кесте құру",
     exportSchedule: "Кестені Excel-ге экспорттау",
     resetSchedule: "Кестені тазалау",
-    confirmResetSchedule: "Кестені толық тазалау керек пе?",
+    scheduleScopeNotice:
+      "Қазір көрсетіліп тұрғаны: ${semester}, ${year}. Экспорт пен тазалау осы кезеңге қолданылады.",
+    confirmResetSchedule: "Таңдалған семестр мен жыл үшін кестені тазалау керек пе?",
     errorResetSchedule: "Кестені тазалау қатесі",
     errorExportSchedule: "Кестені экспорттау қатесі",
     selectedFile: "Таңдалған файл",
@@ -937,7 +938,6 @@ export const translations = {
     errorSaveRoom: "Ошибка при сохранении аудитории",
     lectureHall: "Лекционная аудитория",
     practicalRoom: "Практическая аудитория",
-    labHall: "LAB аудитория",
     equipmentPlaceholder: "Проектор, доска и т.д.",
     mainBuildingPlaceholder: "Главное здание",
 
@@ -960,7 +960,9 @@ export const translations = {
     generateNewSchedule: "Сгенерировать новое расписание",
     exportSchedule: "Экспортировать расписание",
     resetSchedule: "Сбросить расписание",
-    confirmResetSchedule: "Очистить всё расписание?",
+    scheduleScopeNotice:
+      "Сейчас показано: ${semester}, ${year}. Экспорт и сброс применяются только к этому периоду.",
+    confirmResetSchedule: "Очистить расписание для выбранного семестра и года?",
     errorResetSchedule: "Ошибка при очистке расписания",
     errorExportSchedule: "Ошибка при экспорте расписания",
     selectedFile: "Выбранный файл",
@@ -1453,7 +1455,6 @@ export const translations = {
     errorSaveRoom: "Error saving room",
     lectureHall: "Lecture Hall",
     practicalRoom: "Practical Room",
-    labHall: "LAB Room",
     equipmentPlaceholder: "Projector, whiteboard, etc.",
     mainBuildingPlaceholder: "Main Building",
 
@@ -1476,7 +1477,9 @@ export const translations = {
     generateNewSchedule: "Generate New Schedule",
     exportSchedule: "Export Schedule",
     resetSchedule: "Reset Schedule",
-    confirmResetSchedule: "Clear the entire schedule?",
+    scheduleScopeNotice:
+      "Currently shown: ${semester}, ${year}. Export and reset apply only to this period.",
+    confirmResetSchedule: "Clear the schedule for the selected semester and year?",
     errorResetSchedule: "Error resetting schedule",
     errorExportSchedule: "Error exporting schedule",
     selectedFile: "Selected file",

@@ -307,15 +307,16 @@ export const sectionAPI = {
 };
 
 export const scheduleAPI = {
-  getAll: () => api.get("/schedules"),
+  getAll: (params = {}) => api.get("/schedules", { params }),
   create: (data) => api.post("/schedules", data),
   update: (id, data) => api.put(`/schedules/${id}`, data),
   delete: (id) => api.delete(`/schedules/${id}`),
   generate: (data) => api.post("/schedules/generate", data).then((response) => response.data),
   getGenerationJob: (jobId) =>
     api.get(`/schedules/generate/${jobId}`).then((response) => response.data),
-  exportExcel: () =>
-    api.get("/export/schedule", { responseType: "blob" }).then((response) => response.data),
+  reset: (data) => api.post("/schedules/reset", data).then((response) => response.data),
+  exportExcel: (params = {}) =>
+    api.get("/export/schedule", { params, responseType: "blob" }).then((response) => response.data),
 };
 
 export const authAPI = {
