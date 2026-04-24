@@ -627,7 +627,7 @@ export const SchedulePage = () => {
         </div>
       ) : null}
 
-      <div className="mb-4 rounded-md border border-blue-100 bg-blue-50 px-4 py-3 pr-8 text-sm text-blue-900">
+      <div className="mb-4 rounded-md border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
         {t("scheduleScopeNotice")
           .replace("${semester}", t(scheduleSemester === 1 ? "fallScheduleSemester" : "springScheduleSemester"))
           .replace("${year}", String(scheduleYear))}
