@@ -161,7 +161,6 @@ export const RoomManager = () => {
       options: [
         { value: "lecture", label: t("lectureHall") },
         { value: "practical", label: t("practicalRoom") },
-        { value: "lab", label: t("labHall") },
       ],
       required: true,
     },
@@ -286,7 +285,6 @@ export const RoomManager = () => {
               <option value="">{t("all")} {t("roomType").toLowerCase()}</option>
               <option value="lecture">{t("lectureHall")}</option>
               <option value="practical">{t("practicalRoom")}</option>
-              <option value="lab">{t("labHall")}</option>
             </select>
             <select
               value={draftAvailabilityFilter}
