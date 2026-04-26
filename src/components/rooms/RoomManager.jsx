@@ -149,12 +149,6 @@ export const RoomManager = () => {
       required: true,
     },
     {
-      name: "building",
-      label: t("building"),
-      placeholder: t("mainBuildingPlaceholder"),
-      required: true,
-    },
-    {
       name: "type",
       label: t("roomType"),
       type: "select",
