@@ -75,6 +75,11 @@ export const TimetableGrid = ({ schedule = [] }) => {
                             {item.room_number}
                             {item.room_programme_mismatch ? ` (${t("externalProgrammeRoom")})` : ""}
                           </div>
+                          {item.relocated_from_room_number ? (
+                            <div className="font-medium text-amber-800">
+                              {t("movedFromRoom")} {item.relocated_from_room_number}
+                            </div>
+                          ) : null}
                         </div>
                       ))}
                     </div>

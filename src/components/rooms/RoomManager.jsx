@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
-import { adminAPI, roomAPI } from "../../services/api";
+import { adminAPI, roomAPI, roomBlockAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import {
@@ -17,9 +17,21 @@ export const RoomManager = () => {
   const { t, language } = useTranslation();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBlocksModalOpen, setIsBlocksModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittingBlock, setIsSubmittingBlock] = useState(false);
+  const [blockFormError, setBlockFormError] = useState("");
+  const [blockFormData, setBlockFormData] = useState({
+    day: "Monday",
+    start_hour: 8,
+    end_hour: 10,
+    semester: "",
+    year: "",
+    reason: "",
+  });
   const [programmeFilter, setProgrammeFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
@@ -27,12 +39,38 @@ export const RoomManager = () => {
   const [draftTypeFilter, setDraftTypeFilter] = useState("");
   const [draftAvailabilityFilter, setDraftAvailabilityFilter] = useState("");
   const { data, isLoading, execute } = useFetch(roomAPI.getAll);
+  const {
+    data: roomBlocksData,
+    isLoading: isRoomBlocksLoading,
+    execute: executeRoomBlocks,
+  } = useFetch(roomBlockAPI.getAll);
 
   useEffect(() => {
     execute();
-  }, [execute]);
+    executeRoomBlocks();
+  }, [execute, executeRoomBlocks]);
 
   const rooms = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const roomBlocks = useMemo(() => (Array.isArray(roomBlocksData) ? roomBlocksData : []), [roomBlocksData]);
+  const selectedRoomBlocks = useMemo(
+    () =>
+      roomBlocks.filter((block) => Number(block.room_id) === Number(selectedRoom?.id)),
+    [roomBlocks, selectedRoom],
+  );
+  const weekdayOptions = useMemo(
+    () => [
+      { value: "Monday", label: t("monday") },
+      { value: "Tuesday", label: t("tuesday") },
+      { value: "Wednesday", label: t("wednesday") },
+      { value: "Thursday", label: t("thursday") },
+      { value: "Friday", label: t("friday") },
+    ],
+    [t],
+  );
+  const hourOptions = useMemo(
+    () => Array.from({ length: 11 }, (_item, index) => 8 + index),
+    [],
+  );
   const filteredRooms = useMemo(
     () =>
       rooms.filter((room) => {
@@ -55,6 +93,20 @@ export const RoomManager = () => {
   const handleEditRoom = (room) => {
     setEditingRoom(room);
     setIsModalOpen(true);
+  };
+
+  const handleManageBlocks = (room) => {
+    setSelectedRoom(room);
+    setBlockFormError("");
+    setBlockFormData({
+      day: "Monday",
+      start_hour: 8,
+      end_hour: 10,
+      semester: "",
+      year: "",
+      reason: "",
+    });
+    setIsBlocksModalOpen(true);
   };
 
   const handleDeleteRoom = async (room) => {
@@ -110,6 +162,43 @@ export const RoomManager = () => {
     }
   };
 
+  const handleBlockSubmit = async (event) => {
+    event.preventDefault();
+    if (!selectedRoom) {
+      return;
+    }
+    try {
+      setIsSubmittingBlock(true);
+      setBlockFormError("");
+      await roomBlockAPI.create({
+        room_id: selectedRoom.id,
+        day: blockFormData.day,
+        start_hour: Number(blockFormData.start_hour),
+        end_hour: Number(blockFormData.end_hour),
+        semester: blockFormData.semester === "" ? null : Number(blockFormData.semester),
+        year: blockFormData.year === "" ? null : Number(blockFormData.year),
+        reason: blockFormData.reason,
+      });
+      await executeRoomBlocks();
+      setBlockFormData((current) => ({
+        ...current,
+        reason: "",
+      }));
+    } catch (error) {
+      setBlockFormError(error.message);
+    } finally {
+      setIsSubmittingBlock(false);
+    }
+  };
+
+  const handleDeleteBlock = async (block) => {
+    if (!window.confirm(t("confirmDeleteRoomBlock"))) {
+      return;
+    }
+    await roomBlockAPI.delete(block.id);
+    await executeRoomBlocks();
+  };
+
   if (!isAdmin) {
     return (
       <div className="p-6 bg-white rounded-lg shadow-sm text-center">
@@ -131,6 +220,19 @@ export const RoomManager = () => {
       key: "available",
       label: t("available"),
       render: (value) => (value ? t("yes") : t("no")),
+    },
+    {
+      key: "room_blocks",
+      label: t("roomBlocks"),
+      render: (_value, row) => (
+        <button
+          type="button"
+          onClick={() => handleManageBlocks(row)}
+          className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+        >
+          {t("manageRoomBlocks")}
+        </button>
+      ),
     },
   ];
 
@@ -306,6 +408,176 @@ export const RoomManager = () => {
           submitText={editingRoom ? t("save") : t("add")}
           isLoading={isSubmitting}
         />
+      </Modal>
+
+      <Modal
+        isOpen={isBlocksModalOpen}
+        onClose={() => setIsBlocksModalOpen(false)}
+        title={`${t("roomBlocks")}${selectedRoom ? ` • ${selectedRoom.number}` : ""}`}
+        size="md"
+      >
+        <div className="space-y-5">
+          <form onSubmit={handleBlockSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  {t("day")}
+                </label>
+                <select
+                  value={blockFormData.day}
+                  onChange={(event) =>
+                    setBlockFormData((current) => ({ ...current, day: event.target.value }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                >
+                  {weekdayOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  {t("blockReason")}
+                </label>
+                <input
+                  type="text"
+                  value={blockFormData.reason}
+                  onChange={(event) =>
+                    setBlockFormData((current) => ({ ...current, reason: event.target.value }))
+                  }
+                  placeholder={t("blockReasonPlaceholder")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  {t("fromHour")}
+                </label>
+                <select
+                  value={blockFormData.start_hour}
+                  onChange={(event) =>
+                    setBlockFormData((current) => ({ ...current, start_hour: Number(event.target.value) }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                >
+                  {hourOptions.map((hour) => (
+                    <option key={hour} value={hour}>
+                      {hour}:00
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  {t("toHour")}
+                </label>
+                <select
+                  value={blockFormData.end_hour}
+                  onChange={(event) =>
+                    setBlockFormData((current) => ({ ...current, end_hour: Number(event.target.value) }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                >
+                  {hourOptions
+                    .filter((hour) => hour > Number(blockFormData.start_hour))
+                    .concat(Number(blockFormData.start_hour) + 1 > hourOptions[hourOptions.length - 1]
+                      ? [Number(blockFormData.start_hour) + 1]
+                      : [])
+                    .map((hour) => (
+                      <option key={hour} value={hour}>
+                        {hour}:00
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  {t("semester")}
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={blockFormData.semester}
+                  onChange={(event) =>
+                    setBlockFormData((current) => ({ ...current, semester: event.target.value }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  {t("year")}
+                </label>
+                <input
+                  type="number"
+                  min="2020"
+                  value={blockFormData.year}
+                  onChange={(event) =>
+                    setBlockFormData((current) => ({ ...current, year: event.target.value }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+                />
+              </div>
+            </div>
+            {blockFormError ? (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {blockFormError}
+              </div>
+            ) : null}
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isSubmittingBlock}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-60"
+              >
+                {isSubmittingBlock ? t("loading") : t("add")}
+              </button>
+            </div>
+          </form>
+
+          <div className="space-y-3">
+            {isRoomBlocksLoading ? (
+              <div className="rounded-xl bg-gray-50 px-4 py-6 text-center text-gray-500">
+                {t("loading")}
+              </div>
+            ) : selectedRoomBlocks.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-6 text-center text-gray-500">
+                {t("noRoomBlocks")}
+              </div>
+            ) : (
+              selectedRoomBlocks.map((block) => (
+                <div
+                  key={block.id}
+                  className="flex items-start justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3"
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {t(String(block.day || "").toLowerCase()) || block.day} • {block.start_hour}:00 - {block.end_hour}:00
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {block.reason || "—"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {block.semester ? `${t("semester")}: ${block.semester}` : ""}
+                      {block.semester && block.year ? " • " : ""}
+                      {block.year ? `${t("year")}: ${block.year}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteBlock(block)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 text-red-600 transition hover:bg-red-50"
+                    aria-label={t("delete")}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </Modal>
     </div>
   );

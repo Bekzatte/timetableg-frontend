@@ -291,6 +291,13 @@ export const roomAPI = {
   delete: (id) => api.delete(`/rooms/${id}`),
 };
 
+export const roomBlockAPI = {
+  getAll: () => api.get("/room_blocks"),
+  create: (data) => api.post("/room_blocks", data),
+  update: (id, data) => api.put(`/room_blocks/${id}`, data),
+  delete: (id) => api.delete(`/room_blocks/${id}`),
+};
+
 export const groupAPI = {
   getAll: () => api.get("/groups"),
   getPublicList: () => api.get("/public/groups").then((response) => response.data),
