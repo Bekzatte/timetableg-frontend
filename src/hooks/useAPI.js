@@ -27,5 +27,5 @@ export const useFetch = (asyncFunction) => {
     [asyncFunction],
   );
 
-  return { data, isLoading, error, execute };
+  return { data, isLoading, error, execute, setData };
 };

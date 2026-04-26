@@ -3,6 +3,7 @@ import { authAPI, profileAPI } from "../services/api";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { ROLES } from "../constants/roles";
 import { getTranslation } from "../i18n/translations";
+import { getStoredUser, setStoredUser } from "../services/browserSession";
 import { AuthContext } from "./AuthContextValue";
 
 export const AuthProvider = ({ children }) => {
@@ -15,42 +16,43 @@ export const AuthProvider = ({ children }) => {
 
   const persistUser = (nextUser) => {
     setUser(nextUser);
-    if (nextUser) {
-      sessionStorage.setItem("user", JSON.stringify(nextUser));
-      localStorage.removeItem("user");
-      return;
-    }
-    sessionStorage.removeItem("user");
-    localStorage.removeItem("user");
+    setStoredUser(nextUser);
   };
 
-  // Session storage keeps the bearer token out of long-lived browser storage.
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("user") || localStorage.getItem("user");
+    const storedUser = getStoredUser();
     if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        profileAPI
-          .getCurrent()
-          .then((profile) => {
-            persistUser({ ...parsedUser, ...profile });
-          })
-          .catch((err) => {
-            console.error("Error refreshing profile:", err);
-            persistUser(null);
-          })
-          .finally(() => {
-            setIsReady(true);
-          });
-      } catch (e) {
-        console.error("Error loading user from browser storage:", e);
-        persistUser(null);
-        setIsReady(true);
-      }
+      setUser(storedUser);
+      profileAPI
+        .getCurrent()
+        .then((profile) => {
+          persistUser({ ...storedUser, ...profile });
+        })
+        .catch((err) => {
+          console.error("Error refreshing profile:", err);
+          persistUser(null);
+        })
+        .finally(() => {
+          setIsReady(true);
+        });
       return;
     }
+
     setIsReady(true);
+  }, []);
+
+  useEffect(() => {
+    const onStorageInvalidated = () => {
+      if (getStoredUser()) {
+        return;
+      }
+
+      setUser(null);
+      setError(null);
+    };
+
+    window.addEventListener("auth:session-cleared", onStorageInvalidated);
+    return () => window.removeEventListener("auth:session-cleared", onStorageInvalidated);
   }, []);
 
   const getErrorMessage = (err, fallback) =>

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getTranslation } from "../i18n/translations";
+import { clearStoredUser, getStoredUser } from "./browserSession";
 
 const resolveApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL?.trim();
@@ -299,11 +300,11 @@ export const roomBlockAPI = {
 };
 
 export const groupAPI = {
-  getAll: () => api.get("/groups"),
+  getAll: () => api.get("/groups").then((response) => response.data),
   getPublicList: () => api.get("/public/groups").then((response) => response.data),
-  create: (data) => api.post("/groups", data),
-  update: (id, data) => api.put(`/groups/${id}`, data),
-  delete: (id) => api.delete(`/groups/${id}`),
+  create: (data) => api.post("/groups", data).then((response) => response.data),
+  update: (id, data) => api.put(`/groups/${id}`, data).then((response) => response.data),
+  delete: (id) => api.delete(`/groups/${id}`).then((response) => response.data),
 };
 
 export const sectionAPI = {
@@ -456,16 +457,9 @@ api.interceptors.request.use(
       );
     }
 
-    const user = sessionStorage.getItem("user") || localStorage.getItem("user");
-    if (user) {
-      try {
-        const parsedUser = JSON.parse(user);
-        if (parsedUser.token) {
-          config.headers.Authorization = `Bearer ${parsedUser.token}`;
-        }
-      } catch (e) {
-        console.error("Error parsing user from browser storage:", e);
-      }
+    const storedUser = getStoredUser();
+    if (storedUser?.token) {
+      config.headers.Authorization = `Bearer ${storedUser.token}`;
     }
     return config;
   },
@@ -477,6 +471,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const errorCode = error?.response?.data?.errorCode;
+    if (errorCode === "invalid_token" || errorCode === "auth_required") {
+      clearStoredUser();
+      window.dispatchEvent(new Event("auth:session-cleared"));
+    }
+
     const transportMessage = getTransportErrorMessage(error);
     const responseData = error?.response?.data;
     const status = error?.response?.status;

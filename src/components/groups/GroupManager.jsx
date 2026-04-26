@@ -27,7 +27,7 @@ export const GroupManager = () => {
   const [courseFilter, setCourseFilter] = useState("");
   const [draftLanguageFilter, setDraftLanguageFilter] = useState("");
   const [draftCourseFilter, setDraftCourseFilter] = useState("");
-  const { data, isLoading, execute } = useFetch(groupAPI.getAll);
+  const { data, isLoading, execute, setData } = useFetch(groupAPI.getAll);
 
   useEffect(() => {
     execute();
@@ -73,6 +73,33 @@ export const GroupManager = () => {
     return matchedGroup?.value || "";
   };
 
+  const upsertGroup = (savedGroup) => {
+    if (!savedGroup?.id) {
+      return;
+    }
+
+    setData((currentData) => {
+      const currentGroups = Array.isArray(currentData) ? currentData : [];
+      const existingIndex = currentGroups.findIndex((group) => group.id === savedGroup.id);
+      const normalizedGroup = {
+        auto_has_subgroups: savedGroup.auto_has_subgroups ?? savedGroup.has_subgroups ?? 0,
+        generated_subgroups: savedGroup.generated_subgroups || "",
+        ...savedGroup,
+      };
+
+      if (existingIndex === -1) {
+        return [...currentGroups, normalizedGroup];
+      }
+
+      const nextGroups = [...currentGroups];
+      nextGroups[existingIndex] = {
+        ...nextGroups[existingIndex],
+        ...normalizedGroup,
+      };
+      return nextGroups;
+    });
+  };
+
   const handleSubmit = async (formData, setErrors) => {
     try {
       setIsSubmitting(true);
@@ -86,13 +113,20 @@ export const GroupManager = () => {
         study_course: formData.study_course ? Number(formData.study_course) : null,
         has_subgroups: formData.subgroup_status === "ab" ? 1 : 0,
       };
-      if (editingGroup) {
-        await groupAPI.update(editingGroup.id, payload);
-      } else {
-        await groupAPI.create(payload);
-      }
-      await execute();
+      const savedGroup = editingGroup
+        ? await groupAPI.update(editingGroup.id, payload)
+        : await groupAPI.create(payload);
+
+      upsertGroup(savedGroup);
       setIsModalOpen(false);
+
+      if (editingGroup) {
+        setEditingGroup(null);
+      }
+
+      execute().catch((refreshError) => {
+        console.error("Error refreshing groups after save:", refreshError);
+      });
     } catch (error) {
       setErrors((prev) => ({ ...prev, error: error.message }));
     } finally {
