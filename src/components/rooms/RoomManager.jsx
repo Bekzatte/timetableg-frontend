@@ -28,8 +28,6 @@ export const RoomManager = () => {
     day: "Monday",
     start_hour: 8,
     end_hour: 10,
-    semester: "",
-    year: "",
     reason: "",
   });
   const [programmeFilter, setProgrammeFilter] = useState("");
@@ -84,6 +82,13 @@ export const RoomManager = () => {
   );
   const availableRoomsCount = rooms.filter((room) => room.available).length;
   const hasActiveFilters = Boolean(programmeFilter || typeFilter || availabilityFilter);
+  const roomTypeLabelMap = useMemo(
+    () => ({
+      lecture: t("lectureHall"),
+      practical: t("practicalRoom"),
+    }),
+    [t],
+  );
 
   const handleAddRoom = () => {
     setEditingRoom(null);
@@ -102,8 +107,6 @@ export const RoomManager = () => {
       day: "Monday",
       start_hour: 8,
       end_hour: 10,
-      semester: "",
-      year: "",
       reason: "",
     });
     setIsBlocksModalOpen(true);
@@ -175,8 +178,6 @@ export const RoomManager = () => {
         day: blockFormData.day,
         start_hour: Number(blockFormData.start_hour),
         end_hour: Number(blockFormData.end_hour),
-        semester: blockFormData.semester === "" ? null : Number(blockFormData.semester),
-        year: blockFormData.year === "" ? null : Number(blockFormData.year),
         reason: blockFormData.reason,
       });
       await executeRoomBlocks();
@@ -215,7 +216,11 @@ export const RoomManager = () => {
     { key: "capacity", label: t("capacity") },
     { key: "computer_count", label: t("computerCount") },
     { key: "programme", label: t("faculty") },
-    { key: "type", label: t("type") },
+    {
+      key: "type",
+      label: t("type"),
+      render: (value) => roomTypeLabelMap[value] || value || "—",
+    },
     {
       key: "available",
       label: t("available"),
@@ -492,34 +497,6 @@ export const RoomManager = () => {
                     ))}
                 </select>
               </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  {t("semester")}
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={blockFormData.semester}
-                  onChange={(event) =>
-                    setBlockFormData((current) => ({ ...current, semester: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  {t("year")}
-                </label>
-                <input
-                  type="number"
-                  min="2020"
-                  value={blockFormData.year}
-                  onChange={(event) =>
-                    setBlockFormData((current) => ({ ...current, year: event.target.value }))
-                  }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-                />
-              </div>
             </div>
             {blockFormError ? (
               <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -558,11 +535,6 @@ export const RoomManager = () => {
                     </p>
                     <p className="text-sm text-gray-600">
                       {block.reason || "—"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {block.semester ? `${t("semester")}: ${block.semester}` : ""}
-                      {block.semester && block.year ? " • " : ""}
-                      {block.year ? `${t("year")}: ${block.year}` : ""}
                     </p>
                   </div>
                   <button
