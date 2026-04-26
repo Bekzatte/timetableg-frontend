@@ -1,42 +1,42 @@
 export const PROGRAMMES = [
   {
-    value: "software_engineering_6b06101",
+    value: "kazakhstan_history_department",
     labels: {
-      kk: "Бағдарламалық инженерия (6B06101)",
-      ru: "Программная инженерия (6B06101)",
-      en: "Software Engineering (6B06101)",
+      kk: "Қазақстан тарихы кафедрасы (7)",
+      ru: "Кафедра истории Казахстана (7)",
+      en: "Department of History of Kazakhstan (7)",
     },
   },
   {
-    value: "business_informatics_6b06102",
+    value: "computer_sciences_department",
     labels: {
-      kk: "Бизнес-информатика (6B06102)",
-      ru: "Бизнес-информатика (6B06102)",
-      en: "Business Informatics (6B06102)",
+      kk: "Компьютерлік ғылымдар кафедрасы (5)",
+      ru: "Кафедра компьютерных наук (5)",
+      en: "Department of Computer Sciences (5)",
     },
   },
   {
-    value: "computer_engineering_6b06103",
+    value: "information_systems_department",
     labels: {
-      kk: "Компьютерлік инженерия (6B06103)",
-      ru: "Компьютерная инженерия (6B06103)",
-      en: "Computer Engineering (6B06103)",
+      kk: "Ақпараттық жүйелер кафедрасы (4)",
+      ru: "Кафедра информационных систем (4)",
+      en: "Department of Information Systems (4)",
     },
   },
   {
-    value: "devops_engineering_6b06104",
+    value: "physics_chemistry_department",
     labels: {
-      kk: "DevOps инжинирингі (6B06104)",
-      ru: "DevOps инжиниринг (6B06104)",
-      en: "DevOps Engineering (6B06104)",
+      kk: "Физика және химия кафедрасы (3)",
+      ru: "Кафедра физики и химии (3)",
+      en: "Department of Physics and Chemistry (3)",
     },
   },
   {
-    value: "digital_agrosystems_6b06115",
+    value: "humanitarian_pedagogical_institute",
     labels: {
-      kk: "Цифрлық агрожүйелер мен кешендер (6B06115)",
-      ru: "Цифровые агросистемы и комплексы (6B06115)",
-      en: "Digital Agrosystems and Complexes (6B06115)",
+      kk: "Гуманитарлық және педагогикалық ғылымдар институты (6)",
+      ru: "Институт гуманитарных и педагогических наук (6)",
+      en: "Institute of Humanities and Pedagogical Sciences (6)",
     },
   },
 ];

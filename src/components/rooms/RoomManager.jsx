@@ -125,7 +125,7 @@ export const RoomManager = () => {
     { key: "number", label: t("roomNumberHeader") },
     { key: "capacity", label: t("capacity") },
     { key: "computer_count", label: t("computerCount") },
-    { key: "programme", label: t("programmeName") },
+    { key: "programme", label: t("faculty") },
     { key: "type", label: t("type") },
     {
       key: "available",
@@ -166,9 +166,9 @@ export const RoomManager = () => {
     },
     {
       name: "programme",
-      label: t("programmeName"),
+      label: t("faculty"),
       type: "select",
-      placeholder: t("selectProgrammeName"),
+      placeholder: t("selectFaculty"),
       options: PROGRAMMES.map((programme) => ({
         value: getCanonicalProgrammeName(programme),
         label: getProgrammeLabel(programme, language),
@@ -267,7 +267,7 @@ export const RoomManager = () => {
               onChange={(event) => setDraftProgrammeFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
-              <option value="">{t("all")} {t("programmeName").toLowerCase()}</option>
+              <option value="">{t("all")} {t("faculty").toLowerCase()}</option>
               {PROGRAMMES.map((programme) => {
                 const value = getCanonicalProgrammeName(programme);
                 return (

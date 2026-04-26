@@ -65,10 +65,20 @@ export const Form = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const field = fields.find((item) => item.name === name);
+    setFormData((prev) => {
+      let next = {
+        ...prev,
+        [name]: value,
+      };
+      if (field?.onChange) {
+        next = {
+          ...next,
+          ...(field.onChange(value, next, prev) || {}),
+        };
+      }
+      return next;
+    });
     clearFieldError(name);
   };
 
@@ -120,7 +130,7 @@ export const Form = ({
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition bg-white text-gray-900 border-gray-300 ${errors[field.name] ? "border-red-500" : ""}`}
             >
               <option value="">{field.placeholder || t("selectOption")}</option>
-              {field.options?.map((opt) => (
+              {(typeof field.options === "function" ? field.options(formData) : field.options)?.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -155,7 +165,7 @@ export const Form = ({
             </label>
           ) : field.type === "checkbox-group" ? (
             <div className="grid gap-2">
-              {field.options?.map((opt) => {
+              {(typeof field.options === "function" ? field.options(formData) : field.options)?.map((opt) => {
                 const currentValues = Array.isArray(formData[field.name]) ? formData[field.name] : [];
                 const checked = currentValues.includes(opt.value);
                 return (

@@ -43,6 +43,7 @@ export const translations = {
     programmeName: "Бағдарлама атауы",
     educationalProgrammeGroup: "Білім беру бағдарламаларының тобы",
     specialtyCode: "Мамандық",
+    faculty: "Факультет",
     entryYear: "Түскен жылы",
     disciplineCycle: "Пән циклы",
     disciplineComponent: "Пән компоненті",
@@ -64,6 +65,8 @@ export const translations = {
     enterCourseCode: "Пән кодын енгізіңіз",
     enterCourseName: "Пән атауын енгізіңіз",
     selectProgrammeName: "Бағдарлама атауын таңдаңыз",
+    selectSpecialty: "Мамандықты таңдаңыз",
+    selectFaculty: "Факультетті таңдаңыз",
     description: "Сипаттама",
 
     // Teachers
@@ -93,7 +96,7 @@ export const translations = {
     editGroup: "Топты өңдеу",
     deleteRoom: "Аудиторияны жою",
     roomNumber: "Аудитория нөмірі",
-    externalProgrammeRoom: "басқа бағдарлама аудиториясы",
+    externalProgrammeRoom: "басқа факультет аудиториясы",
     groupNumber: "Топ нөмірі",
     studentCount: "Студент саны",
     subgroup: "Топша",
@@ -560,6 +563,7 @@ export const translations = {
     programmeName: "Название программы",
     educationalProgrammeGroup: "Образовательная программа",
     specialtyCode: "Специальность",
+    faculty: "Факультет",
     entryYear: "Год поступления",
     disciplineCycle: "Цикл дисциплины",
     disciplineComponent: "Компонент дисциплины",
@@ -581,6 +585,8 @@ export const translations = {
     enterCourseCode: "Введите код дисциплины",
     enterCourseName: "Введите название дисциплины",
     selectProgrammeName: "Выберите название программы",
+    selectSpecialty: "Выберите специальность",
+    selectFaculty: "Выберите факультет",
     description: "Описание",
 
     // Teachers
@@ -610,7 +616,7 @@ export const translations = {
     editGroup: "Редактировать группу",
     deleteRoom: "Удалить аудиторию",
     roomNumber: "Номер аудитории",
-    externalProgrammeRoom: "аудитория другой программы",
+    externalProgrammeRoom: "аудитория другого факультета",
     groupNumber: "Номер группы",
     studentCount: "Количество студентов",
     subgroup: "Подгруппа",
@@ -1077,6 +1083,7 @@ export const translations = {
     programmeName: "Programme Name",
     educationalProgrammeGroup: "Educational Programme",
     specialtyCode: "Specialty",
+    faculty: "Faculty",
     entryYear: "Entry Year",
     disciplineCycle: "Discipline Cycle",
     disciplineComponent: "Discipline Component",
@@ -1098,6 +1105,8 @@ export const translations = {
     enterCourseCode: "Enter discipline code",
     enterCourseName: "Enter discipline name",
     selectProgrammeName: "Select programme name",
+    selectSpecialty: "Select specialty",
+    selectFaculty: "Select faculty",
     description: "Description",
 
     // Teachers
@@ -1127,7 +1136,7 @@ export const translations = {
     editGroup: "Edit Group",
     deleteRoom: "Delete Room",
     roomNumber: "Room Number",
-    externalProgrammeRoom: "room from another programme",
+    externalProgrammeRoom: "room from another faculty",
     groupNumber: "Group Number",
     studentCount: "Student Count",
     subgroup: "Subgroup",

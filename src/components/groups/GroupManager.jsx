@@ -9,13 +9,15 @@ import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
 import { STUDY_LANGUAGES } from "../../constants/languages";
 import {
-  PROGRAMMES,
-  getCanonicalProgrammeName,
-  getProgrammeLabel,
-} from "../../constants/programmes";
+  EDUCATION_GROUPS,
+  PROGRAMME_CODE_TO_EDUCATION_GROUP,
+  getEducationGroupLabel,
+  getProgrammeOptionsByEducationGroup,
+  getSpecialtyLabel,
+} from "../../constants/educationGroups";
 
 export const GroupManager = () => {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
@@ -52,6 +54,23 @@ export const GroupManager = () => {
       return "ab";
     }
     return "auto";
+  };
+
+  const getEditingProgrammeValue = (group) => {
+    if (!group) {
+      return "";
+    }
+    if (EDUCATION_GROUPS.some((item) => item.value === group.programme)) {
+      return group.programme;
+    }
+    if (group.specialty_code && PROGRAMME_CODE_TO_EDUCATION_GROUP[group.specialty_code]) {
+      return PROGRAMME_CODE_TO_EDUCATION_GROUP[group.specialty_code];
+    }
+    const normalizedProgramme = String(group.programme || "").toLowerCase();
+    const matchedGroup = EDUCATION_GROUPS.find((item) =>
+      normalizedProgramme.includes(item.value),
+    );
+    return matchedGroup?.value || "";
   };
 
   const handleSubmit = async (formData, setErrors) => {
@@ -134,8 +153,16 @@ export const GroupManager = () => {
 
   const columns = [
     { key: "name", label: t("groupNumber") },
-    { key: "programme", label: t("programmeName") },
-    { key: "specialty_code", label: t("specialtyCode") },
+    {
+      key: "programme",
+      label: t("educationalProgrammeGroup"),
+      render: (value) => getEducationGroupLabel(value),
+    },
+    {
+      key: "specialty_code",
+      label: t("specialtyCode"),
+      render: (value) => getSpecialtyLabel(value),
+    },
     { key: "student_count", label: t("studentCount") },
     {
       key: "has_subgroups",
@@ -165,19 +192,22 @@ export const GroupManager = () => {
     },
     {
       name: "programme",
-      label: t("programmeName"),
+      label: t("educationalProgrammeGroup"),
       type: "select",
-      placeholder: t("selectProgrammeName"),
-      options: PROGRAMMES.map((programme) => ({
-        value: getCanonicalProgrammeName(programme),
-        label: getProgrammeLabel(programme, language),
+      placeholder: t("selectEducationalProgrammeGroup"),
+      options: EDUCATION_GROUPS.map((group) => ({
+        value: group.value,
+        label: group.label,
       })),
+      onChange: () => ({ specialty_code: "" }),
       required: true,
     },
     {
       name: "specialty_code",
       label: t("specialtyCode"),
-      placeholder: "КИ / БИ / КИ СОПР",
+      type: "select",
+      placeholder: t("selectSpecialty"),
+      options: (formData) => getProgrammeOptionsByEducationGroup(formData.programme),
       required: true,
     },
     {
@@ -325,8 +355,9 @@ export const GroupManager = () => {
           resetKey={editingGroup ? `group-${editingGroup.id}` : "group-new"}
           initialValues={{
             language: "ru",
-            subgroup_status: editingGroup ? getModalSubgroupStatus(editingGroup) : "auto",
             ...(editingGroup || {}),
+            programme: editingGroup ? getEditingProgrammeValue(editingGroup) : "",
+            subgroup_status: editingGroup ? getModalSubgroupStatus(editingGroup) : "auto",
           }}
           submitText={editingGroup ? t("save") : t("add")}
           isLoading={isSubmitting}

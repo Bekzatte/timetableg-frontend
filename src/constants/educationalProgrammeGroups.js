@@ -1,3 +1,1 @@
-export const EDUCATIONAL_PROGRAMME_GROUPS = [
-  "B057 - Информационные технологии",
-];
+export { EDUCATIONAL_PROGRAMME_GROUPS } from "./educationGroups";
