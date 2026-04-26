@@ -254,7 +254,7 @@ export default function ProfilePage() {
                 {user?.role !== "teacher" && user?.department ? (
                   <div className="min-w-0 rounded-2xl bg-[#f4fbf7] p-4 max-[420px]:p-3">
                     <p className={infoLabelClass}>
-                      {t("facultyInstitute")}
+                      {user?.role === "student" ? t("educationalProgrammeGroup") : t("facultyInstitute")}
                     </p>
                     <p className={infoValueClass}>
                       {user.department}
@@ -264,7 +264,7 @@ export default function ProfilePage() {
                 {user?.programmeName ? (
                   <div className="min-w-0 rounded-2xl bg-[#f4fbf7] p-4 max-[420px]:p-3">
                     <p className={infoLabelClass}>
-                      {t("programmeName")}
+                      {user?.role === "student" ? t("specialtyCode") : t("programmeName")}
                     </p>
                     <p className={infoValueClass}>
                       {user.programmeName}

@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ROLES } from "../constants/roles";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
-import { DEPARTMENTS } from "../constants/departments";
-import { PROGRAMMES } from "../constants/programmes";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { groupAPI, teacherClaimAPI } from "../services/api";
 import { STUDY_LANGUAGES } from "../constants/languages";
+import {
+  EDUCATION_GROUPS,
+  getEducationGroupLabel,
+  getProgrammeOptionsByEducationGroup,
+  getSpecialtyLabel,
+} from "../constants/educationGroups";
 
 const TEACHER_REGISTRATION_MODES = {
   CLAIM: "claim",
@@ -27,8 +31,8 @@ export const RegisterPage = () => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [department, setDepartment] = useState("");
-  const [programmeName, setProgrammeName] = useState("");
+  const [educationGroup, setEducationGroup] = useState("");
+  const [specialtyCode, setSpecialtyCode] = useState("");
   const [groupId, setGroupId] = useState("");
   const [subgroup, setSubgroup] = useState("");
   const [studentLanguage, setStudentLanguage] = useState("");
@@ -53,6 +57,15 @@ export const RegisterPage = () => {
     { value: ROLES.STUDENT, label: t("student") },
     { value: ROLES.TEACHER, label: t("teacher") },
   ];
+  const filteredStudentGroups = useMemo(
+    () =>
+      groups.filter((group) => {
+        const matchesEducationGroup = !educationGroup || group.programme === educationGroup;
+        const matchesSpecialty = !specialtyCode || group.specialty_code === specialtyCode;
+        return matchesEducationGroup && matchesSpecialty;
+      }),
+    [groups, educationGroup, specialtyCode],
+  );
   const selectedGroup = groups.find((group) => String(group.id) === String(groupId));
   const requiresSubgroup = Boolean(selectedGroup?.has_subgroups);
   const isTeacherClaimMode =
@@ -101,7 +114,8 @@ export const RegisterPage = () => {
     setConfirmPassword("");
 
     if (role !== ROLES.STUDENT) {
-      setProgrammeName("");
+      setEducationGroup("");
+      setSpecialtyCode("");
       setGroupId("");
       setSubgroup("");
       setStudentLanguage("");
@@ -117,14 +131,12 @@ export const RegisterPage = () => {
       setDisplayName("");
       setEmail("");
       setPhone("");
-      setDepartment("");
       return;
     }
 
     setDisplayName("");
     setEmail("");
     setPhone("");
-    setDepartment("");
   };
 
   const handleTeacherRegistrationModeChange = (mode) => {
@@ -138,7 +150,6 @@ export const RegisterPage = () => {
       setDisplayName("");
       setEmail("");
       setPhone("");
-      setDepartment("");
       setTeacherLanguages([]);
     }
   };
@@ -203,7 +214,6 @@ export const RegisterPage = () => {
     setSelectedTeacherAccount(teacherAccount);
     setDisplayName(teacherAccount.name || "");
     setEmail("");
-    setDepartment("");
     setClaimEmail("");
     setTeacherLanguages(
       String(teacherAccount.teachingLanguages || "ru,kk")
@@ -283,7 +293,7 @@ export const RegisterPage = () => {
 
     if (
       selectedRole === ROLES.STUDENT &&
-      (!department || !programmeName || !groupId || !studentLanguage)
+      (!educationGroup || !specialtyCode || !groupId || !studentLanguage)
     ) {
       setLocalError(t("fillAllFields"));
       return;
@@ -319,8 +329,8 @@ export const RegisterPage = () => {
         displayName,
         selectedRole,
         selectedRole === ROLES.TEACHER ? phone.trim() : "",
-        department,
-        programmeName,
+        selectedRole === ROLES.STUDENT ? getEducationGroupLabel(educationGroup) : "",
+        selectedRole === ROLES.STUDENT ? getSpecialtyLabel(specialtyCode) : "",
         groupId,
         subgroup,
         studentLanguage,
@@ -578,17 +588,23 @@ export const RegisterPage = () => {
             <>
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
-                  {t("facultyInstitute")}
+                  {t("educationalProgrammeGroup")}
                 </label>
                 <select
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
+                  value={educationGroup}
+                  onChange={(e) => {
+                    setEducationGroup(e.target.value);
+                    setSpecialtyCode("");
+                    setGroupId("");
+                    setSubgroup("");
+                    setStudentLanguage("");
+                  }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
-                  <option value="">{t("selectFacultyInstitute")}</option>
-                  {DEPARTMENTS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
+                  <option value="">{t("selectEducationalProgrammeGroup")}</option>
+                  {EDUCATION_GROUPS.map((group) => (
+                    <option key={group.value} value={group.value}>
+                      {group.label}
                     </option>
                   ))}
                 </select>
@@ -596,17 +612,23 @@ export const RegisterPage = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
-                  {t("programmeName")}
+                  {t("specialtyCode")}
                 </label>
                 <select
-                  value={programmeName}
-                  onChange={(e) => setProgrammeName(e.target.value)}
+                  value={specialtyCode}
+                  onChange={(e) => {
+                    setSpecialtyCode(e.target.value);
+                    setGroupId("");
+                    setSubgroup("");
+                    setStudentLanguage("");
+                  }}
+                  disabled={!educationGroup}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
-                  <option value="">{t("selectProgrammeName")}</option>
-                  {PROGRAMMES.map((programme) => (
-                    <option key={programme.value} value={programme.labels.ru}>
-                      {programme.labels[language] || programme.labels.en}
+                  <option value="">{t("selectSpecialty")}</option>
+                  {getProgrammeOptionsByEducationGroup(educationGroup).map((programme) => (
+                    <option key={programme.value} value={programme.value}>
+                      {programme.label}
                     </option>
                   ))}
                 </select>
@@ -632,7 +654,7 @@ export const RegisterPage = () => {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
                   <option value="">{t("selectGroup")}</option>
-                  {groups.map((group) => (
+                  {filteredStudentGroups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name} •{" "}
                       {t(group.language === "kk" ? "languageKazakh" : "languageRussian")} •{" "}
