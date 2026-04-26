@@ -67,7 +67,9 @@ export const RegisterPage = () => {
     [groups, educationGroup, specialtyCode],
   );
   const selectedGroup = groups.find((group) => String(group.id) === String(groupId));
-  const requiresSubgroup = Boolean(selectedGroup?.has_subgroups);
+  const requiresSubgroup = Boolean(
+    selectedGroup?.auto_has_subgroups || selectedGroup?.has_subgroups,
+  );
   const isTeacherClaimMode =
     selectedRole === ROLES.TEACHER &&
     teacherRegistrationMode === TEACHER_REGISTRATION_MODES.CLAIM;
@@ -647,7 +649,7 @@ export const RegisterPage = () => {
                     );
                     setGroupId(nextGroupId);
                     setStudentLanguage(nextGroup?.language || "");
-                    if (!nextGroup?.has_subgroups) {
+                    if (!(nextGroup?.auto_has_subgroups || nextGroup?.has_subgroups)) {
                       setSubgroup("");
                     }
                   }}
