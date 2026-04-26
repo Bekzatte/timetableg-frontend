@@ -7,7 +7,6 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, teacherAPI, teacherPreferenceAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
-import { DEPARTMENTS } from "../../constants/departments";
 import { STUDY_LANGUAGES } from "../../constants/languages";
 
 export const TeacherManager = () => {
@@ -20,9 +19,9 @@ export const TeacherManager = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeletingRequestId, setIsDeletingRequestId] = useState(null);
   const [isClearingRequests, setIsClearingRequests] = useState(false);
-  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState("");
   const [languageFilter, setLanguageFilter] = useState("");
-  const [draftDepartmentFilter, setDraftDepartmentFilter] = useState("");
+  const [draftSubjectFilter, setDraftSubjectFilter] = useState("");
   const [draftLanguageFilter, setDraftLanguageFilter] = useState("");
   const { data, isLoading, execute } = useFetch(teacherAPI.getAll);
   const {
@@ -38,20 +37,31 @@ export const TeacherManager = () => {
   }, [execute, executePreferenceRequests]);
 
   const teachers = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  const hasActiveFilters = Boolean(departmentFilter || languageFilter);
+  const subjectOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          teachers
+            .map((teacher) => String(teacher.subject_taught || "").trim())
+            .filter(Boolean),
+        ),
+      ).sort((left, right) => left.localeCompare(right, "ru")),
+    [teachers],
+  );
+  const hasActiveFilters = Boolean(subjectFilter || languageFilter);
   const filteredTeachers = useMemo(
     () =>
       teachers.filter((teacher) => {
-        const matchesDepartment = !departmentFilter || teacher.department === departmentFilter;
+        const matchesSubject = !subjectFilter || teacher.subject_taught === subjectFilter;
         const matchesLanguage =
           !languageFilter ||
           String(teacher.teaching_languages || "ru,kk")
             .split(",")
             .map((item) => item.trim())
             .includes(languageFilter);
-        return matchesDepartment && matchesLanguage;
+        return matchesSubject && matchesLanguage;
       }),
-    [teachers, departmentFilter, languageFilter],
+    [teachers, subjectFilter, languageFilter],
   );
   const preferenceRequests = Array.isArray(preferenceRequestsData) ? preferenceRequestsData : [];
 
@@ -180,7 +190,7 @@ export const TeacherManager = () => {
     { key: "name", label: t("fullName") },
     { key: "email", label: t("email") },
     { key: "phone", label: t("phone") },
-    { key: "department", label: t("facultyInstitute") },
+    { key: "subject_taught", label: t("subjectTaught") },
     {
       key: "teaching_languages",
       label: t("teachingLanguages"),
@@ -220,15 +230,10 @@ export const TeacherManager = () => {
     },
     { name: "phone", label: t("phone"), placeholder: t("phonePlaceholder"), required: true },
     {
-      name: "department",
-      label: t("facultyInstitute"),
-      type: "select",
-      placeholder: t("selectFacultyInstitute"),
+      name: "subject_taught",
+      label: t("subjectTaught"),
+      placeholder: t("enterSubjectTaught"),
       required: true,
-      options: DEPARTMENTS.map((department) => ({
-        value: department,
-        label: department,
-      })),
     },
     {
       name: "teaching_languages",
@@ -255,10 +260,10 @@ export const TeacherManager = () => {
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
           <p className="text-sm font-medium text-emerald-700">
-            {t("totalDepartments")}
+            {t("totalSubjects")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            {DEPARTMENTS.length}
+            {subjectOptions.length}
           </p>
         </div>
         <button
@@ -309,26 +314,26 @@ export const TeacherManager = () => {
         hasActiveFilters={hasActiveFilters}
         filterDialogTitle={t("filter")}
         onApplyFilters={() => {
-          setDepartmentFilter(draftDepartmentFilter);
+          setSubjectFilter(draftSubjectFilter);
           setLanguageFilter(draftLanguageFilter);
         }}
         onResetFilters={() => {
-          setDraftDepartmentFilter("");
+          setDraftSubjectFilter("");
           setDraftLanguageFilter("");
-          setDepartmentFilter("");
+          setSubjectFilter("");
           setLanguageFilter("");
         }}
         filterControls={
           <>
             <select
-              value={draftDepartmentFilter}
-              onChange={(event) => setDraftDepartmentFilter(event.target.value)}
+              value={draftSubjectFilter}
+              onChange={(event) => setDraftSubjectFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
-              <option value="">{t("all")} {t("facultyInstitute").toLowerCase()}</option>
-              {DEPARTMENTS.map((department) => (
-                <option key={department} value={department}>
-                  {department}
+              <option value="">{t("all")} {t("subjectTaught").toLowerCase()}</option>
+              {subjectOptions.map((subject) => (
+                <option key={subject} value={subject}>
+                  {subject}
                 </option>
               ))}
             </select>

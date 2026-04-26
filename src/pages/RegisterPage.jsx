@@ -677,20 +677,15 @@ export const RegisterPage = () => {
             <>
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
-                  {t("facultyInstitute")}
+                  {t("subjectTaught")}
                 </label>
-                <select
+                <input
+                  type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
+                  placeholder={t("enterSubjectTaught")}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="">{t("selectFacultyInstitute")}</option>
-                  {DEPARTMENTS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>

@@ -241,7 +241,17 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 ) : null}
-                {user?.department ? (
+                {user?.role === "teacher" && user?.subjectTaught ? (
+                  <div className="min-w-0 rounded-2xl bg-[#f4fbf7] p-4 max-[420px]:p-3">
+                    <p className={infoLabelClass}>
+                      {t("subjectTaught")}
+                    </p>
+                    <p className={infoValueClass}>
+                      {user.subjectTaught}
+                    </p>
+                  </div>
+                ) : null}
+                {user?.role !== "teacher" && user?.department ? (
                   <div className="min-w-0 rounded-2xl bg-[#f4fbf7] p-4 max-[420px]:p-3">
                     <p className={infoLabelClass}>
                       {t("facultyInstitute")}
