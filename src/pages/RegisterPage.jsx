@@ -19,7 +19,7 @@ const TEACHER_REGISTRATION_MODES = {
 };
 
 export const RegisterPage = () => {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { register, login, isLoading, error } = useAuth();
   const [selectedRole, setSelectedRole] = useState(ROLES.STUDENT);

@@ -6,7 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, courseAPI, courseComponentAPI, importAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
 import { useTranslation } from "../../hooks/useTranslation";
-import { EDUCATIONAL_PROGRAMME_GROUPS } from "../../constants/educationalProgrammeGroups";
+import { EDUCATIONAL_PROGRAMME_GROUPS } from "../../constants/educationGroups";
 import {
   PROGRAMMES,
   getCanonicalProgrammeName,
