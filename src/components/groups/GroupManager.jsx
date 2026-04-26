@@ -49,6 +49,13 @@ export const GroupManager = () => {
   );
   const hasActiveFilters = Boolean(languageFilter || courseFilter);
 
+  const getModalSubgroupStatus = (group) => {
+    if (group?.auto_has_subgroups || group?.has_subgroups) {
+      return "ab";
+    }
+    return "auto";
+  };
+
   const getEditingProgrammeValue = (group) => {
     if (!group) {
       return "";
@@ -77,6 +84,7 @@ export const GroupManager = () => {
         specialty_code: formData.specialty_code || "",
         entry_year: formData.entry_year ? Number(formData.entry_year) : null,
         study_course: formData.study_course ? Number(formData.study_course) : null,
+        has_subgroups: formData.subgroup_status === "ab" ? 1 : 0,
       };
       if (editingGroup) {
         await groupAPI.update(editingGroup.id, payload);
@@ -202,6 +210,17 @@ export const GroupManager = () => {
       label: t("studentCount"),
       type: "number",
       placeholder: "25",
+      required: true,
+    },
+    {
+      name: "subgroup_status",
+      label: t("autoSubgroupsStatus"),
+      type: "select",
+      placeholder: t("autoSubgroupsStatus"),
+      options: [
+        { value: "auto", label: t("auto") },
+        { value: "ab", label: "A/B" },
+      ],
       required: true,
     },
     {
@@ -333,6 +352,7 @@ export const GroupManager = () => {
             language: "ru",
             ...(editingGroup || {}),
             programme: editingGroup ? getEditingProgrammeValue(editingGroup) : "",
+            subgroup_status: editingGroup ? getModalSubgroupStatus(editingGroup) : "auto",
           }}
           submitText={editingGroup ? t("save") : t("add")}
           isLoading={isSubmitting}
