@@ -41,9 +41,9 @@ export const TeacherManager = () => {
     () =>
       Array.from(
         new Set(
-          teachers
-            .map((teacher) => String(teacher.subject_taught || "").trim())
-            .filter(Boolean),
+          teachers.flatMap((teacher) =>
+            Array.isArray(teacher.assigned_disciplines) ? teacher.assigned_disciplines : [],
+          ),
         ),
       ).sort((left, right) => left.localeCompare(right, "ru")),
     [teachers],
@@ -52,7 +52,11 @@ export const TeacherManager = () => {
   const filteredTeachers = useMemo(
     () =>
       teachers.filter((teacher) => {
-        const matchesSubject = !subjectFilter || teacher.subject_taught === subjectFilter;
+        const teacherDisciplines = Array.isArray(teacher.assigned_disciplines)
+          ? teacher.assigned_disciplines
+          : [];
+        const matchesSubject =
+          !subjectFilter || teacherDisciplines.includes(subjectFilter);
         const matchesLanguage =
           !languageFilter ||
           String(teacher.teaching_languages || "ru,kk")
@@ -190,7 +194,11 @@ export const TeacherManager = () => {
     { key: "name", label: t("fullName") },
     { key: "email", label: t("email") },
     { key: "phone", label: t("phone") },
-    { key: "subject_taught", label: t("subjectTaught") },
+    {
+      key: "assigned_disciplines_text",
+      label: t("assignedDisciplines"),
+      render: (value) => value || "—",
+    },
     {
       key: "teaching_languages",
       label: t("teachingLanguages"),
@@ -229,12 +237,6 @@ export const TeacherManager = () => {
       required: true,
     },
     { name: "phone", label: t("phone"), placeholder: t("phonePlaceholder"), required: true },
-    {
-      name: "subject_taught",
-      label: t("subjectTaught"),
-      placeholder: t("enterSubjectTaught"),
-      required: true,
-    },
     {
       name: "teaching_languages",
       label: t("teachingLanguages"),
@@ -330,7 +332,7 @@ export const TeacherManager = () => {
               onChange={(event) => setDraftSubjectFilter(event.target.value)}
               className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
             >
-              <option value="">{t("all")} {t("subjectTaught").toLowerCase()}</option>
+              <option value="">{t("all")} {t("assignedDisciplines").toLowerCase()}</option>
               {subjectOptions.map((subject) => (
                 <option key={subject} value={subject}>
                   {subject}

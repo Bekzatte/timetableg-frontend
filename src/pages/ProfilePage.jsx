@@ -241,13 +241,13 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 ) : null}
-                {user?.role === "teacher" && user?.subjectTaught ? (
+                {user?.role === "teacher" && user?.assignedDisciplinesText ? (
                   <div className="min-w-0 rounded-2xl bg-[#f4fbf7] p-4 max-[420px]:p-3">
                     <p className={infoLabelClass}>
-                      {t("subjectTaught")}
+                      {t("assignedDisciplines")}
                     </p>
                     <p className={infoValueClass}>
-                      {user.subjectTaught}
+                      {user.assignedDisciplinesText}
                     </p>
                   </div>
                 ) : null}

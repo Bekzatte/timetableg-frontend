@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { ROLES } from "../constants/roles";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
-import { DEPARTMENTS } from "../constants/departments";
 import { PROGRAMMES } from "../constants/programmes";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { groupAPI, teacherClaimAPI } from "../services/api";
@@ -291,7 +290,7 @@ export const RegisterPage = () => {
 
     if (
       selectedRole === ROLES.TEACHER &&
-      (!phone.trim() || !department || teacherLanguages.length === 0)
+      (!phone.trim() || teacherLanguages.length === 0)
     ) {
       setLocalError(t("fillAllFields"));
       return;
@@ -675,19 +674,6 @@ export const RegisterPage = () => {
           {selectedRole === ROLES.TEACHER &&
           teacherRegistrationMode === TEACHER_REGISTRATION_MODES.MANUAL ? (
             <>
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">
-                  {t("subjectTaught")}
-                </label>
-                <input
-                  type="text"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  placeholder={t("enterSubjectTaught")}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
                   {t("phone")}
