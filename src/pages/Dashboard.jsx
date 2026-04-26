@@ -165,7 +165,7 @@ export const Dashboard = () => {
   ];
 
   const refreshManagedData = async () => {
-    await Promise.all([
+    const results = await Promise.allSettled([
       executeCourses(),
       executeCourseComponents(),
       executeTeachers(),
@@ -174,6 +174,10 @@ export const Dashboard = () => {
       executeSections(),
       executeSchedules(),
     ]);
+    const failed = results.filter((result) => result.status === "rejected");
+    if (failed.length > 0) {
+      console.warn("Some dashboard refresh requests failed:", failed);
+    }
   };
 
   const handleRopFileChange = async (event) => {

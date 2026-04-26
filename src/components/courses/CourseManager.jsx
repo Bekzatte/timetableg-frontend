@@ -80,6 +80,18 @@ export const CourseManager = () => {
     executeCourseComponents();
   }, [execute, executeTeachers, executeCourseComponents]);
 
+  const refreshImportedData = async () => {
+    const results = await Promise.allSettled([
+      execute(),
+      executeTeachers(),
+      executeCourseComponents(),
+    ]);
+    const failed = results.filter((result) => result.status === "rejected");
+    if (failed.length > 0) {
+      console.warn("Some post-import refresh requests failed:", failed);
+    }
+  };
+
   const courses = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const teachers = Array.isArray(teachersData) ? teachersData : [];
   const courseComponents = useMemo(
@@ -245,12 +257,11 @@ export const CourseManager = () => {
       setRopError("");
       setIsRopImporting(true);
       await importAPI.importRop(ropFile.name, ropFileContent);
-      await execute();
-      await executeCourseComponents();
       setIsRopModalOpen(false);
       setRopPreview(null);
       setRopFile(null);
       setRopFileContent("");
+      await refreshImportedData();
     } catch (error) {
       setRopError(error.message);
     } finally {
@@ -298,13 +309,11 @@ export const CourseManager = () => {
       setIupError("");
       setIsIupImporting(true);
       await importAPI.importIup(iupFile.name, iupFileContent);
-      await execute();
-      await executeTeachers();
-      await executeCourseComponents();
       setIsIupModalOpen(false);
       setIupPreview(null);
       setIupFile(null);
       setIupFileContent("");
+      await refreshImportedData();
     } catch (error) {
       setIupError(error.message);
     } finally {
