@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { ROLES } from "../constants/roles";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
+import { DEPARTMENTS } from "../constants/departments";
 import { PROGRAMMES } from "../constants/programmes";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { groupAPI, teacherClaimAPI } from "../services/api";
