@@ -4,10 +4,15 @@ import TimetableGrid from "../components/timetable/TimetableGrid";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
 import Form from "../components/ui/Form";
-import { courseAPI, roomAPI, scheduleAPI, sectionAPI, teacherAPI } from "../services/api";
+import {
+  courseAPI,
+  roomAPI,
+  scheduleAPI,
+  sectionAPI,
+  teacherAPI,
+} from "../services/api";
 import { useFetch } from "../hooks/useAPI";
 import { useAuth } from "../hooks/useAuth";
-import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 
@@ -42,8 +47,10 @@ const getWeekdayValue = (isoDate) => {
   if (!isoDate) {
     return "monday";
   }
+
   const jsDay = new Date(`${isoDate}T12:00:00`).getDay();
   const weekdayIndex = jsDay === 0 ? 6 : jsDay - 1;
+
   return WEEKDAY_OPTIONS[weekdayIndex]?.value || "monday";
 };
 
@@ -51,18 +58,26 @@ const toIsoDateForWeekday = (weekday, year) => {
   const today = new Date();
   const anchor = new Date(year, today.getMonth(), today.getDate());
   const monday = new Date(anchor);
+
   monday.setDate(anchor.getDate() - ((anchor.getDay() + 6) % 7));
-  const weekdayIndex = WEEKDAY_OPTIONS.findIndex((item) => item.value === weekday);
+
+  const weekdayIndex = WEEKDAY_OPTIONS.findIndex(
+    (item) => item.value === weekday,
+  );
+
   monday.setDate(monday.getDate() + (weekdayIndex >= 0 ? weekdayIndex : 0));
 
   const month = `${monday.getMonth() + 1}`.padStart(2, "0");
   const day = `${monday.getDate()}`.padStart(2, "0");
+
   return `${monday.getFullYear()}-${month}-${day}`;
 };
 
 const GROUP_LANGUAGE_UNSUPPORTED_PATTERN =
   /Преподаватель курса '(.+)' не поддерживает язык группы '(.+)'\.?/i;
+
 const TEACHER_NOT_FOUND_PATTERN = /не найден преподаватель/i;
+
 const GENERATION_REASON_TRANSLATION_KEYS = {
   "Для дисциплины не найдено подходящих аудиторий по типу, вместимости или PCCount.":
     "errorGenerationNoSuitableRoomsReason",
@@ -74,7 +89,9 @@ const formatGenerationError = (job, t) => {
   const translationKey = job?.errorCode
     ? JOB_ERROR_CODE_TRANSLATION_KEYS[job.errorCode]
     : null;
+
   const firstIssue = job.details?.issues?.[0];
+
   if (firstIssue?.reason) {
     const reason = String(firstIssue.reason);
     const normalizedReason = reason.toLowerCase();
@@ -83,46 +100,64 @@ const formatGenerationError = (job, t) => {
     if (normalizedReason.includes("аудитор")) {
       items.push(t("errorGenerationRoomsAvailableHint"));
     }
+
     if (normalizedReason.includes("вместим")) {
       items.push(t("errorGenerationRoomCapacityHint"));
     }
-    if (normalizedReason.includes("pccount") || normalizedReason.includes("компьют")) {
+
+    if (
+      normalizedReason.includes("pccount") ||
+      normalizedReason.includes("компьют")
+    ) {
       items.push(t("errorGenerationComputersHint"));
     }
-    if (normalizedReason.includes("временн") || normalizedReason.includes("слотов")) {
+
+    if (
+      normalizedReason.includes("временн") ||
+      normalizedReason.includes("слотов")
+    ) {
       items.push(t("errorGenerationSlotsHint"));
     }
 
     const error = new Error(t("errorGenerateSchedule"));
     error.items = items;
+
     return error;
   }
 
   if (job.details?.missing?.length) {
     const details = job.details.missing.map((item) => {
       const normalized = String(item).toLowerCase();
+
       if (normalized.includes("секции")) {
         return `${item}. ${t("errorGenerationMissingSectionsHint")}`;
       }
+
       if (normalized.includes("преподавател")) {
         return `${item}. ${t("errorGenerationMissingTeachersHint")}`;
       }
+
       if (normalized.includes("аудит")) {
         return `${item}. ${t("errorGenerationMissingRoomsHint")}`;
       }
+
       if (normalized.includes("групп")) {
         return `${item}. ${t("errorGenerationMissingGroupsHint")}`;
       }
+
       return item;
     });
+
     const error = new Error(t("errorScheduleGenerationRequiresData"));
     error.items = details;
+
     return error;
   }
 
   if (translationKey) {
     const error = new Error(t(translationKey));
     error.items = [];
+
     return error;
   }
 
@@ -132,6 +167,7 @@ const formatGenerationError = (job, t) => {
 
   if (normalizedError.includes("не поддерживает язык группы")) {
     const match = rawError.match(GROUP_LANGUAGE_UNSUPPORTED_PATTERN);
+
     if (match) {
       items.push(
         t("errorTeacherDoesNotSupportGroupLanguage")
@@ -141,6 +177,7 @@ const formatGenerationError = (job, t) => {
     } else {
       items.push(t("errorTeacherDoesNotSupportGroupLanguageFallback"));
     }
+
     items.push(t("errorTeacherDoesNotSupportGroupLanguageHint"));
   } else if (TEACHER_NOT_FOUND_PATTERN.test(normalizedError)) {
     items.push(t("errorTeacherNotAssigned"));
@@ -151,14 +188,16 @@ const formatGenerationError = (job, t) => {
 
   const error = new Error(t("errorGenerateSchedule"));
   error.items = items;
+
   return error;
 };
 
 export const SchedulePage = () => {
   const { t } = useTranslation();
-  const { withGlobalLoader } = useGlobalLoader();
   const { isAdmin } = useAuth();
+
   const currentYear = new Date().getFullYear();
+
   const [schedule, setSchedule] = useState([]);
   const [scheduleSemester, setScheduleSemester] = useState(1);
   const [scheduleYear, setScheduleYear] = useState(currentYear);
@@ -171,19 +210,29 @@ export const SchedulePage = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [generationError, setGenerationError] = useState(null);
   const [pageError, setPageError] = useState("");
+
   const [groupFilter, setGroupFilter] = useState("");
   const [teacherFilter, setTeacherFilter] = useState("");
   const [roomFilter, setRoomFilter] = useState("");
   const [dayFilter, setDayFilter] = useState("");
+
   const [draftGroupFilter, setDraftGroupFilter] = useState("");
   const [draftTeacherFilter, setDraftTeacherFilter] = useState("");
   const [draftRoomFilter, setDraftRoomFilter] = useState("");
   const [draftDayFilter, setDraftDayFilter] = useState("");
+
   const { data, execute } = useFetch(scheduleAPI.getAll);
-  const { data: sectionsData, execute: executeSections } = useFetch(sectionAPI.getAll);
+  const { data: sectionsData, execute: executeSections } = useFetch(
+    sectionAPI.getAll,
+  );
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
-  const { data: coursesData, execute: executeCourses } = useFetch(courseAPI.getAll);
-  const { data: teachersData, execute: executeTeachers } = useFetch(teacherAPI.getAll);
+  const { data: coursesData, execute: executeCourses } = useFetch(
+    courseAPI.getAll,
+  );
+  const { data: teachersData, execute: executeTeachers } = useFetch(
+    teacherAPI.getAll,
+  );
+
   useAutoDismiss(pageError, setPageError);
 
   useEffect(() => {
@@ -194,6 +243,7 @@ export const SchedulePage = () => {
 
   useEffect(() => {
     execute({ semester: scheduleSemester, year: scheduleYear });
+
     if (isAdmin) {
       executeSections();
       executeRooms();
@@ -215,14 +265,18 @@ export const SchedulePage = () => {
   const rooms = Array.isArray(roomsData) ? roomsData : [];
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const teachers = Array.isArray(teachersData) ? teachersData : [];
-  const hasAssignedTeacher = sections.some((section) => section.teacher_id) ||
+
+  const hasAssignedTeacher =
+    sections.some((section) => section.teacher_id) ||
     courses.some((course) => course.instructor_id);
+
   const isEntryFormBlocked =
     sections.length === 0 ||
     rooms.length === 0 ||
     courses.length === 0 ||
     teachers.length === 0 ||
     !hasAssignedTeacher;
+
   const entryFormHint =
     sections.length === 0
       ? t("scheduleEntriesNeedSectionsFirst")
@@ -233,35 +287,50 @@ export const SchedulePage = () => {
           : teachers.length === 0 || !hasAssignedTeacher
             ? t("scheduleEntriesNeedAssignedTeachers")
             : "";
+
   const filteredSchedule = useMemo(
     () =>
       schedule.filter((entry) => {
-        const matchesGroup = !groupFilter || String(entry.group_id) === groupFilter;
-        const matchesTeacher = !teacherFilter || String(entry.teacher_id) === teacherFilter;
+        const matchesGroup =
+          !groupFilter || String(entry.group_id) === groupFilter;
+        const matchesTeacher =
+          !teacherFilter || String(entry.teacher_id) === teacherFilter;
         const matchesRoom = !roomFilter || String(entry.room_id) === roomFilter;
         const matchesDay = !dayFilter || getWeekdayValue(entry.day) === dayFilter;
+
         return matchesGroup && matchesTeacher && matchesRoom && matchesDay;
       }),
     [schedule, groupFilter, teacherFilter, roomFilter, dayFilter],
   );
-  const hasActiveEntryFilters = Boolean(groupFilter || teacherFilter || roomFilter || dayFilter);
+
+  const hasActiveEntryFilters = Boolean(
+    groupFilter || teacherFilter || roomFilter || dayFilter,
+  );
 
   const waitForGenerationJob = async (jobId) => {
     while (true) {
       const job = await scheduleAPI.getGenerationJob(jobId);
+
       if (job.status === "completed") {
         return job;
       }
+
       if (job.status === "failed") {
         throw formatGenerationError(job, t);
       }
+
       await new Promise((resolve) => window.setTimeout(resolve, 2500));
     }
   };
 
   const refreshSchedule = async () => {
-    const nextSchedule = await execute({ semester: scheduleSemester, year: scheduleYear });
+    const nextSchedule = await execute({
+      semester: scheduleSemester,
+      year: scheduleYear,
+    });
+
     setSchedule(nextSchedule || []);
+
     return nextSchedule || [];
   };
 
@@ -271,19 +340,20 @@ export const SchedulePage = () => {
       setPageError("");
       setIsGenerateOpen(false);
       setIsLoading(true);
-      const job = await withGlobalLoader(() => scheduleAPI.generate(formData), {
-        title: t("generateSchedule"),
-        description: t("globalLoaderGenerateDescription"),
-      });
+
+      const job = await scheduleAPI.generate(formData);
+
       await waitForGenerationJob(job.jobId);
       await refreshSchedule();
     } catch (error) {
       console.error(t("errorGenerateSchedule"), error);
+
       setGenerationError({
         title: t("errorGenerateSchedule"),
         message: error.message || t("errorUnknown"),
         items: Array.isArray(error.items) ? error.items : [],
       });
+
       setErrors((prev) => ({
         ...prev,
         error: error.message,
@@ -301,13 +371,12 @@ export const SchedulePage = () => {
     try {
       setIsResetting(true);
       setPageError("");
-      await withGlobalLoader(
-        () => scheduleAPI.reset({ semester: scheduleSemester, year: scheduleYear }),
-        {
-          title: t("resetSchedule"),
-          description: t("globalLoaderClearDescription"),
-        },
-      );
+
+      await scheduleAPI.reset({
+        semester: scheduleSemester,
+        year: scheduleYear,
+      });
+
       setSchedule([]);
       await refreshSchedule();
     } catch (error) {
@@ -322,20 +391,22 @@ export const SchedulePage = () => {
     try {
       setIsExporting(true);
       setPageError("");
-      const blob = await withGlobalLoader(
-        () => scheduleAPI.exportExcel({ semester: scheduleSemester, year: scheduleYear }),
-        {
-          title: t("exportSchedule"),
-          description: t("globalLoaderExportDescription"),
-        },
-      );
+
+      const blob = await scheduleAPI.exportExcel({
+        semester: scheduleSemester,
+        year: scheduleYear,
+      });
+
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
+
       link.href = downloadUrl;
       link.download = "schedule-export.xlsx";
+
       document.body.appendChild(link);
       link.click();
       link.remove();
+
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error(t("errorExportSchedule"), error);
@@ -355,6 +426,7 @@ export const SchedulePage = () => {
       ...entry,
       weekday: getWeekdayValue(entry.day),
     });
+
     setIsEntryModalOpen(true);
   };
 
@@ -365,10 +437,8 @@ export const SchedulePage = () => {
 
     try {
       setPageError("");
-      await withGlobalLoader(() => scheduleAPI.delete(entry.id), {
-        title: t("delete"),
-        description: t("globalLoaderDeleteDescription"),
-      });
+
+      await scheduleAPI.delete(entry.id);
       await refreshSchedule();
     } catch (error) {
       console.error(t("errorDeleteScheduleEntry"), error);
@@ -380,7 +450,11 @@ export const SchedulePage = () => {
     const selectedSection = sections.find(
       (section) => String(section.id) === String(formData.section_id),
     );
-    const selectedRoom = rooms.find((room) => String(room.id) === String(formData.room_id));
+
+    const selectedRoom = rooms.find(
+      (room) => String(room.id) === String(formData.room_id),
+    );
+
     const selectedCourse = courses.find(
       (course) => String(course.id) === String(selectedSection?.course_id),
     );
@@ -390,12 +464,15 @@ export const SchedulePage = () => {
         ...prev,
         error: t("errorBadRequest"),
       }));
+
       return;
     }
 
     try {
       setIsEntrySaving(true);
+
       const normalizedYear = Number(formData.year);
+
       const payload = {
         section_id: Number(selectedSection.id),
         course_id: Number(selectedSection.course_id),
@@ -405,7 +482,8 @@ export const SchedulePage = () => {
           : selectedCourse.instructor_id
             ? Number(selectedCourse.instructor_id)
             : null,
-        teacher_name: selectedSection.teacher_name || selectedCourse.instructor_name || "",
+        teacher_name:
+          selectedSection.teacher_name || selectedCourse.instructor_name || "",
         room_id: Number(selectedRoom.id),
         room_number: selectedRoom.number,
         group_id: Number(selectedSection.group_id),
@@ -422,19 +500,17 @@ export const SchedulePage = () => {
         throw new Error(t("errorBadRequest"));
       }
 
-      await withGlobalLoader(
-        () => (editingEntry ? scheduleAPI.update(editingEntry.id, payload) : scheduleAPI.create(payload)),
-        {
-          title: editingEntry ? t("save") : t("add"),
-          description: t("globalLoaderSaveDescription"),
-        },
-      );
+      await (editingEntry
+        ? scheduleAPI.update(editingEntry.id, payload)
+        : scheduleAPI.create(payload));
 
       await refreshSchedule();
+
       setIsEntryModalOpen(false);
       setEditingEntry(null);
     } catch (error) {
       console.error(t("errorSaveScheduleEntry"), error);
+
       setErrors((prev) => ({
         ...prev,
         error: error.message,
@@ -506,6 +582,7 @@ export const SchedulePage = () => {
       placeholder: t("startTime"),
       options: Array.from({ length: 10 }, (_, index) => {
         const hour = index + 8;
+
         return {
           value: hour,
           label: `${hour}:00`,
@@ -545,23 +622,54 @@ export const SchedulePage = () => {
   ];
 
   const scheduleColumns = [
-    { key: "course_name", label: t("courseName") },
-    { key: "group_name", label: t("groupNumber"), render: (value, row) => `${value}${row.subgroup ? ` • ${row.subgroup}` : ""}` },
-    { key: "teacher_name", label: t("teacherName") },
+    {
+      key: "course_name",
+      label: t("courseName"),
+    },
+    {
+      key: "group_name",
+      label: t("groupNumber"),
+      render: (value, row) => `${value}${row.subgroup ? ` • ${row.subgroup}` : ""}`,
+    },
+    {
+      key: "teacher_name",
+      label: t("teacherName"),
+    },
     {
       key: "room_number",
       label: t("roomNumber"),
       render: (value, row) =>
-        `${value}${row.room_programme_mismatch ? ` (${t("externalProgrammeRoom")})` : ""}${row.relocated_from_room_number ? ` • ${t("movedFromRoom")} ${row.relocated_from_room_number}` : ""}`,
+        `${value}${
+          row.room_programme_mismatch ? ` (${t("externalProgrammeRoom")})` : ""
+        }${
+          row.relocated_from_room_number
+            ? ` • ${t("movedFromRoom")} ${row.relocated_from_room_number}`
+            : ""
+        }`,
     },
-    { key: "day", label: t("day"), render: (value) => t(getWeekdayValue(value)) },
-    { key: "start_hour", label: t("startTime"), render: (value) => `${value}:00` },
-    { key: "semester", label: t("semester") },
-    { key: "year", label: t("year") },
+    {
+      key: "day",
+      label: t("day"),
+      render: (value) => t(getWeekdayValue(value)),
+    },
+    {
+      key: "start_hour",
+      label: t("startTime"),
+      render: (value) => `${value}:00`,
+    },
+    {
+      key: "semester",
+      label: t("semester"),
+    },
+    {
+      key: "year",
+      label: t("year"),
+    },
   ];
 
   const scheduleActionLabel =
     schedule.length > 0 ? t("regenerateSchedule") : t("generateNewSchedule");
+
   const displayedScheduleCount = filteredSchedule.length;
 
   return (
@@ -569,27 +677,32 @@ export const SchedulePage = () => {
       {isLoading ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm">
           <div className="rounded-2xl border border-blue-100 bg-white px-6 py-5 text-center shadow-xl">
-            <RotateCw size={28} className="mx-auto animate-spin text-[#014531]" />
+            <RotateCw
+              size={28}
+              className="mx-auto animate-spin text-[#014531]"
+            />
             <p className="mt-3 text-sm font-medium text-gray-900">
               {t("scheduleGenerationInProgress")}
             </p>
-            <p className="mt-1 text-xs text-gray-500">
-              {t("loading")}
-            </p>
+            <p className="mt-1 text-xs text-gray-500">{t("loading")}</p>
           </div>
         </div>
       ) : null}
+
       <div
         data-testid="schedule-toolbar"
-        className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between"
+        className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
           {t("scheduleMgmt")}
         </h1>
+
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
           <select
             value={scheduleSemester}
-            onChange={(event) => setScheduleSemester(Number(event.target.value))}
+            onChange={(event) =>
+              setScheduleSemester(Number(event.target.value))
+            }
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 sm:w-auto"
           >
             {SCHEDULE_SEMESTER_OPTIONS.map((item) => (
@@ -598,44 +711,51 @@ export const SchedulePage = () => {
               </option>
             ))}
           </select>
+
           <input
             type="number"
             value={scheduleYear}
-            onChange={(event) => setScheduleYear(Number(event.target.value) || currentYear)}
+            onChange={(event) =>
+              setScheduleYear(Number(event.target.value) || currentYear)
+            }
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 sm:w-28"
           />
+
           {isAdmin ? (
             <>
-            <button
-              onClick={() => setIsGenerateOpen(true)}
-              disabled={isLoading}
-              className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RotateCw size={20} /> {scheduleActionLabel}
-            </button>
-            <button
-              onClick={handleAddEntry}
-              disabled={isLoading}
-              className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition w-full sm:w-auto"
-            >
-              <Plus size={20} /> {t("addScheduleEntry")}
-            </button>
-            {schedule.length > 0 ? (
               <button
-                onClick={handleExportSchedule}
-                disabled={isExporting || isLoading}
-                className="flex items-center justify-center gap-2 bg-[#014531] text-white px-4 py-2 rounded-md hover:bg-[#02704e] transition w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => setIsGenerateOpen(true)}
+                disabled={isLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
-                <Download size={20} /> {t("exportSchedule")}
+                <RotateCw size={20} /> {scheduleActionLabel}
               </button>
-            ) : null}
-            <button
-              onClick={handleResetSchedule}
-              disabled={isResetting || isLoading || schedule.length === 0}
-              className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-            >
-              {t("resetSchedule")}
-            </button>
+
+              <button
+                onClick={handleAddEntry}
+                disabled={isLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 sm:w-auto"
+              >
+                <Plus size={20} /> {t("addScheduleEntry")}
+              </button>
+
+              {schedule.length > 0 ? (
+                <button
+                  onClick={handleExportSchedule}
+                  disabled={isExporting || isLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[#014531] px-4 py-2 text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  <Download size={20} /> {t("exportSchedule")}
+                </button>
+              ) : null}
+
+              <button
+                onClick={handleResetSchedule}
+                disabled={isResetting || isLoading || schedule.length === 0}
+                className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              >
+                {t("resetSchedule")}
+              </button>
             </>
           ) : null}
         </div>
@@ -649,7 +769,14 @@ export const SchedulePage = () => {
 
       <div className="mb-4 rounded-md border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
         {t("scheduleScopeNotice")
-          .replace("${semester}", t(scheduleSemester === 1 ? "fallScheduleSemester" : "springScheduleSemester"))
+          .replace(
+            "${semester}",
+            t(
+              scheduleSemester === 1
+                ? "fallScheduleSemester"
+                : "springScheduleSemester",
+            ),
+          )
           .replace("${year}", String(scheduleYear))}
       </div>
 
@@ -660,9 +787,10 @@ export const SchedulePage = () => {
         {schedule.length > 0 ? (
           <TimetableGrid schedule={schedule} />
         ) : (
-          <div className="text-center py-12 text-gray-500">
+          <div className="py-12 text-center text-gray-500">
             <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
             <p>{t("scheduleNotCreated")}</p>
+
             {isAdmin ? (
               <button
                 type="button"
@@ -682,10 +810,12 @@ export const SchedulePage = () => {
             <h2 className="text-xl font-semibold text-gray-900">
               {t("manageScheduleEntries")}
             </h2>
+
             <span className="text-sm text-gray-500">
               {displayedScheduleCount}/{schedule.length}
             </span>
           </div>
+
           <DataTable
             columns={scheduleColumns}
             data={filteredSchedule}
@@ -715,10 +845,15 @@ export const SchedulePage = () => {
               <>
                 <select
                   value={draftGroupFilter}
-                  onChange={(event) => setDraftGroupFilter(event.target.value)}
+                  onChange={(event) =>
+                    setDraftGroupFilter(event.target.value)
+                  }
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
-                  <option value="">{t("all")} {t("groups").toLowerCase()}</option>
+                  <option value="">
+                    {t("all")} {t("groups").toLowerCase()}
+                  </option>
+
                   {Array.from(
                     new Map(
                       schedule
@@ -731,17 +866,26 @@ export const SchedulePage = () => {
                     </option>
                   ))}
                 </select>
+
                 <select
                   value={draftTeacherFilter}
-                  onChange={(event) => setDraftTeacherFilter(event.target.value)}
+                  onChange={(event) =>
+                    setDraftTeacherFilter(event.target.value)
+                  }
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
-                  <option value="">{t("all")} {t("teachers").toLowerCase()}</option>
+                  <option value="">
+                    {t("all")} {t("teachers").toLowerCase()}
+                  </option>
+
                   {Array.from(
                     new Map(
                       schedule
                         .filter((entry) => entry.teacher_id)
-                        .map((entry) => [entry.teacher_id, entry.teacher_name]),
+                        .map((entry) => [
+                          entry.teacher_id,
+                          entry.teacher_name,
+                        ]),
                     ).entries(),
                   ).map(([id, name]) => (
                     <option key={id} value={id}>
@@ -749,12 +893,16 @@ export const SchedulePage = () => {
                     </option>
                   ))}
                 </select>
+
                 <select
                   value={draftRoomFilter}
                   onChange={(event) => setDraftRoomFilter(event.target.value)}
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
-                  <option value="">{t("all")} {t("rooms").toLowerCase()}</option>
+                  <option value="">
+                    {t("all")} {t("rooms").toLowerCase()}
+                  </option>
+
                   {Array.from(
                     new Map(
                       schedule
@@ -767,12 +915,16 @@ export const SchedulePage = () => {
                     </option>
                   ))}
                 </select>
+
                 <select
                   value={draftDayFilter}
                   onChange={(event) => setDraftDayFilter(event.target.value)}
                   className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
-                  <option value="">{t("all")} {t("day").toLowerCase()}</option>
+                  <option value="">
+                    {t("all")} {t("day").toLowerCase()}
+                  </option>
+
                   {WEEKDAY_OPTIONS.map((day) => (
                     <option key={day.value} value={day.value}>
                       {t(day.labelKey)}
@@ -798,10 +950,17 @@ export const SchedulePage = () => {
         <Form
           fields={formFields}
           onSubmit={handleGenerateSchedule}
-          resetKey={`schedule-generate-${schedule.length > 0 ? "regenerate" : "new"}`}
-          submitText={schedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule")}
+          resetKey={`schedule-generate-${
+            schedule.length > 0 ? "regenerate" : "new"
+          }`}
+          submitText={
+            schedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule")
+          }
           isLoading={isLoading}
-          initialValues={{ semester: scheduleSemester, year: scheduleYear }}
+          initialValues={{
+            semester: scheduleSemester,
+            year: scheduleYear,
+          }}
         />
       </Modal>
 
@@ -815,11 +974,13 @@ export const SchedulePage = () => {
           <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {generationError?.message}
           </div>
+
           {generationError?.items?.length ? (
             <div>
               <p className="mb-2 text-sm font-medium text-gray-900">
                 {t("description")}
               </p>
+
               <ul className="list-disc space-y-2 pl-5 text-sm text-gray-700">
                 {generationError.items.map((item) => (
                   <li key={item}>{item}</li>
@@ -827,6 +988,7 @@ export const SchedulePage = () => {
               </ul>
             </div>
           ) : null}
+
           <button
             type="button"
             onClick={() => setGenerationError(null)}
@@ -850,7 +1012,11 @@ export const SchedulePage = () => {
         <Form
           fields={entryFields}
           onSubmit={handleEntrySubmit}
-          resetKey={editingEntry ? `schedule-entry-${editingEntry.id}` : "schedule-entry-new"}
+          resetKey={
+            editingEntry
+              ? `schedule-entry-${editingEntry.id}`
+              : "schedule-entry-new"
+          }
           submitText={editingEntry ? t("save") : t("add")}
           isLoading={isEntrySaving}
           isSubmitDisabled={isEntryFormBlocked}
