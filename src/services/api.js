@@ -23,7 +23,7 @@ const resolveApiBaseUrl = () => {
 };
 
 const API_BASE_URL = resolveApiBaseUrl();
-const API_TIMEOUT_MS = 70000;
+const API_TIMEOUT_MS = 180000;
 
 const api = axios.create({
   baseURL: API_BASE_URL || undefined,
