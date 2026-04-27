@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { teacherPreferenceAPI } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
+import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { useTranslation } from "../hooks/useTranslation";
 import { useFetch } from "../hooks/useAPI";
 
@@ -22,6 +23,7 @@ const infoValueClass =
 
 export default function ProfilePage() {
   const { t } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const { user, uploadAvatar, isLoading } = useAuth();
   const [localError, setLocalError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -120,11 +122,18 @@ export default function ProfilePage() {
 
     try {
       setIsSubmittingPreference(true);
-      await teacherPreferenceAPI.create({
-        preferred_day: preferenceForm.preferred_day,
-        preferred_hour: Number(preferenceForm.preferred_hour),
-        note: preferenceForm.note.trim(),
-      });
+      await withGlobalLoader(
+        () =>
+          teacherPreferenceAPI.create({
+            preferred_day: preferenceForm.preferred_day,
+            preferred_hour: Number(preferenceForm.preferred_hour),
+            note: preferenceForm.note.trim(),
+          }),
+        {
+          title: t("teacherPreferenceSubmit"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
       setPreferenceForm({
         preferred_day: "monday",
         preferred_hour: "8",
@@ -412,7 +421,7 @@ export default function ProfilePage() {
                     disabled={isSubmittingPreference}
                     className="rounded-xl bg-[#014531] px-4 py-2 text-white transition hover:bg-[#026646] disabled:cursor-not-allowed disabled:opacity-60 max-[420px]:w-full"
                   >
-                    {isSubmittingPreference ? t("loading") : t("teacherPreferenceSubmit")}
+                    {t("teacherPreferenceSubmit")}
                   </button>
                 </form>
 

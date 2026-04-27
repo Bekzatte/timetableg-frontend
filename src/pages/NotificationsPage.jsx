@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Bell, Trash2 } from "lucide-react";
+import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { useNotifications } from "../hooks/useNotifications";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -90,6 +91,7 @@ const getNotificationContent = (item, t) => {
 
 export default function NotificationsPage() {
   const { t, language } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -110,7 +112,10 @@ export default function NotificationsPage() {
   const handleMarkAllRead = async () => {
     try {
       setIsMarkingAllRead(true);
-      await markAllAsRead();
+      await withGlobalLoader(() => markAllAsRead(), {
+        title: t("notificationsMarkAllRead"),
+        description: t("globalLoaderSaveDescription"),
+      });
     } finally {
       setIsMarkingAllRead(false);
     }
@@ -119,7 +124,10 @@ export default function NotificationsPage() {
   const handleDeleteAll = async () => {
     try {
       setIsDeletingAll(true);
-      await deleteAll();
+      await withGlobalLoader(() => deleteAll(), {
+        title: t("notificationsDeleteAll"),
+        description: t("globalLoaderClearDescription"),
+      });
     } finally {
       setIsDeletingAll(false);
     }
@@ -128,7 +136,10 @@ export default function NotificationsPage() {
   const handleDeleteOne = async (notificationId) => {
     try {
       setDeletingId(notificationId);
-      await deleteOne(notificationId);
+      await withGlobalLoader(() => deleteOne(notificationId), {
+        title: t("delete"),
+        description: t("globalLoaderDeleteDescription"),
+      });
     } finally {
       setDeletingId(null);
     }
@@ -161,7 +172,7 @@ export default function NotificationsPage() {
                   disabled={isMarkingAllRead}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
                 >
-                  {isMarkingAllRead ? t("loading") : t("notificationsMarkAllRead")}
+                  {t("notificationsMarkAllRead")}
                 </button>
               ) : null}
               {sortedItems.length > 0 ? (
@@ -172,7 +183,7 @@ export default function NotificationsPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
                 >
                   <Trash2 size={18} />
-                  {isDeletingAll ? t("loading") : t("notificationsDeleteAll")}
+                  {t("notificationsDeleteAll")}
                 </button>
               ) : null}
             </div>
@@ -244,7 +255,7 @@ export default function NotificationsPage() {
                             disabled={deletingId === item.id}
                             className="inline-flex items-center justify-center rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
                           >
-                            {deletingId === item.id ? t("loading") : t("delete")}
+                            {t("delete")}
                           </button>
                         </div>
                       </div>

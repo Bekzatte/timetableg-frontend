@@ -6,6 +6,7 @@ export const Form = ({
   onSubmit,
   submitText,
   isLoading = false,
+  showLoadingText = false,
   isSubmitDisabled = false,
   submitHint = "",
   initialValues = {},
@@ -219,7 +220,7 @@ export const Form = ({
         disabled={isLoading || isSubmitDisabled}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-medium transition"
       >
-        {isLoading ? t("loading") : finalSubmitText}
+        {isLoading && showLoadingText ? t("loading") : finalSubmitText}
       </button>
     </form>
   );

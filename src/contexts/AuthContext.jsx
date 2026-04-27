@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { authAPI, profileAPI } from "../services/api";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
+import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { ROLES } from "../constants/roles";
 import { getTranslation } from "../i18n/translations";
 import { getStoredUser, setStoredUser } from "../services/browserSession";
@@ -11,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
+  const { withGlobalLoader } = useGlobalLoader();
 
   useAutoDismiss(error, setError, 5000, null);
 
@@ -64,7 +66,13 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const userData = await authAPI.login(email, password, role);
+      const userData = await withGlobalLoader(
+        () => authAPI.login(email, password, role),
+        {
+          title: getLocalized("login"),
+          description: getLocalized("globalLoaderAuthDescription"),
+        },
+      );
       const userWithRole = { ...userData, role: userData.role || role };
       persistUser(userWithRole);
       return userWithRole;
@@ -93,18 +101,25 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const userData = await authAPI.register(
-        email,
-        password,
-        displayName,
-        role,
-        phone,
-        department,
-        programmeName,
-        groupId,
-        subgroup,
-        language,
-        teachingLanguages,
+      const userData = await withGlobalLoader(
+        () =>
+          authAPI.register(
+            email,
+            password,
+            displayName,
+            role,
+            phone,
+            department,
+            programmeName,
+            groupId,
+            subgroup,
+            language,
+            teachingLanguages,
+          ),
+        {
+          title: getLocalized("register"),
+          description: getLocalized("globalLoaderAuthDescription"),
+        },
       );
       persistUser(userData);
       return userData;
@@ -129,7 +144,13 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const profile = await profileAPI.getCurrent();
+      const profile = await withGlobalLoader(
+        () => profileAPI.getCurrent(),
+        {
+          title: getLocalized("profile"),
+          description: getLocalized("globalLoaderProfileDescription"),
+        },
+      );
       const nextUser = { ...user, ...profile };
       persistUser(nextUser);
       return nextUser;
@@ -146,7 +167,13 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const nextUser = await profileAPI.uploadAvatar(avatarData);
+      const nextUser = await withGlobalLoader(
+        () => profileAPI.uploadAvatar(avatarData),
+        {
+          title: getLocalized("profile"),
+          description: getLocalized("globalLoaderAvatarDescription"),
+        },
+      );
       persistUser(nextUser);
       return nextUser;
     } catch (err) {

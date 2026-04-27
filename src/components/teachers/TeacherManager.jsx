@@ -6,11 +6,13 @@ import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, teacherAPI, teacherPreferenceAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
+import { useGlobalLoader } from "../../hooks/useGlobalLoader";
 import { useTranslation } from "../../hooks/useTranslation";
 import { STUDY_LANGUAGES } from "../../constants/languages";
 
 export const TeacherManager = () => {
   const { t } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
@@ -95,7 +97,10 @@ export const TeacherManager = () => {
       window.confirm(t("confirmDeleteTeacher").replace("${name}", teacher.name))
     ) {
       try {
-        await teacherAPI.delete(teacher.id);
+        await withGlobalLoader(() => teacherAPI.delete(teacher.id), {
+          title: t("delete"),
+          description: t("globalLoaderDeleteDescription"),
+        });
         await execute();
       } catch (error) {
         console.error(t("errorDeleteTeacher"), error);
@@ -110,7 +115,10 @@ export const TeacherManager = () => {
 
     try {
       setIsClearing(true);
-      await adminAPI.clearCollection("teachers");
+      await withGlobalLoader(() => adminAPI.clearCollection("teachers"), {
+        title: t("clearTeachers"),
+        description: t("globalLoaderClearDescription"),
+      });
       await execute();
     } catch (error) {
       console.error("Error clearing teachers:", error);
@@ -132,19 +140,24 @@ export const TeacherManager = () => {
         return;
       }
 
-      if (editingTeacher) {
-        await teacherAPI.update(editingTeacher.id, {
-          ...formData,
-          email: normalizedEmail,
-          teaching_languages: formData.teaching_languages || ["ru", "kk"],
-        });
-      } else {
-        await teacherAPI.create({
-          ...formData,
-          email: normalizedEmail,
-          teaching_languages: formData.teaching_languages || ["ru", "kk"],
-        });
-      }
+      await withGlobalLoader(
+        () =>
+          editingTeacher
+            ? teacherAPI.update(editingTeacher.id, {
+                ...formData,
+                email: normalizedEmail,
+                teaching_languages: formData.teaching_languages || ["ru", "kk"],
+              })
+            : teacherAPI.create({
+                ...formData,
+                email: normalizedEmail,
+                teaching_languages: formData.teaching_languages || ["ru", "kk"],
+              }),
+        {
+          title: editingTeacher ? t("save") : t("addTeacher"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
       await execute();
       setIsModalOpen(false);
     } catch (error) {
@@ -159,10 +172,17 @@ export const TeacherManager = () => {
 
   const handleUpdateRequestStatus = async (request, status) => {
     try {
-      await teacherPreferenceAPI.updateStatus(request.id, {
-        status,
-        admin_comment: "",
-      });
+      await withGlobalLoader(
+        () =>
+          teacherPreferenceAPI.updateStatus(request.id, {
+            status,
+            admin_comment: "",
+          }),
+        {
+          title: t("save"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
       await executePreferenceRequests();
     } catch (error) {
       console.error(t("errorSaveTeacherPreference"), error);
@@ -176,7 +196,10 @@ export const TeacherManager = () => {
 
     try {
       setIsDeletingRequestId(request.id);
-      await teacherPreferenceAPI.deleteOne(request.id);
+      await withGlobalLoader(() => teacherPreferenceAPI.deleteOne(request.id), {
+        title: t("delete"),
+        description: t("globalLoaderDeleteDescription"),
+      });
       await executePreferenceRequests();
     } catch (error) {
       console.error(t("errorDeleteTeacherRequest"), error);
@@ -192,7 +215,10 @@ export const TeacherManager = () => {
 
     try {
       setIsClearingRequests(true);
-      await teacherPreferenceAPI.deleteAll();
+      await withGlobalLoader(() => teacherPreferenceAPI.deleteAll(), {
+        title: t("clearTeacherRequests"),
+        description: t("globalLoaderClearDescription"),
+      });
       await executePreferenceRequests();
     } catch (error) {
       console.error(t("errorDeleteTeacherRequest"), error);
@@ -312,7 +338,7 @@ export const TeacherManager = () => {
             disabled={isClearing || teachers.length === 0}
             className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
-            {isClearing ? t("loading") : t("clearTeachers")}
+            {t("clearTeachers")}
           </button>
         </div>
       </div>
@@ -413,7 +439,7 @@ export const TeacherManager = () => {
                 disabled={isClearingRequests || preferenceRequests.length === 0}
                 className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isClearingRequests ? t("loading") : t("clearTeacherRequests")}
+                {t("clearTeacherRequests")}
               </button>
             </div>
           </div>

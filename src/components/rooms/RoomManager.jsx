@@ -6,6 +6,7 @@ import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, roomAPI, roomBlockAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
+import { useGlobalLoader } from "../../hooks/useGlobalLoader";
 import { useTranslation } from "../../hooks/useTranslation";
 import {
   PROGRAMMES,
@@ -15,6 +16,7 @@ import {
 
 export const RoomManager = () => {
   const { t, language } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBlocksModalOpen, setIsBlocksModalOpen] = useState(false);
@@ -121,7 +123,10 @@ export const RoomManager = () => {
       window.confirm(t("confirmDeleteRoom").replace("${number}", room.number))
     ) {
       try {
-        await roomAPI.delete(room.id);
+        await withGlobalLoader(() => roomAPI.delete(room.id), {
+          title: t("delete"),
+          description: t("globalLoaderDeleteDescription"),
+        });
         await execute();
       } catch (error) {
         console.error(t("errorDeleteRoom"), error);
@@ -136,7 +141,10 @@ export const RoomManager = () => {
 
     try {
       setIsClearing(true);
-      await adminAPI.clearCollection("rooms");
+      await withGlobalLoader(() => adminAPI.clearCollection("rooms"), {
+        title: t("clearRooms"),
+        description: t("globalLoaderClearDescription"),
+      });
       await execute();
     } catch (error) {
       console.error("Error clearing rooms:", error);
@@ -152,11 +160,13 @@ export const RoomManager = () => {
         ...formData,
         available: formData.available ? 1 : 0,
       };
-      if (editingRoom) {
-        await roomAPI.update(editingRoom.id, payload);
-      } else {
-        await roomAPI.create(payload);
-      }
+      await withGlobalLoader(
+        () => (editingRoom ? roomAPI.update(editingRoom.id, payload) : roomAPI.create(payload)),
+        {
+          title: editingRoom ? t("save") : t("addRoom"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
       await execute();
       setIsModalOpen(false);
     } catch (error) {
@@ -177,13 +187,20 @@ export const RoomManager = () => {
     try {
       setIsSubmittingBlock(true);
       setBlockFormError("");
-      await roomBlockAPI.create({
-        room_id: selectedRoom.id,
-        day: blockFormData.day,
-        start_hour: Number(blockFormData.start_hour),
-        end_hour: Number(blockFormData.end_hour),
-        reason: blockFormData.reason,
-      });
+      await withGlobalLoader(
+        () =>
+          roomBlockAPI.create({
+            room_id: selectedRoom.id,
+            day: blockFormData.day,
+            start_hour: Number(blockFormData.start_hour),
+            end_hour: Number(blockFormData.end_hour),
+            reason: blockFormData.reason,
+          }),
+        {
+          title: t("add"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
       await executeRoomBlocks();
       setBlockFormData((current) => ({
         ...current,
@@ -200,7 +217,10 @@ export const RoomManager = () => {
     if (!window.confirm(t("confirmDeleteRoomBlock"))) {
       return;
     }
-    await roomBlockAPI.delete(block.id);
+    await withGlobalLoader(() => roomBlockAPI.delete(block.id), {
+      title: t("delete"),
+      description: t("globalLoaderDeleteDescription"),
+    });
     await executeRoomBlocks();
   };
 
@@ -346,7 +366,7 @@ export const RoomManager = () => {
             disabled={isClearing || rooms.length === 0}
             className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
-            {isClearing ? t("loading") : t("clearRooms")}
+            {t("clearRooms")}
           </button>
         </div>
       </div>
@@ -521,7 +541,7 @@ export const RoomManager = () => {
                 disabled={isSubmittingBlock}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-60"
               >
-                {isSubmittingBlock ? t("loading") : t("add")}
+                {t("add")}
               </button>
             </div>
           </form>

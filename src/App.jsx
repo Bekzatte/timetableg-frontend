@@ -18,6 +18,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
+import FullScreenLoader from "./components/ui/FullScreenLoader";
 import { useLanguage } from "./hooks/useLanguage";
 import { useTranslation } from "./hooks/useTranslation";
 import { ROLES } from "./constants/roles";
@@ -173,6 +174,7 @@ export default function App() {
   return (
     <Router>
       <div className="flex flex-col min-h-screen bg-white">
+        <FullScreenLoader />
         {/* Header */}
         <header className="bg-[#014531] shadow-xl border-b border-green-900">
           <nav className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 py-3 sm:px-6 sm:py-4 xl:px-10">

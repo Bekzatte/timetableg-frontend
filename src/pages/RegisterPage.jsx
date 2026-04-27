@@ -6,6 +6,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { groupAPI, teacherClaimAPI } from "../services/api";
 import { STUDY_LANGUAGES } from "../constants/languages";
+import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import {
   EDUCATION_GROUPS,
   getEducationGroupLabel,
@@ -20,6 +21,7 @@ const TEACHER_REGISTRATION_MODES = {
 
 export const RegisterPage = () => {
   const { t } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const navigate = useNavigate();
   const { register, login, isLoading, error } = useAuth();
   const [selectedRole, setSelectedRole] = useState(ROLES.STUDENT);
@@ -73,7 +75,6 @@ export const RegisterPage = () => {
   const isTeacherClaimMode =
     selectedRole === ROLES.TEACHER &&
     teacherRegistrationMode === TEACHER_REGISTRATION_MODES.CLAIM;
-  const isSubmittingClaim = isConfirmingClaim || isLoading;
   const emailPlaceholder =
     selectedRole === ROLES.TEACHER ? "name@kazatu.edu.kz" : "name@example.com";
   const claimDeliveryLabel = selectedTeacherAccount?.hasEmail
@@ -237,9 +238,16 @@ export const RegisterPage = () => {
     try {
       setIsRequestingClaimCode(true);
       setLocalError("");
-      const result = await teacherClaimAPI.request(
-        selectedTeacherAccount.id,
-        selectedTeacherAccount.hasEmail ? "" : claimEmail.trim().toLowerCase(),
+      const result = await withGlobalLoader(
+        () =>
+          teacherClaimAPI.request(
+            selectedTeacherAccount.id,
+            selectedTeacherAccount.hasEmail ? "" : claimEmail.trim().toLowerCase(),
+          ),
+        {
+          title: t("teacherClaimRequestCode"),
+          description: t("globalLoaderAuthDescription"),
+        },
       );
       setClaimDebugCode(result.debugCode || "");
       setClaimEmail(result.email || claimEmail.trim().toLowerCase());
@@ -272,11 +280,18 @@ export const RegisterPage = () => {
 
       try {
         setIsConfirmingClaim(true);
-        await teacherClaimAPI.confirm(
-          selectedTeacherAccount.id,
-          verificationCode,
-          password,
-          selectedTeacherAccount.hasEmail ? "" : claimEmail.trim().toLowerCase(),
+        await withGlobalLoader(
+          () =>
+            teacherClaimAPI.confirm(
+              selectedTeacherAccount.id,
+              verificationCode,
+              password,
+              selectedTeacherAccount.hasEmail ? "" : claimEmail.trim().toLowerCase(),
+            ),
+          {
+            title: t("teacherClaimConfirmAction"),
+            description: t("globalLoaderAuthDescription"),
+          },
         );
         await login(claimEmail.trim().toLowerCase(), password, ROLES.TEACHER);
         navigate("/schedule");
@@ -518,7 +533,7 @@ export const RegisterPage = () => {
                         disabled={isRequestingClaimCode}
                         className="w-full rounded-md border border-emerald-300 bg-white px-4 py-2 text-sm font-medium text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-60"
                       >
-                        {isRequestingClaimCode ? t("loading") : t("teacherClaimRequestCode")}
+                        {t("teacherClaimRequestCode")}
                       </button>
 
                       {claimDebugCode ? (
@@ -774,11 +789,7 @@ export const RegisterPage = () => {
             disabled={isLoading || isConfirmingClaim}
             className="w-full cursor-pointer rounded-md bg-[#014531] px-4 py-2 font-medium text-white transition hover:bg-[#02704e] disabled:opacity-50"
           >
-            {isSubmittingClaim
-              ? t("loading")
-              : isTeacherClaimMode
-                ? t("teacherClaimConfirmAction")
-                : t("register")}
+            {isTeacherClaimMode ? t("teacherClaimConfirmAction") : t("register")}
           </button>
         </form>
 

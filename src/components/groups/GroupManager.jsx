@@ -6,6 +6,7 @@ import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, groupAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
+import { useGlobalLoader } from "../../hooks/useGlobalLoader";
 import { useTranslation } from "../../hooks/useTranslation";
 import { STUDY_LANGUAGES } from "../../constants/languages";
 import {
@@ -18,6 +19,7 @@ import {
 
 export const GroupManager = () => {
   const { t } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
@@ -113,9 +115,16 @@ export const GroupManager = () => {
         study_course: formData.study_course ? Number(formData.study_course) : null,
         has_subgroups: formData.subgroup_status === "ab" ? 1 : 0,
       };
-      const savedGroup = editingGroup
-        ? await groupAPI.update(editingGroup.id, payload)
-        : await groupAPI.create(payload);
+      const savedGroup = await withGlobalLoader(
+        () =>
+          editingGroup
+            ? groupAPI.update(editingGroup.id, payload)
+            : groupAPI.create(payload),
+        {
+          title: editingGroup ? t("save") : t("addGroup"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
 
       upsertGroup(savedGroup);
       setIsModalOpen(false);
@@ -140,7 +149,13 @@ export const GroupManager = () => {
     }
     try {
       setIsClearing(true);
-      await adminAPI.clearCollection("groups");
+      await withGlobalLoader(
+        () => adminAPI.clearCollection("groups"),
+        {
+          title: t("clearGroups"),
+          description: t("globalLoaderClearDescription"),
+        },
+      );
       await execute();
     } finally {
       setIsClearing(false);
@@ -153,7 +168,13 @@ export const GroupManager = () => {
     }
 
     try {
-      await groupAPI.delete(group.id);
+      await withGlobalLoader(
+        () => groupAPI.delete(group.id),
+        {
+          title: t("delete"),
+          description: t("globalLoaderDeleteDescription"),
+        },
+      );
       await execute();
     } catch (error) {
       console.error("Error deleting group:", error);
@@ -316,7 +337,7 @@ export const GroupManager = () => {
             disabled={isClearing || groups.length === 0}
             className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
-            {isClearing ? t("loading") : t("clearGroups")}
+            {t("clearGroups")}
           </button>
         </div>
       </div>

@@ -6,10 +6,12 @@ import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, courseAPI, groupAPI, sectionAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
+import { useGlobalLoader } from "../../hooks/useGlobalLoader";
 import { useTranslation } from "../../hooks/useTranslation";
 
 export const SectionManager = () => {
   const { t } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
@@ -110,7 +112,10 @@ export const SectionManager = () => {
       setIsGeneratingSections(true);
       setGenerateError("");
       setGenerateResult(null);
-      const result = await sectionAPI.generate({});
+      const result = await withGlobalLoader(() => sectionAPI.generate({}), {
+        title: t("generateSections"),
+        description: t("globalLoaderGenerateDescription"),
+      });
       await execute();
       setGenerateResult(result);
     } catch (error) {
@@ -132,7 +137,10 @@ export const SectionManager = () => {
 
     try {
       setIsClearing(true);
-      await adminAPI.clearCollection("sections");
+      await withGlobalLoader(() => adminAPI.clearCollection("sections"), {
+        title: t("clearSections"),
+        description: t("globalLoaderClearDescription"),
+      });
       await execute();
     } finally {
       setIsClearing(false);
@@ -162,11 +170,13 @@ export const SectionManager = () => {
         teacher_name: selectedTeacher?.name || "",
       };
 
-      if (editingSection) {
-        await sectionAPI.update(editingSection.id, payload);
-      } else {
-        await sectionAPI.create(payload);
-      }
+      await withGlobalLoader(
+        () => (editingSection ? sectionAPI.update(editingSection.id, payload) : sectionAPI.create(payload)),
+        {
+          title: editingSection ? t("save") : t("addSection"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
       await execute();
       setIsModalOpen(false);
     } catch (error) {
@@ -308,7 +318,7 @@ export const SectionManager = () => {
             disabled={isGeneratingSections}
             className="flex items-center justify-center gap-2 rounded-md bg-[#014531] px-4 py-2 text-white transition hover:bg-[#013726] w-full sm:w-auto"
           >
-            <Plus size={20} /> {isGeneratingSections ? t("loading") : t("generateSections")}
+            {t("generateSections")}
           </button>
           <button
             onClick={handleAddSection}
@@ -321,7 +331,7 @@ export const SectionManager = () => {
             disabled={isClearing || sections.length === 0}
             className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
-            {isClearing ? t("loading") : t("clearSections")}
+            {t("clearSections")}
           </button>
         </div>
       </div>

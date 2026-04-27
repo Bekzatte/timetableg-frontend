@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { BookOpen, FileSpreadsheet, FileText, Users, Home, Zap, UsersRound } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
+import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { useTranslation } from "../hooks/useTranslation";
 import Modal from "../components/ui/Modal";
 import {
@@ -28,6 +29,7 @@ const readFileAsDataUrl = (file) =>
 
 export const Dashboard = () => {
   const { t } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const { isAdmin } = useAuth();
   const ropFileInputRef = useRef(null);
   const iupFileInputRef = useRef(null);
@@ -223,7 +225,13 @@ export const Dashboard = () => {
     setImportResult(null);
 
     try {
-      const result = await importAPI.importRop(ropFile.name, ropFileContent);
+      const result = await withGlobalLoader(
+        () => importAPI.importRop(ropFile.name, ropFileContent),
+        {
+          title: t("ropImportConfirm"),
+          description: t("globalLoaderImportDescription"),
+        },
+      );
       await refreshManagedData();
       setIsRopModalOpen(false);
       setRopPreview(null);
@@ -288,9 +296,16 @@ export const Dashboard = () => {
     setImportResult(null);
 
     try {
-      const result = await importAPI.importIup(iupFile.name, iupFileContent, {
-        createMissingCourses: createMissingIupCourses,
-      });
+      const result = await withGlobalLoader(
+        () =>
+          importAPI.importIup(iupFile.name, iupFileContent, {
+            createMissingCourses: createMissingIupCourses,
+          }),
+        {
+          title: t("iupImportConfirm"),
+          description: t("globalLoaderImportDescription"),
+        },
+      );
       await refreshManagedData();
       setIsIupModalOpen(false);
       setIupPreview(null);
@@ -324,7 +339,10 @@ export const Dashboard = () => {
     setImportResult(null);
 
     try {
-      await adminAPI.clearAllData();
+      await withGlobalLoader(() => adminAPI.clearAllData(), {
+        title: t("clearAllData"),
+        description: t("globalLoaderClearDescription"),
+      });
       await refreshManagedData();
       setImportResult({
         title: t("clearAllDataSuccess"),
@@ -459,7 +477,7 @@ export const Dashboard = () => {
                   disabled={isRopPreviewLoading || isRopImporting}
                   className={solidActionButtonClass}
                 >
-                  {isRopPreviewLoading || isRopImporting ? t("loading") : t("ropImportButton")}
+                  {t("ropImportButton")}
                 </button>
                  <p className="mt-4 text-sm text-gray-700">{t("ropImportGuide")}</p>
               </div>
@@ -480,7 +498,7 @@ export const Dashboard = () => {
                   disabled={isIupPreviewLoading || isIupImporting}
                   className={slateActionButtonClass}
                 >
-                  {isIupPreviewLoading || isIupImporting ? t("loading") : t("iupImportButton")}
+                  {t("iupImportButton")}
                 </button>
                 <p className="mt-4 text-sm text-gray-700">{t("iupImportGuide")}</p>
               </div>
@@ -511,7 +529,7 @@ export const Dashboard = () => {
                 disabled={isClearingAll || totalManagedRecords === 0}
                 className={dangerActionButtonClass}
               >
-                {isClearingAll ? t("loading") : t("clearAllData")}
+                {t("clearAllData")}
               </button>
             </div>
 
@@ -646,7 +664,7 @@ export const Dashboard = () => {
                     disabled={isRopImporting}
                     className="rounded-md bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 disabled:opacity-60"
                   >
-                    {isRopImporting ? t("loading") : t("ropImportConfirm")}
+                    {t("ropImportConfirm")}
                   </button>
                 </div>
               </>
@@ -786,7 +804,7 @@ export const Dashboard = () => {
                     disabled={isIupImporting}
                     className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-800 disabled:opacity-60"
                   >
-                    {isIupImporting ? t("loading") : t("iupImportConfirm")}
+                    {t("iupImportConfirm")}
                   </button>
                 </div>
               </>

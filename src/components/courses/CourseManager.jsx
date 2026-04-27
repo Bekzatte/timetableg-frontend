@@ -5,6 +5,7 @@ import Modal from "../ui/Modal";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, courseAPI, courseComponentAPI, importAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
+import { useGlobalLoader } from "../../hooks/useGlobalLoader";
 import { useTranslation } from "../../hooks/useTranslation";
 import { EDUCATIONAL_PROGRAMME_GROUPS } from "../../constants/educationGroups";
 import {
@@ -37,6 +38,7 @@ const emptyComponentDrafts = () =>
 
 export const CourseManager = () => {
   const { t, language } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const ropFileInputRef = useRef(null);
@@ -201,7 +203,10 @@ export const CourseManager = () => {
   const handleDeleteCourse = async (course) => {
     if (window.confirm(`${t("deleteCourse")}?`)) {
       try {
-        await courseAPI.delete(course.id);
+        await withGlobalLoader(() => courseAPI.delete(course.id), {
+          title: t("delete"),
+          description: t("globalLoaderDeleteDescription"),
+        });
         await execute();
       } catch (error) {
         console.error("Error deleting course:", error);
@@ -216,7 +221,10 @@ export const CourseManager = () => {
 
     try {
       setIsClearing(true);
-      await adminAPI.clearCollection("courses");
+      await withGlobalLoader(() => adminAPI.clearCollection("courses"), {
+        title: t("clearCourses"),
+        description: t("globalLoaderClearDescription"),
+      });
       await execute();
     } catch (error) {
       console.error("Error clearing courses:", error);
@@ -273,7 +281,10 @@ export const CourseManager = () => {
     try {
       setRopError("");
       setIsRopImporting(true);
-      await importAPI.importRop(ropFile.name, ropFileContent);
+      await withGlobalLoader(() => importAPI.importRop(ropFile.name, ropFileContent), {
+        title: t("ropImportConfirm"),
+        description: t("globalLoaderImportDescription"),
+      });
       setIsRopModalOpen(false);
       setRopPreview(null);
       setRopFile(null);
@@ -325,7 +336,10 @@ export const CourseManager = () => {
     try {
       setIupError("");
       setIsIupImporting(true);
-      await importAPI.importIup(iupFile.name, iupFileContent);
+      await withGlobalLoader(() => importAPI.importIup(iupFile.name, iupFileContent), {
+        title: t("iupImportConfirm"),
+        description: t("globalLoaderImportDescription"),
+      });
       setIsIupModalOpen(false);
       setIupPreview(null);
       setIupFile(null);
@@ -422,12 +436,13 @@ export const CourseManager = () => {
         instructor_id: null,
         instructor_name: "",
       };
-      let response;
-      if (editingCourse) {
-        response = await courseAPI.update(editingCourse.id, payload);
-      } else {
-        response = await courseAPI.create(payload);
-      }
+      const response = await withGlobalLoader(
+        () => (editingCourse ? courseAPI.update(editingCourse.id, payload) : courseAPI.create(payload)),
+        {
+          title: editingCourse ? t("save") : t("addCourse"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
       const savedCourse = response.data || response;
       await saveCourseComponents(savedCourse);
       await execute();
@@ -567,7 +582,7 @@ export const CourseManager = () => {
             disabled={isClearing || courses.length === 0}
             className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
-            {isClearing ? t("loading") : t("clearCourses")}
+            {t("clearCourses")}
           </button>
         </div>
       </div>
@@ -859,7 +874,7 @@ export const CourseManager = () => {
             disabled={isSubmitting}
             className="w-full rounded-md bg-blue-600 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? t("loading") : editingCourse ? t("save") : t("add")}
+            {editingCourse ? t("save") : t("add")}
           </button>
         </form>
       </Modal>
@@ -964,14 +979,14 @@ export const CourseManager = () => {
                 >
                   {t("cancel")}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleImportRop}
-                  disabled={isRopImporting}
-                  className="rounded-md bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 disabled:opacity-60"
-                >
-                  {isRopImporting ? t("loading") : t("ropImportConfirm")}
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleImportRop}
+                    disabled={isRopImporting}
+                    className="rounded-md bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                  {t("ropImportConfirm")}
+                  </button>
               </div>
             </>
           ) : null}
@@ -1073,14 +1088,14 @@ export const CourseManager = () => {
                 >
                   {t("cancel")}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleImportIup}
-                  disabled={isIupImporting}
-                  className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-800 disabled:opacity-60"
-                >
-                  {isIupImporting ? t("loading") : t("iupImportConfirm")}
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleImportIup}
+                    disabled={isIupImporting}
+                    className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-800 disabled:opacity-60"
+                  >
+                  {t("iupImportConfirm")}
+                  </button>
               </div>
             </>
           ) : null}

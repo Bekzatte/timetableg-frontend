@@ -7,6 +7,7 @@ import Form from "../components/ui/Form";
 import { courseAPI, roomAPI, scheduleAPI, sectionAPI, teacherAPI } from "../services/api";
 import { useFetch } from "../hooks/useAPI";
 import { useAuth } from "../hooks/useAuth";
+import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 
@@ -155,6 +156,7 @@ const formatGenerationError = (job, t) => {
 
 export const SchedulePage = () => {
   const { t } = useTranslation();
+  const { withGlobalLoader } = useGlobalLoader();
   const { isAdmin } = useAuth();
   const currentYear = new Date().getFullYear();
   const [schedule, setSchedule] = useState([]);
@@ -269,7 +271,10 @@ export const SchedulePage = () => {
       setPageError("");
       setIsGenerateOpen(false);
       setIsLoading(true);
-      const job = await scheduleAPI.generate(formData);
+      const job = await withGlobalLoader(() => scheduleAPI.generate(formData), {
+        title: t("generateSchedule"),
+        description: t("globalLoaderGenerateDescription"),
+      });
       await waitForGenerationJob(job.jobId);
       await refreshSchedule();
     } catch (error) {
@@ -296,7 +301,13 @@ export const SchedulePage = () => {
     try {
       setIsResetting(true);
       setPageError("");
-      await scheduleAPI.reset({ semester: scheduleSemester, year: scheduleYear });
+      await withGlobalLoader(
+        () => scheduleAPI.reset({ semester: scheduleSemester, year: scheduleYear }),
+        {
+          title: t("resetSchedule"),
+          description: t("globalLoaderClearDescription"),
+        },
+      );
       setSchedule([]);
       await refreshSchedule();
     } catch (error) {
@@ -311,7 +322,13 @@ export const SchedulePage = () => {
     try {
       setIsExporting(true);
       setPageError("");
-      const blob = await scheduleAPI.exportExcel({ semester: scheduleSemester, year: scheduleYear });
+      const blob = await withGlobalLoader(
+        () => scheduleAPI.exportExcel({ semester: scheduleSemester, year: scheduleYear }),
+        {
+          title: t("exportSchedule"),
+          description: t("globalLoaderExportDescription"),
+        },
+      );
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -348,7 +365,10 @@ export const SchedulePage = () => {
 
     try {
       setPageError("");
-      await scheduleAPI.delete(entry.id);
+      await withGlobalLoader(() => scheduleAPI.delete(entry.id), {
+        title: t("delete"),
+        description: t("globalLoaderDeleteDescription"),
+      });
       await refreshSchedule();
     } catch (error) {
       console.error(t("errorDeleteScheduleEntry"), error);
@@ -402,11 +422,13 @@ export const SchedulePage = () => {
         throw new Error(t("errorBadRequest"));
       }
 
-      if (editingEntry) {
-        await scheduleAPI.update(editingEntry.id, payload);
-      } else {
-        await scheduleAPI.create(payload);
-      }
+      await withGlobalLoader(
+        () => (editingEntry ? scheduleAPI.update(editingEntry.id, payload) : scheduleAPI.create(payload)),
+        {
+          title: editingEntry ? t("save") : t("add"),
+          description: t("globalLoaderSaveDescription"),
+        },
+      );
 
       await refreshSchedule();
       setIsEntryModalOpen(false);
@@ -604,7 +626,7 @@ export const SchedulePage = () => {
                 disabled={isExporting || isLoading}
                 className="flex items-center justify-center gap-2 bg-[#014531] text-white px-4 py-2 rounded-md hover:bg-[#02704e] transition w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <Download size={20} /> {isExporting ? t("loading") : t("exportSchedule")}
+                <Download size={20} /> {t("exportSchedule")}
               </button>
             ) : null}
             <button
@@ -612,7 +634,7 @@ export const SchedulePage = () => {
               disabled={isResetting || isLoading || schedule.length === 0}
               className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
-              {isResetting ? t("loading") : t("resetSchedule")}
+              {t("resetSchedule")}
             </button>
             </>
           ) : null}

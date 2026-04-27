@@ -4,16 +4,19 @@ import "./index.css";
 import App from "./App.jsx";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { GlobalLoaderProvider } from "./contexts/GlobalLoaderContext";
 import { NotificationsProvider } from "./contexts/NotificationsContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <LanguageProvider>
-      <AuthProvider>
-        <NotificationsProvider>
-          <App />
-        </NotificationsProvider>
-      </AuthProvider>
+      <GlobalLoaderProvider>
+        <AuthProvider>
+          <NotificationsProvider>
+            <App />
+          </NotificationsProvider>
+        </AuthProvider>
+      </GlobalLoaderProvider>
     </LanguageProvider>
   </StrictMode>,
 );

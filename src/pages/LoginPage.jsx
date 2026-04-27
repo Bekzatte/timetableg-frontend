@@ -113,7 +113,7 @@ export const LoginPage = () => {
             disabled={isLoading}
             className="w-full bg-[#014531] hover:bg-[#02704e] disabled:opacity-50 text-white px-4 py-2 rounded-md transition font-medium cursor-pointer"
           >
-            {isLoading ? t("loading") : t("login")}
+            {t("login")}
           </button>
         </form>
 
