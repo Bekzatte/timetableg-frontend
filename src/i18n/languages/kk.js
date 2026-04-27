@@ -29,6 +29,7 @@ export default {
     sectionsCount: "Барлық секциялар",
     schedulesCount: "Барлық кестелер",
     availableRooms: "Қолжетімді аудиториялар",
+    totalSeats: "Жалпы орын саны",
     studentsCount: "Барлық студенттер",
     viewMore: "Толығымен қарау",
 

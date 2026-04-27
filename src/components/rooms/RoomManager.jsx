@@ -80,7 +80,11 @@ export const RoomManager = () => {
       }),
     [rooms, programmeFilter, typeFilter, availabilityFilter],
   );
-  const availableRoomsCount = rooms.filter((room) => room.available).length;
+  const availableRoomsCount = filteredRooms.filter((room) => room.available).length;
+  const totalSeatsCount = filteredRooms.reduce(
+    (sum, room) => sum + (Number(room.capacity) || 0),
+    0,
+  );
   const hasActiveFilters = Boolean(programmeFilter || typeFilter || availabilityFilter);
   const roomTypeLabelMap = useMemo(
     () => ({
@@ -301,13 +305,13 @@ export const RoomManager = () => {
 
   return (
     <div className="p-6 bg-white">
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">
             {t("roomsCount")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            {rooms.length}
+            {filteredRooms.length}
           </p>
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
@@ -316,6 +320,14 @@ export const RoomManager = () => {
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
             {availableRoomsCount}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5">
+          <p className="text-sm font-medium text-amber-700">
+            {t("totalSeats")}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">
+            {totalSeatsCount}
           </p>
         </div>
       </div>

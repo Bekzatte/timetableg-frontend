@@ -55,24 +55,34 @@ export const SectionManager = () => {
     () => new Map(courses.map((course) => [String(course.id), course])),
     [courses],
   );
+  const sectionsBySecondaryFilters = useMemo(
+    () =>
+      sections.filter((section) => {
+        const matchesLessonType =
+          !lessonTypeFilter || section.lesson_type === lessonTypeFilter;
+        const matchesGroup = !groupFilter || String(section.group_id) === groupFilter;
+        return matchesLessonType && matchesGroup;
+      }),
+    [sections, lessonTypeFilter, groupFilter],
+  );
   const studyCourseTabs = useMemo(() => {
     const years = [...new Set(
-      sections
+      sectionsBySecondaryFilters
         .map((section) => Number(courseById.get(String(section.course_id))?.year))
         .filter((year) => Number.isFinite(year) && year > 0),
     )].sort((left, right) => left - right);
 
     return [
-      { value: "all", label: t("all"), count: sections.length },
+      { value: "all", label: t("all"), count: sectionsBySecondaryFilters.length },
       ...years.map((year) => ({
         value: String(year),
         label: `${year} ${t("studyCourse").toLowerCase()}`,
-        count: sections.filter(
+        count: sectionsBySecondaryFilters.filter(
           (section) => Number(courseById.get(String(section.course_id))?.year) === year,
         ).length,
       })),
     ];
-  }, [courseById, sections, t]);
+  }, [courseById, sectionsBySecondaryFilters, t]);
   const hasActiveFilters = Boolean(lessonTypeFilter || groupFilter);
   const isSectionFormBlocked = courses.length === 0 || groups.length === 0;
   const sectionFormHint =
@@ -83,14 +93,11 @@ export const SectionManager = () => {
         : "";
   const filteredSections = useMemo(
     () =>
-      sections.filter((section) => {
+      sectionsBySecondaryFilters.filter((section) => {
         const sectionStudyCourse = String(courseById.get(String(section.course_id))?.year || "");
-        const matchesStudyCourse = activeStudyCourse === "all" || sectionStudyCourse === activeStudyCourse;
-        const matchesLessonType = !lessonTypeFilter || section.lesson_type === lessonTypeFilter;
-        const matchesGroup = !groupFilter || String(section.group_id) === groupFilter;
-        return matchesStudyCourse && matchesLessonType && matchesGroup;
+        return activeStudyCourse === "all" || sectionStudyCourse === activeStudyCourse;
       }),
-    [sections, courseById, activeStudyCourse, lessonTypeFilter, groupFilter],
+    [sectionsBySecondaryFilters, courseById, activeStudyCourse],
   );
 
   const handleAddSection = () => {
@@ -286,7 +293,7 @@ export const SectionManager = () => {
             {t("sectionsCount")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            {sections.length}
+            {filteredSections.length}
           </p>
         </div>
       </div>

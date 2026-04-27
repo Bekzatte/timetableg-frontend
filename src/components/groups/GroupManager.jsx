@@ -43,7 +43,7 @@ export const GroupManager = () => {
       }),
     [groups, languageFilter, courseFilter],
   );
-  const totalStudents = groups.reduce(
+  const totalStudents = filteredGroups.reduce(
     (sum, group) => sum + (Number(group.student_count) || 0),
     0,
   );
@@ -291,7 +291,7 @@ export const GroupManager = () => {
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">{t("groupsCount")}</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{groups.length}</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{filteredGroups.length}</p>
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
           <p className="text-sm font-medium text-emerald-700">{t("studentsCount")}</p>

@@ -106,32 +106,49 @@ export const CourseManager = () => {
     });
     return grouped;
   }, [courseComponents]);
+  const coursesBySecondaryFilters = useMemo(
+    () =>
+      courses.filter((course) => {
+        const matchesDepartment = !departmentFilter || course.department === departmentFilter;
+        const matchesSemester = !semesterFilter || String(course.semester) === semesterFilter;
+        return matchesDepartment && matchesSemester;
+      }),
+    [courses, departmentFilter, semesterFilter],
+  );
   const courseYearTabs = useMemo(() => {
     const years = [...new Set(
-      courses
+      coursesBySecondaryFilters
         .map((course) => Number(course.year))
         .filter((year) => Number.isFinite(year) && year > 0),
     )].sort((left, right) => left - right);
 
     return [
-      { value: "all", label: t("all"), count: courses.length },
+      { value: "all", label: t("all"), count: coursesBySecondaryFilters.length },
       ...years.map((year) => ({
         value: String(year),
         label: `${year} ${t("studyCourse").toLowerCase()}`,
-        count: courses.filter((course) => Number(course.year) === year).length,
+        count: coursesBySecondaryFilters.filter((course) => Number(course.year) === year).length,
       })),
     ];
-  }, [courses, t]);
+  }, [coursesBySecondaryFilters, t]);
   const hasActiveFilters = Boolean(departmentFilter || semesterFilter);
   const filteredCourses = useMemo(
     () =>
-      courses.filter((course) => {
-        const matchesActiveYear = activeCourseYear === "all" || String(course.year) === activeCourseYear;
-        const matchesDepartment = !departmentFilter || course.department === departmentFilter;
-        const matchesSemester = !semesterFilter || String(course.semester) === semesterFilter;
-        return matchesActiveYear && matchesDepartment && matchesSemester;
+      coursesBySecondaryFilters.filter((course) => {
+        const matchesActiveYear =
+          activeCourseYear === "all" || String(course.year) === activeCourseYear;
+        return matchesActiveYear;
       }),
-    [courses, activeCourseYear, departmentFilter, semesterFilter],
+    [coursesBySecondaryFilters, activeCourseYear],
+  );
+  const filteredProgrammeGroupsCount = useMemo(
+    () =>
+      new Set(
+        filteredCourses
+          .map((course) => String(course.programme || "").trim())
+          .filter(Boolean),
+      ).size,
+    [filteredCourses],
   );
 
   const lessonTypeLabels = {
@@ -507,7 +524,7 @@ export const CourseManager = () => {
             {t("coursesCount")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            {courses.length}
+            {filteredCourses.length}
           </p>
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
@@ -515,7 +532,7 @@ export const CourseManager = () => {
             {t("totalEducationalProgrammeGroups")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            {EDUCATIONAL_PROGRAMME_GROUPS.length}
+            {filteredProgrammeGroupsCount}
           </p>
         </div>
       </div>

@@ -29,6 +29,7 @@ export default {
     sectionsCount: "Всего секций",
     schedulesCount: "Всего расписаний",
     availableRooms: "Доступных аудиторий",
+    totalSeats: "Всего мест",
     studentsCount: "Всего студентов",
     viewMore: "Посмотреть все",
 

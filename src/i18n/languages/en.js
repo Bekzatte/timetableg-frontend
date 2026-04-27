@@ -28,6 +28,7 @@ export default {
     sectionsCount: "Total Sections",
     schedulesCount: "Total Schedules",
     availableRooms: "Available Rooms",
+    totalSeats: "Total Seats",
     studentsCount: "Total Students",
     viewMore: "View All",
 

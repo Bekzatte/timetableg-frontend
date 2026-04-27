@@ -67,6 +67,17 @@ export const TeacherManager = () => {
       }),
     [teachers, subjectFilter, languageFilter],
   );
+  const filteredSubjectOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          filteredTeachers.flatMap((teacher) =>
+            Array.isArray(teacher.assigned_disciplines) ? teacher.assigned_disciplines : [],
+          ),
+        ),
+      ).sort((left, right) => left.localeCompare(right, "ru")),
+    [filteredTeachers],
+  );
   const preferenceRequests = Array.isArray(preferenceRequestsData) ? preferenceRequestsData : [];
 
   const handleAddTeacher = () => {
@@ -257,7 +268,7 @@ export const TeacherManager = () => {
             {t("totalInstructors")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            {teachers.length}
+            {filteredTeachers.length}
           </p>
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
@@ -265,7 +276,7 @@ export const TeacherManager = () => {
             {t("totalSubjects")}
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
-            {subjectOptions.length}
+            {filteredSubjectOptions.length}
           </p>
         </div>
         <button
