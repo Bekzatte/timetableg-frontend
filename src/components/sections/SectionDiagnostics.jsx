@@ -188,12 +188,12 @@ export const SectionDiagnostics = ({
           )}
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-4">
+          <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <h3 className="text-sm font-semibold text-gray-900">
               {t("validationIssues")}
             </h3>
-            <div className="inline-flex rounded-md border border-gray-200 bg-gray-50 p-1">
+            <div className="grid w-full min-w-0 grid-cols-2 gap-1 rounded-md border border-gray-200 bg-gray-50 p-1 sm:grid-cols-4 md:w-auto">
               {["all", "error", "warning", "info"].map((severity) => (
                 <button
                   key={severity}
@@ -202,13 +202,15 @@ export const SectionDiagnostics = ({
                     setIssueSeverityFilter(severity);
                     resetVisibleIssues();
                   }}
-                  className={`rounded px-2.5 py-1 text-xs font-medium transition ${
+                  className={`min-w-0 rounded px-2 py-1 text-xs font-medium transition ${
                     issueSeverityFilter === severity
                       ? "bg-[#014531] text-white"
                       : "text-gray-600 hover:bg-white"
                   }`}
                 >
-                  {severity === "all" ? t("all") : severityMeta[severity].label}
+                  <span className="block truncate">
+                    {severity === "all" ? t("all") : severityMeta[severity].label}
+                  </span>
                 </button>
               ))}
             </div>
