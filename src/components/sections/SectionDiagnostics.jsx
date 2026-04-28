@@ -18,6 +18,8 @@ export const SectionDiagnostics = ({
 }) => {
   const { t } = useTranslation();
   const [issueSeverityFilter, setIssueSeverityFilter] = useState("all");
+  const [issueSearchQuery, setIssueSearchQuery] = useState("");
+  const [visibleIssueCount, setVisibleIssueCount] = useState(20);
   const issues = useMemo(
     () => (Array.isArray(report?.issues) ? report.issues : []),
     [report],
@@ -72,12 +74,35 @@ export const SectionDiagnostics = ({
   }, [issues]);
 
   const filteredIssues = useMemo(
-    () =>
-      issues
-        .filter((issue) => issueSeverityFilter === "all" || issue.severity === issueSeverityFilter)
-        .slice(0, 12),
-    [issueSeverityFilter, issues],
+    () => {
+      const normalizedQuery = issueSearchQuery.trim().toLowerCase();
+      return issues.filter((issue) => {
+        const matchesSeverity =
+          issueSeverityFilter === "all" || issue.severity === issueSeverityFilter;
+        if (!matchesSeverity) {
+          return false;
+        }
+        if (!normalizedQuery) {
+          return true;
+        }
+        return [
+          issue.code,
+          issue.message,
+          issue.group_name,
+          issue.course_code,
+          issue.course_name,
+          issue.lesson_type,
+          issue.teacher_name,
+        ]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedQuery));
+      });
+    },
+    [issueSearchQuery, issueSeverityFilter, issues],
   );
+  const visibleIssues = filteredIssues.slice(0, visibleIssueCount);
+  const canShowMoreIssues = visibleIssueCount < filteredIssues.length;
+  const resetVisibleIssues = () => setVisibleIssueCount(20);
 
   return (
     <section className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -173,7 +198,10 @@ export const SectionDiagnostics = ({
                 <button
                   key={severity}
                   type="button"
-                  onClick={() => setIssueSeverityFilter(severity)}
+                  onClick={() => {
+                    setIssueSeverityFilter(severity);
+                    resetVisibleIssues();
+                  }}
                   className={`rounded px-2.5 py-1 text-xs font-medium transition ${
                     issueSeverityFilter === severity
                       ? "bg-[#014531] text-white"
@@ -186,11 +214,27 @@ export const SectionDiagnostics = ({
             </div>
           </div>
 
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <input
+              type="search"
+              value={issueSearchQuery}
+              onChange={(event) => {
+                setIssueSearchQuery(event.target.value);
+                resetVisibleIssues();
+              }}
+              placeholder={`${t("search")}...`}
+              className="min-w-0 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#014531] focus:ring-2 focus:ring-[#014531]/20 sm:flex-1"
+            />
+            <span className="text-xs text-gray-500">
+              {t("shown")}: {Math.min(visibleIssueCount, filteredIssues.length)} / {filteredIssues.length}
+            </span>
+          </div>
+
           <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
             {isLoading && !report ? (
               <p className="text-sm text-gray-500">{t("loading")}</p>
-            ) : filteredIssues.length ? (
-              filteredIssues.map((issue, index) => {
+            ) : visibleIssues.length ? (
+              visibleIssues.map((issue, index) => {
                 const meta = severityMeta[issue.severity] || severityMeta.info;
                 return (
                   <div
@@ -221,6 +265,15 @@ export const SectionDiagnostics = ({
               <p className="text-sm text-gray-500">{t("noValidationIssues")}</p>
             )}
           </div>
+          {canShowMoreIssues ? (
+            <button
+              type="button"
+              onClick={() => setVisibleIssueCount((current) => current + 20)}
+              className="mt-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+              {t("showMore")}
+            </button>
+          ) : null}
         </div>
       </div>
     </section>

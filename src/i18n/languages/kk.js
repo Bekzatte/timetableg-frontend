@@ -191,6 +191,8 @@ export default {
     updated: "Жаңартылды",
     skipped: "Өткізілді",
     refresh: "Жаңарту",
+    shown: "Көрсетілді",
+    showMore: "Тағы көрсету",
     generateSections: "Секцияларды қалыптастыру",
     generateSectionsFromIup: "ИУП бойынша қалыптастыру",
     previewSections: "Секцияларды алдын ала қарау",

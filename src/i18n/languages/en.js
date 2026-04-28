@@ -190,6 +190,8 @@ export default {
     updated: "Updated",
     skipped: "Skipped",
     refresh: "Refresh",
+    shown: "Shown",
+    showMore: "Show more",
     generateSections: "Generate sections",
     generateSectionsFromIup: "Generate from IUP",
     previewSections: "Preview sections",

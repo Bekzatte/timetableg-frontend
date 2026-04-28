@@ -257,7 +257,7 @@ export const SectionManager = () => {
     {
       key: "requires_computers",
       label: t("requiresComputers"),
-      render: (_value, section) => (section.lesson_type === "practical" || section.lesson_type === "lab" ? t("yes") : t("no")),
+      render: (value, section) => (Number(value || 0) === 1 || section.lesson_type === "lab" ? t("yes") : t("no")),
     },
     { key: "subgroup_mode", label: t("subgroupMode"), render: (value) => t(value || "auto") },
     { key: "subgroup_count", label: t("subgroupCount") },
@@ -323,7 +323,7 @@ export const SectionManager = () => {
       label: t("requiresComputers"),
       type: "computed",
       render: (formData) =>
-        formData.lesson_type === "practical" || formData.lesson_type === "lab" ? t("yes") : t("no"),
+        formData.lesson_type === "lab" ? t("yes") : t("no"),
     },
     {
       name: "subgroup_mode",

@@ -191,6 +191,8 @@ export default {
     updated: "Обновлено",
     skipped: "Пропущено",
     refresh: "Обновить",
+    shown: "Показано",
+    showMore: "Показать ещё",
     generateSections: "Сформировать секции",
     generateSectionsFromIup: "Сформировать из ИУП",
     previewSections: "Preview секций",
