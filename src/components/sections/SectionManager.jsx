@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Eye, Plus } from "lucide-react";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
+import SectionDiagnostics from "./SectionDiagnostics";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, courseAPI, groupAPI, sectionAPI, teacherAPI } from "../../services/api";
 import { useFetch } from "../../hooks/useAPI";
@@ -20,6 +21,12 @@ export const SectionManager = () => {
   const [isGeneratingSections, setIsGeneratingSections] = useState(false);
   const [generateResult, setGenerateResult] = useState(null);
   const [generateError, setGenerateError] = useState("");
+  const [previewResult, setPreviewResult] = useState(null);
+  const [previewError, setPreviewError] = useState("");
+  const [isPreviewingSections, setIsPreviewingSections] = useState(false);
+  const [validationReport, setValidationReport] = useState(null);
+  const [validationError, setValidationError] = useState("");
+  const [isValidationLoading, setIsValidationLoading] = useState(false);
   const [activeStudyCourse, setActiveStudyCourse] = useState("all");
   const [lessonTypeFilter, setLessonTypeFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
@@ -42,12 +49,28 @@ export const SectionManager = () => {
     execute: executeTeachers,
   } = useFetch(teacherAPI.getAll);
 
+  const fetchValidationReport = useCallback(async () => {
+    try {
+      setIsValidationLoading(true);
+      setValidationError("");
+      const report = await sectionAPI.getValidationReport();
+      setValidationReport(report);
+      return report;
+    } catch (error) {
+      setValidationError(error.message);
+      return null;
+    } finally {
+      setIsValidationLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     execute();
     executeCourses();
     executeGroups();
     executeTeachers();
-  }, [execute, executeCourses, executeGroups, executeTeachers]);
+    fetchValidationReport();
+  }, [execute, executeCourses, executeGroups, executeTeachers, fetchValidationReport]);
 
   const sections = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const courses = useMemo(() => (Array.isArray(coursesData) ? coursesData : []), [coursesData]);
@@ -101,10 +124,29 @@ export const SectionManager = () => {
       }),
     [sectionsBySecondaryFilters, courseById, activeStudyCourse],
   );
-
   const handleAddSection = () => {
     setEditingSection(null);
     setIsModalOpen(true);
+  };
+
+  const handlePreviewSections = async () => {
+    try {
+      setIsPreviewingSections(true);
+      setPreviewError("");
+      setPreviewResult(null);
+      const result = await withGlobalLoader(
+        () => sectionAPI.previewGenerateFromIup({ strict_mode: true }),
+        {
+          title: t("previewSections"),
+          description: t("globalLoaderGenerateDescription"),
+        },
+      );
+      setPreviewResult(result);
+    } catch (error) {
+      setPreviewError(error.message);
+    } finally {
+      setIsPreviewingSections(false);
+    }
   };
 
   const handleGenerateSections = async () => {
@@ -112,11 +154,15 @@ export const SectionManager = () => {
       setIsGeneratingSections(true);
       setGenerateError("");
       setGenerateResult(null);
-      const result = await withGlobalLoader(() => sectionAPI.generate({}), {
-        title: t("generateSections"),
-        description: t("globalLoaderGenerateDescription"),
-      });
+      const result = await withGlobalLoader(
+        () => sectionAPI.generateFromIup({ strict_mode: true }),
+        {
+          title: t("generateSections"),
+          description: t("globalLoaderGenerateDescription"),
+        },
+      );
       await execute();
+      await fetchValidationReport();
       setGenerateResult(result);
     } catch (error) {
       setGenerateError(error.message);
@@ -142,6 +188,7 @@ export const SectionManager = () => {
         description: t("globalLoaderClearDescription"),
       });
       await execute();
+      await fetchValidationReport();
     } finally {
       setIsClearing(false);
     }
@@ -178,6 +225,7 @@ export const SectionManager = () => {
         },
       );
       await execute();
+      await fetchValidationReport();
       setIsModalOpen(false);
     } catch (error) {
       setErrors((prev) => ({
@@ -308,17 +356,32 @@ export const SectionManager = () => {
         </div>
       </div>
 
+      <SectionDiagnostics
+        report={validationReport}
+        error={validationError}
+        isLoading={isValidationLoading}
+        sectionsCount={sections.length}
+        onRefresh={fetchValidationReport}
+      />
+
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {t("sections")}
         </h1>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <button
+            onClick={handlePreviewSections}
+            disabled={isPreviewingSections}
+            className="flex items-center justify-center gap-2 rounded-md border border-[#014531] bg-white px-4 py-2 text-[#014531] transition hover:bg-[#f4fbf7] disabled:cursor-not-allowed disabled:opacity-60 w-full sm:w-auto"
+          >
+            <Eye size={18} /> {t("previewSections")}
+          </button>
+          <button
             onClick={handleGenerateSections}
             disabled={isGeneratingSections}
             className="flex items-center justify-center gap-2 rounded-md bg-[#014531] px-4 py-2 text-white transition hover:bg-[#013726] w-full sm:w-auto"
           >
-            {t("generateSections")}
+            {t("generateSectionsFromIup")}
           </button>
           <button
             onClick={handleAddSection}
@@ -342,11 +405,29 @@ export const SectionManager = () => {
         </div>
       ) : null}
 
+      {previewError ? (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {previewError}
+        </div>
+      ) : null}
+
+      {previewResult ? (
+        <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          <p className="font-semibold">{t("sectionsPreviewReady")}</p>
+          <p className="mt-1">
+            {t("wouldCreate")}: {previewResult.inserted || 0}. {t("wouldUpdate")}: {previewResult.updated || 0}.{" "}
+            {t("skipped")}: {previewResult.skipped || 0}. {t("validationIssues")}: {previewResult.issues?.length || 0}.
+          </p>
+        </div>
+      ) : null}
+
       {generateResult ? (
         <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
           <p className="font-semibold">{t("sectionsGenerated")}</p>
           <p className="mt-1">
             {t("created")}: {generateResult.inserted || 0}. {t("updated")}: {generateResult.updated || 0}.
+            {" "}
+            {t("skipped")}: {generateResult.skipped || 0}.
           </p>
           {generateResult.missing?.groups || generateResult.missing?.components ? (
             <p className="mt-2 text-amber-700">

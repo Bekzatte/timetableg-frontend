@@ -312,6 +312,12 @@ export const sectionAPI = {
   create: (data) => api.post("/sections", data),
   update: (id, data) => api.put(`/sections/${id}`, data),
   generate: (data) => api.post("/sections/generate", data).then((response) => response.data),
+  generateFromIup: (data) =>
+    api.post("/sections/generate-from-iup", data).then((response) => response.data),
+  previewGenerateFromIup: (data) =>
+    api.post("/sections/generate-from-iup/preview", data).then((response) => response.data),
+  getValidationReport: () =>
+    api.get("/validation/report").then((response) => response.data),
 };
 
 export const scheduleAPI = {
