@@ -5,6 +5,7 @@ import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { useTranslation } from "../hooks/useTranslation";
 import { useFetch } from "../hooks/useAPI";
+import { formatLessonTimeRange, scheduleHours } from "../utils/timeSlots";
 
 const MAX_FILE_SIZE = 1024 * 1024;
 
@@ -396,9 +397,9 @@ export default function ProfilePage() {
                       onChange={handlePreferenceChange}
                       className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-gray-900"
                     >
-                      {Array.from({ length: 10 }, (_, index) => `${index + 8}`).map((hour) => (
+                      {scheduleHours.map((hour) => (
                         <option key={hour} value={hour}>
-                          {hour}:00
+                          {formatLessonTimeRange(hour)}
                         </option>
                       ))}
                     </select>
@@ -439,7 +440,7 @@ export default function ProfilePage() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0">
                             <p className="break-words text-base font-semibold text-gray-900">
-                              {t(request.preferred_day)} • {request.preferred_hour}:00
+                              {t(request.preferred_day)} • {formatLessonTimeRange(request.preferred_hour)}
                             </p>
                             <p className="mt-1 break-words text-sm text-gray-600">
                               {request.note || t("teacherPreferenceNoNote")}

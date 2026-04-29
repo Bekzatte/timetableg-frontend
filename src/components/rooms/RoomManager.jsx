@@ -13,6 +13,7 @@ import {
   getCanonicalProgrammeName,
   getProgrammeLabel,
 } from "../../constants/programmes";
+import { formatHour, scheduleBoundaryHours, scheduleHours } from "../../utils/timeSlots";
 
 export const RoomManager = () => {
   const { t, language } = useTranslation();
@@ -67,10 +68,8 @@ export const RoomManager = () => {
     ],
     [t],
   );
-  const hourOptions = useMemo(
-    () => Array.from({ length: 11 }, (_item, index) => 8 + index),
-    [],
-  );
+  const hourOptions = useMemo(() => scheduleHours, []);
+  const boundaryHourOptions = useMemo(() => scheduleBoundaryHours, []);
   const filteredRooms = useMemo(
     () =>
       rooms.filter((room) => {
@@ -501,7 +500,7 @@ export const RoomManager = () => {
                 >
                   {hourOptions.map((hour) => (
                     <option key={hour} value={hour}>
-                      {hour}:00
+                      {formatHour(hour)}
                     </option>
                   ))}
                 </select>
@@ -517,14 +516,14 @@ export const RoomManager = () => {
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
                 >
-                  {hourOptions
+                  {boundaryHourOptions
                     .filter((hour) => hour > Number(blockFormData.start_hour))
-                    .concat(Number(blockFormData.start_hour) + 1 > hourOptions[hourOptions.length - 1]
+                    .concat(Number(blockFormData.start_hour) + 1 > boundaryHourOptions[boundaryHourOptions.length - 1]
                       ? [Number(blockFormData.start_hour) + 1]
                       : [])
                     .map((hour) => (
                       <option key={hour} value={hour}>
-                        {hour}:00
+                        {formatHour(hour)}
                       </option>
                     ))}
                 </select>
@@ -563,7 +562,7 @@ export const RoomManager = () => {
                 >
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-gray-900">
-                      {t(String(block.day || "").toLowerCase()) || block.day} • {block.start_hour}:00 - {block.end_hour}:00
+                      {t(String(block.day || "").toLowerCase()) || block.day} • {formatHour(block.start_hour)} - {formatHour(block.end_hour)}
                     </p>
                     <p className="text-sm text-gray-600">
                       {block.reason || "—"}

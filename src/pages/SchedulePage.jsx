@@ -15,6 +15,7 @@ import { useFetch } from "../hooks/useAPI";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
+import { formatLessonTimeRange, scheduleHours } from "../utils/timeSlots";
 
 const WEEKDAY_OPTIONS = [
   { value: "monday", labelKey: "monday" },
@@ -580,14 +581,10 @@ export const SchedulePage = () => {
       label: t("startTime"),
       type: "select",
       placeholder: t("startTime"),
-      options: Array.from({ length: 10 }, (_, index) => {
-        const hour = index + 8;
-
-        return {
-          value: hour,
-          label: `${hour}:00`,
-        };
-      }),
+      options: scheduleHours.map((hour) => ({
+        value: hour,
+        label: formatLessonTimeRange(hour),
+      })),
       required: true,
     },
     {
@@ -655,7 +652,7 @@ export const SchedulePage = () => {
     {
       key: "start_hour",
       label: t("startTime"),
-      render: (value) => `${value}:00`,
+      render: (value) => formatLessonTimeRange(value),
     },
     {
       key: "semester",

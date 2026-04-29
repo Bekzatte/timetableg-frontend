@@ -9,6 +9,7 @@ import { useFetch } from "../../hooks/useAPI";
 import { useGlobalLoader } from "../../hooks/useGlobalLoader";
 import { useTranslation } from "../../hooks/useTranslation";
 import { STUDY_LANGUAGES } from "../../constants/languages";
+import { formatLessonTimeRange } from "../../utils/timeSlots";
 
 export const TeacherManager = () => {
   const { t } = useTranslation();
@@ -466,7 +467,7 @@ export const TeacherManager = () => {
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-1">
                       <p className="text-base font-semibold text-gray-900">
-                        {request.teacher_name} • {t(request.preferred_day)} • {request.preferred_hour}:00
+                        {request.teacher_name} • {t(request.preferred_day)} • {formatLessonTimeRange(request.preferred_hour)}
                       </p>
                       <p className="text-sm text-gray-600">{request.teacher_email}</p>
                       <p className="text-sm text-gray-600">

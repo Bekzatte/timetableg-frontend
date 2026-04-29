@@ -1,4 +1,5 @@
 import { useTranslation } from "../../hooks/useTranslation";
+import { formatLessonTimeRange, scheduleHours } from "../../utils/timeSlots";
 
 export const TimetableGrid = ({ schedule = [] }) => {
   const { t } = useTranslation();
@@ -10,8 +11,6 @@ export const TimetableGrid = ({ schedule = [] }) => {
     t("thursdayShort"),
     t("fridayShort"),
   ];
-
-  const hours = Array.from({ length: 10 }, (_, i) => i + 8); // 8:00 - 17:00
 
   const getScheduleItems = (day, hour) => {
     const weekday = day + 1;
@@ -47,10 +46,10 @@ export const TimetableGrid = ({ schedule = [] }) => {
           </tr>
         </thead>
         <tbody>
-          {hours.map((hour) => (
+          {scheduleHours.map((hour) => (
             <tr key={hour} className="border-b border-gray-200">
               <td className="px-4 py-2 border-r font-semibold text-sm text-center bg-gray-50 text-gray-900 border-gray-200 w-32 whitespace-nowrap">
-                {hour}:00 - {hour}:50
+                {formatLessonTimeRange(hour)}
               </td>
               {days.map((_, dayIdx) => {
                 const items = getScheduleItems(dayIdx, hour);

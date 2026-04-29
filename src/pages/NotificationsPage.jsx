@@ -3,6 +3,7 @@ import { Bell, Trash2 } from "lucide-react";
 import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { useNotifications } from "../hooks/useNotifications";
 import { useTranslation } from "../hooks/useTranslation";
+import { formatLessonTimeRange } from "../utils/timeSlots";
 
 const LOCALE_BY_LANGUAGE = {
   kk: "kk-KZ",
@@ -31,7 +32,7 @@ const formatScheduleBrief = (scheduleItem, t) => {
 
   const subgroup = String(scheduleItem.subgroup || "").trim().toUpperCase();
   const subgroupLabel = subgroup ? ` | ${t("subgroup")} ${subgroup}` : "";
-  return `${scheduleItem.course_name || ""} | ${scheduleItem.day || ""} ${scheduleItem.start_hour || ""}:00 | ${t("roomNumber")} ${scheduleItem.room_number || ""} | ${t("groupNumber")} ${scheduleItem.group_name || ""}${subgroupLabel}`;
+  return `${scheduleItem.course_name || ""} | ${scheduleItem.day || ""} ${formatLessonTimeRange(scheduleItem.start_hour)} | ${t("roomNumber")} ${scheduleItem.room_number || ""} | ${t("groupNumber")} ${scheduleItem.group_name || ""}${subgroupLabel}`;
 };
 
 const formatTimestamp = (value, language) => {
