@@ -109,6 +109,7 @@ export default {
     teachingLanguages: "Языки преподавания",
     languageRussian: "Русский",
     languageKazakh: "Казахский",
+    languageEnglish: "Английский",
     subgroups: "Подгруппы",
     autoSubgroupsStatus: "Автостатус подгрупп",
     autoSubgroupsSplit: "Разделена",
@@ -489,6 +490,7 @@ export default {
       "Расписание ещё не создано. Нажмите кнопку выше, чтобы сгенерировать его.",
     generateNewSchedule: "Сгенерировать новое расписание",
     exportSchedule: "Экспортировать расписание",
+    exportLanguage: "Язык экспорта",
     resetSchedule: "Сбросить расписание",
     scheduleScopeNotice:
       "Сейчас показано: ${semester}, ${year}. Экспорт и сброс применяются только к этому периоду.",

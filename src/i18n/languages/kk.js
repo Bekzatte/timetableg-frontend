@@ -109,6 +109,7 @@ export default {
     teachingLanguages: "Оқыту тілдері",
     languageRussian: "Орыс тілі",
     languageKazakh: "Қазақ тілі",
+    languageEnglish: "Ағылшын тілі",
     subgroups: "A / B топшалары",
     autoSubgroupsStatus: "Авто топша статусы",
     autoSubgroupsSplit: "Бөлінді",
@@ -488,6 +489,7 @@ export default {
       "Кесте әлі құрылмаған. Оны жасау үшін жоғарыдағы батырманы басыңыз.",
     generateNewSchedule: "Жаңа кесте құру",
     exportSchedule: "Кестені Excel-ге экспорттау",
+    exportLanguage: "Экспорт тілі",
     resetSchedule: "Кестені тазалау",
     scheduleScopeNotice:
       "Қазір көрсетіліп тұрғаны: ${semester}, ${year}. Экспорт пен тазалау осы кезеңге қолданылады.",

@@ -102,7 +102,13 @@ export const Form = ({
           {errors.error}
         </div>
       )}
-      {fields.map((field) => (
+      {fields.map((field) => {
+        const isDisabled =
+          typeof field.disabled === "function"
+            ? field.disabled(formData)
+            : Boolean(field.disabled);
+
+        return (
         <div key={field.name}>
           <label className="block text-sm font-medium mb-1 text-gray-700">
             {field.label}
@@ -119,8 +125,9 @@ export const Form = ({
               onChange={handleChange}
               placeholder={field.placeholder}
               required={field.required}
+              disabled={isDisabled}
               rows={field.rows || 4}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition bg-white text-gray-900 border-gray-300 ${errors[field.name] ? "border-red-500" : ""}`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition bg-white text-gray-900 border-gray-300 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 ${errors[field.name] ? "border-red-500" : ""}`}
             />
           ) : field.type === "select" ? (
             <select
@@ -128,7 +135,8 @@ export const Form = ({
               value={formData[field.name] || ""}
               onChange={handleChange}
               required={field.required}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition bg-white text-gray-900 border-gray-300 ${errors[field.name] ? "border-red-500" : ""}`}
+              disabled={isDisabled}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition bg-white text-gray-900 border-gray-300 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 ${errors[field.name] ? "border-red-500" : ""}`}
             >
               <option value="">{field.placeholder || t("selectOption")}</option>
               {(typeof field.options === "function" ? field.options(formData) : field.options)?.map((opt) => (
@@ -204,14 +212,16 @@ export const Form = ({
               onChange={handleChange}
               placeholder={field.placeholder}
               required={field.required}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition bg-white text-gray-900 border-gray-300 ${errors[field.name] ? "border-red-500" : ""}`}
+              disabled={isDisabled}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition bg-white text-gray-900 border-gray-300 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 ${errors[field.name] ? "border-red-500" : ""}`}
             />
           )}
           {errors[field.name] && (
             <p className="text-sm mt-1 text-red-600">{errors[field.name]}</p>
           )}
         </div>
-      ))}
+        );
+      })}
       {submitHint ? (
         <p className="text-sm text-amber-700">{submitHint}</p>
       ) : null}

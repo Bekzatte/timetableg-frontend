@@ -222,7 +222,7 @@ const filterScheduleEntries = (entries, filters) =>
   });
 
 export const SchedulePage = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { isAdmin } = useAuth();
 
   const currentYear = new Date().getFullYear();
@@ -231,6 +231,13 @@ export const SchedulePage = () => {
   const [scheduleSemester, setScheduleSemester] = useState(1);
   const [scheduleYear, setScheduleYear] = useState(currentYear);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [resetSemester, setResetSemester] = useState(1);
+  const [resetYear, setResetYear] = useState(currentYear);
+  const [exportSemester, setExportSemester] = useState(1);
+  const [exportYear, setExportYear] = useState(currentYear);
+  const [exportLanguage, setExportLanguage] = useState(language || "ru");
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -340,6 +347,8 @@ export const SchedulePage = () => {
   );
 
   const selectedSemesterSchedule = schedulesBySemester[scheduleSemester] || [];
+  const hasAnyScheduleForYear =
+    schedulesBySemester[1].length > 0 || schedulesBySemester[2].length > 0;
 
   const hasActiveEntryFilters = (semester) => {
     const filters = filtersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
@@ -440,22 +449,31 @@ export const SchedulePage = () => {
     }
   };
 
-  const handleResetSchedule = async () => {
-    if (!window.confirm(t("confirmResetSchedule"))) {
-      return;
-    }
+  const openResetScheduleModal = () => {
+    setResetSemester(scheduleSemester);
+    setResetYear(scheduleYear);
+    setIsResetModalOpen(true);
+  };
 
+  const handleResetSchedule = async () => {
     try {
       setIsResetting(true);
       setPageError("");
 
       await scheduleAPI.reset({
-        semester: scheduleSemester,
-        year: scheduleYear,
+        semester: resetSemester,
+        year: resetYear,
       });
 
-      setSchedule([]);
+      setSchedule((current) =>
+        current.filter(
+          (entry) =>
+            Number(entry.semester) !== Number(resetSemester) ||
+            Number(entry.year) !== Number(resetYear),
+        ),
+      );
       await refreshSchedule();
+      setIsResetModalOpen(false);
     } catch (error) {
       console.error(t("errorResetSchedule"), error);
       setPageError(error.message || t("errorResetSchedule"));
@@ -464,27 +482,36 @@ export const SchedulePage = () => {
     }
   };
 
+  const openExportScheduleModal = () => {
+    setExportSemester(scheduleSemester);
+    setExportYear(scheduleYear);
+    setExportLanguage(language || "ru");
+    setIsExportModalOpen(true);
+  };
+
   const handleExportSchedule = async () => {
     try {
       setIsExporting(true);
       setPageError("");
 
       const blob = await scheduleAPI.exportExcel({
-        semester: scheduleSemester,
-        year: scheduleYear,
+        semester: exportSemester,
+        year: exportYear,
+        language: exportLanguage,
       });
 
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
 
       link.href = downloadUrl;
-      link.download = "schedule-export.xlsx";
+      link.download = `schedule-${exportYear}-semester-${exportSemester}.xlsx`;
 
       document.body.appendChild(link);
       link.click();
       link.remove();
 
       window.URL.revokeObjectURL(downloadUrl);
+      setIsExportModalOpen(false);
     } catch (error) {
       console.error(t("errorExportSchedule"), error);
       setPageError(error.message || t("errorExportSchedule"));
@@ -521,6 +548,73 @@ export const SchedulePage = () => {
       console.error(t("errorDeleteScheduleEntry"), error);
       setPageError(error.message || t("errorDeleteScheduleEntry"));
     }
+  };
+
+  const getSelectedEntrySection = (formData) =>
+    sections.find((section) => String(section.id) === String(formData.section_id));
+
+  const getSelectedEntryCourse = (section) =>
+    courses.find((course) => String(course.id) === String(section?.course_id));
+
+  const hasGroupSlotConflict = (entry, selectedSection, subgroup) => {
+    if (String(entry.group_id) !== String(selectedSection.group_id)) {
+      return false;
+    }
+
+    const existingSubgroup = String(entry.subgroup || "").toUpperCase();
+    const nextSubgroup = String(subgroup || "").toUpperCase();
+
+    return !existingSubgroup || !nextSubgroup || existingSubgroup === nextSubgroup;
+  };
+
+  const getAvailableStartHourOptions = (formData) => {
+    const selectedSection = getSelectedEntrySection(formData);
+    const selectedCourse = getSelectedEntryCourse(selectedSection);
+
+    if (
+      !selectedSection ||
+      !formData.room_id ||
+      !formData.weekday ||
+      !formData.semester ||
+      !formData.year
+    ) {
+      return [];
+    }
+
+    const teacherId = selectedSection.teacher_id || selectedCourse?.instructor_id;
+    const day = toIsoDateForWeekday(formData.weekday, Number(formData.year));
+    const semester = Number(formData.semester);
+    const year = Number(formData.year);
+
+    return scheduleHours
+      .filter((hour) => {
+        const hasConflict = schedule.some((entry) => {
+          if (editingEntry && String(entry.id) === String(editingEntry.id)) {
+            return false;
+          }
+
+          if (
+            Number(entry.semester) !== semester ||
+            Number(entry.year) !== year ||
+            entry.day !== day ||
+            Number(entry.start_hour) !== Number(hour)
+          ) {
+            return false;
+          }
+
+          return (
+            String(entry.room_id) === String(formData.room_id) ||
+            (teacherId && String(entry.teacher_id) === String(teacherId)) ||
+            hasGroupSlotConflict(entry, selectedSection, formData.subgroup)
+          );
+        });
+
+        return !hasConflict;
+      })
+      .map((hour) => ({
+        value: hour,
+        label: formatLessonTimeRange(hour),
+      }));
   };
 
   const handleEntrySubmit = async (formData, setErrors) => {
@@ -639,7 +733,26 @@ export const SchedulePage = () => {
         value: section.id,
         label: `${section.course_name} - ${section.group_name}`,
       })),
+      onChange: () => ({
+        start_hour: "",
+        subgroup: "",
+      }),
       required: true,
+    },
+    {
+      name: "selected_group",
+      label: t("groupNumber"),
+      type: "computed",
+      render: (formData) => getSelectedEntrySection(formData)?.group_name || "-",
+    },
+    {
+      name: "selected_lesson_type",
+      label: t("lessonType"),
+      type: "computed",
+      render: (formData) => {
+        const lessonType = getSelectedEntrySection(formData)?.lesson_type;
+        return lessonType ? t(lessonType) : "-";
+      },
     },
     {
       name: "room_id",
@@ -650,6 +763,9 @@ export const SchedulePage = () => {
         value: room.id,
         label: room.number,
       })),
+      onChange: () => ({
+        start_hour: "",
+      }),
       required: true,
     },
     {
@@ -661,6 +777,9 @@ export const SchedulePage = () => {
         value: item.value,
         label: t(item.labelKey),
       })),
+      onChange: () => ({
+        start_hour: "",
+      }),
       required: true,
     },
     {
@@ -668,32 +787,40 @@ export const SchedulePage = () => {
       label: t("startTime"),
       type: "select",
       placeholder: t("startTime"),
-      options: scheduleHours.map((hour) => ({
-        value: hour,
-        label: formatLessonTimeRange(hour),
-      })),
+      options: getAvailableStartHourOptions,
+      disabled: (formData) =>
+        !formData.section_id ||
+        !formData.room_id ||
+        !formData.weekday ||
+        getAvailableStartHourOptions(formData).length === 0,
       required: true,
     },
     {
       name: "subgroup",
-      label: t("subgroup"),
+      label: t("subgroupMode"),
       type: "select",
       placeholder: t("selectSubgroup"),
       options: [
-        { value: "", label: "-" },
+        { value: "", label: t("none") },
         { value: "A", label: "A" },
         { value: "B", label: "B" },
       ],
+      onChange: () => ({
+        start_hour: "",
+      }),
     },
     {
       name: "semester",
       label: t("semester"),
       type: "select",
       placeholder: t("semester"),
-      options: [
-        { value: 1, label: "1" },
-        { value: 2, label: "2" },
-      ],
+      options: SCHEDULE_SEMESTER_OPTIONS.map((item) => ({
+        value: item.value,
+        label: t(item.labelKey),
+      })),
+      onChange: () => ({
+        start_hour: "",
+      }),
       required: true,
     },
     {
@@ -701,6 +828,9 @@ export const SchedulePage = () => {
       label: t("year"),
       type: "number",
       placeholder: String(new Date().getFullYear()),
+      onChange: () => ({
+        start_hour: "",
+      }),
       required: true,
     },
   ];
@@ -752,7 +882,7 @@ export const SchedulePage = () => {
   ];
 
   const scheduleActionLabel =
-    selectedSemesterSchedule.length > 0 ? t("regenerateSchedule") : t("generateNewSchedule");
+    selectedSemesterSchedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule");
 
   const renderFilterControls = (semester, semesterSchedule) => {
     const draftFilters = draftFiltersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
@@ -911,9 +1041,9 @@ export const SchedulePage = () => {
                 <Plus size={20} /> {t("addScheduleEntry")}
               </button>
 
-              {selectedSemesterSchedule.length > 0 ? (
+              {hasAnyScheduleForYear ? (
                 <button
-                  onClick={handleExportSchedule}
+                  onClick={openExportScheduleModal}
                   disabled={isExporting || isLoading}
                   className="flex w-full items-center justify-center gap-2 rounded-md bg-[#014531] px-4 py-2 text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
@@ -922,7 +1052,7 @@ export const SchedulePage = () => {
               ) : null}
 
               <button
-                onClick={handleResetSchedule}
+                onClick={openResetScheduleModal}
                 disabled={isResetting || isLoading || selectedSemesterSchedule.length === 0}
                 className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
@@ -938,19 +1068,6 @@ export const SchedulePage = () => {
           {pageError}
         </div>
       ) : null}
-
-      <div className="mb-4 rounded-md border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-        {t("scheduleScopeNotice")
-          .replace(
-            "${semester}",
-            t(
-              scheduleSemester === 1
-                ? "fallScheduleSemester"
-                : "springScheduleSemester",
-            ),
-          )
-          .replace("${year}", String(scheduleYear))}
-      </div>
 
       <div className="space-y-6">
         {SCHEDULE_SEMESTER_OPTIONS.map((semesterOption) => {
@@ -986,19 +1103,6 @@ export const SchedulePage = () => {
                     <div className="py-12 text-center text-gray-500">
                       <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
                       <p>{t("scheduleNotCreated")}</p>
-
-                      {isAdmin ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setScheduleSemester(semester);
-                            setIsGenerateOpen(true);
-                          }}
-                          className="mx-auto mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-                        >
-                          <RotateCw size={18} /> {t("generateSchedule")}
-                        </button>
-                      ) : null}
                     </div>
                   )}
 
@@ -1096,6 +1200,152 @@ export const SchedulePage = () => {
       </Modal>
 
       <Modal
+        isOpen={isExportModalOpen}
+        onClose={() => {
+          if (!isExporting) {
+            setIsExportModalOpen(false);
+          }
+        }}
+        title={t("exportSchedule")}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t("semester")}
+            </label>
+            <select
+              value={exportSemester}
+              onChange={(event) => setExportSemester(Number(event.target.value))}
+              disabled={isExporting}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+            >
+              {SCHEDULE_SEMESTER_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {t(item.labelKey)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t("year")}
+            </label>
+            <input
+              type="number"
+              value={exportYear}
+              onChange={(event) => setExportYear(Number(event.target.value) || currentYear)}
+              disabled={isExporting}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t("exportLanguage")}
+            </label>
+            <select
+              value={exportLanguage}
+              onChange={(event) => setExportLanguage(event.target.value)}
+              disabled={isExporting}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+            >
+              <option value="ru">{t("languageRussian")}</option>
+              <option value="kk">{t("languageKazakh")}</option>
+              <option value="en">{t("languageEnglish")}</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setIsExportModalOpen(false)}
+              disabled={isExporting}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {t("cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleExportSchedule}
+              disabled={isExporting}
+              className="rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isExporting ? t("loading") : t("exportSchedule")}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isResetModalOpen}
+        onClose={() => {
+          if (!isResetting) {
+            setIsResetModalOpen(false);
+          }
+        }}
+        title={t("resetSchedule")}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t("semester")}
+            </label>
+            <select
+              value={resetSemester}
+              onChange={(event) => setResetSemester(Number(event.target.value))}
+              disabled={isResetting}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+            >
+              {SCHEDULE_SEMESTER_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {t(item.labelKey)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t("year")}
+            </label>
+            <input
+              type="number"
+              value={resetYear}
+              onChange={(event) => setResetYear(Number(event.target.value) || currentYear)}
+              disabled={isResetting}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+            />
+          </div>
+
+          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {t("confirmResetSchedule")}
+          </div>
+
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setIsResetModalOpen(false)}
+              disabled={isResetting}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {t("cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleResetSchedule}
+              disabled={isResetting}
+              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isResetting ? t("loading") : t("resetSchedule")}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
         isOpen={isEntryModalOpen}
         onClose={() => {
           if (!isLoading) {
@@ -1130,7 +1380,7 @@ export const SchedulePage = () => {
                   weekday: editingEntry.weekday || "monday",
                 }
               : {
-                  start_hour: 8,
+                  start_hour: "",
                   semester: scheduleSemester,
                   year: scheduleYear,
                   subgroup: "",

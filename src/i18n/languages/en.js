@@ -108,6 +108,7 @@ export default {
     teachingLanguages: "Teaching Languages",
     languageRussian: "Russian",
     languageKazakh: "Kazakh",
+    languageEnglish: "English",
     subgroups: "Subgroups",
     autoSubgroupsStatus: "Auto subgroup status",
     autoSubgroupsSplit: "Split",
@@ -488,6 +489,7 @@ export default {
       "No schedule created. Click the button above to generate one.",
     generateNewSchedule: "Generate New Schedule",
     exportSchedule: "Export Schedule",
+    exportLanguage: "Export Language",
     resetSchedule: "Reset Schedule",
     scheduleScopeNotice:
       "Currently shown: ${semester}, ${year}. Export and reset apply only to this period.",
