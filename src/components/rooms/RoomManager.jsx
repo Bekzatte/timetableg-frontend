@@ -16,10 +16,9 @@ import {
 import { formatHour, scheduleBoundaryHours, scheduleHours } from "../../utils/timeSlots";
 
 const ALL_FACULTIES_VALUE = "Все факультеты";
-const ORLENOK_ROOM_NAME = "орленок";
+const SHARED_FACULTY_MIN_CAPACITY = 100;
 
-const isOrlenokRoomNumber = (value) =>
-  String(value || "").trim().toLowerCase().includes(ORLENOK_ROOM_NAME);
+const isSharedFacultyRoomCapacity = (value) => Number(value) > SHARED_FACULTY_MIN_CAPACITY;
 
 export const RoomManager = () => {
   const { t, language } = useTranslation();
@@ -161,10 +160,10 @@ export const RoomManager = () => {
   const handleSubmit = async (formData, setErrors) => {
     try {
       setIsSubmitting(true);
-      const isOrlenokRoom = isOrlenokRoomNumber(formData.number);
+      const isSharedFacultyRoom = isSharedFacultyRoomCapacity(formData.capacity);
       const payload = {
         ...formData,
-        programme: isOrlenokRoom
+        programme: isSharedFacultyRoom
           ? ALL_FACULTIES_VALUE
           : formData.programme === ALL_FACULTIES_VALUE
             ? ""
@@ -282,15 +281,6 @@ export const RoomManager = () => {
       label: t("roomNumber"),
       placeholder: "101",
       required: true,
-      onChange: (value, next) => {
-        if (isOrlenokRoomNumber(value)) {
-          return { programme: ALL_FACULTIES_VALUE };
-        }
-        if (next.programme === ALL_FACULTIES_VALUE) {
-          return { programme: "" };
-        }
-        return {};
-      },
     },
     {
       name: "capacity",
@@ -298,6 +288,15 @@ export const RoomManager = () => {
       type: "number",
       placeholder: "30",
       required: true,
+      onChange: (value, next) => {
+        if (isSharedFacultyRoomCapacity(value)) {
+          return { programme: ALL_FACULTIES_VALUE };
+        }
+        if (next.programme === ALL_FACULTIES_VALUE) {
+          return { programme: "" };
+        }
+        return {};
+      },
     },
     {
       name: "type",
@@ -315,7 +314,7 @@ export const RoomManager = () => {
       type: "select",
       placeholder: t("selectFaculty"),
       options: (formData) => [
-        ...(isOrlenokRoomNumber(formData.number)
+        ...(isSharedFacultyRoomCapacity(formData.capacity)
           ? [{ value: ALL_FACULTIES_VALUE, label: t("allFaculties") }]
           : []),
         ...PROGRAMMES.map((programme) => ({
@@ -470,7 +469,7 @@ export const RoomManager = () => {
             editingRoom
               ? {
                   ...editingRoom,
-                  programme: isOrlenokRoomNumber(editingRoom.number)
+                  programme: isSharedFacultyRoomCapacity(editingRoom.capacity)
                     ? ALL_FACULTIES_VALUE
                     : editingRoom.programme || "",
                 }
