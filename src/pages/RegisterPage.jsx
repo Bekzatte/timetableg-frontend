@@ -19,6 +19,9 @@ const TEACHER_REGISTRATION_MODES = {
   MANUAL: "manual",
 };
 
+const STUDENT_SELECT_CLASS_NAME =
+  "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500";
+
 export const RegisterPage = () => {
   const { t } = useTranslation();
   const { withGlobalLoader } = useGlobalLoader();
@@ -617,7 +620,7 @@ export const RegisterPage = () => {
                     setSubgroup("");
                     setStudentLanguage("");
                   }}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className={STUDENT_SELECT_CLASS_NAME}
                 >
                   <option value="">{t("selectEducationalProgrammeGroup")}</option>
                   {EDUCATION_GROUPS.map((group) => (
@@ -641,7 +644,7 @@ export const RegisterPage = () => {
                     setStudentLanguage("");
                   }}
                   disabled={!educationGroup}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className={STUDENT_SELECT_CLASS_NAME}
                 >
                   <option value="">{t("selectSpecialty")}</option>
                   {getProgrammeOptionsByEducationGroup(educationGroup).map((programme) => (
@@ -670,15 +673,9 @@ export const RegisterPage = () => {
                     }
                   }}
                   disabled={!canSelectStudentGroup}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+                  className={STUDENT_SELECT_CLASS_NAME}
                 >
-                  <option value="">
-                    {!educationGroup
-                      ? t("selectEducationalProgrammeGroup")
-                      : !specialtyCode
-                        ? t("selectSpecialty")
-                        : t("selectGroup")}
-                  </option>
+                  <option value="">{t("selectGroup")}</option>
                   {filteredStudentGroups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name} •{" "}
