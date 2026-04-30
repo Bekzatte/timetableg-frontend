@@ -232,7 +232,6 @@ export const Dashboard = () => {
           description: t("globalLoaderImportDescription"),
         },
       );
-      await refreshManagedData();
       setIsRopModalOpen(false);
       setRopPreview(null);
       setRopFile(null);
@@ -245,6 +244,7 @@ export const Dashboard = () => {
           existing: result?.courseLists?.existing || [],
         },
       });
+      await refreshManagedData();
     } catch (error) {
       setRopError(error.message || t("errorUnknown"));
     } finally {
@@ -306,7 +306,6 @@ export const Dashboard = () => {
           description: t("globalLoaderImportDescription"),
         },
       );
-      await refreshManagedData();
       setIsIupModalOpen(false);
       setIupPreview(null);
       setIupFile(null);
@@ -322,6 +321,7 @@ export const Dashboard = () => {
           missing: result?.stats?.courseLists?.missing || [],
         },
       });
+      await refreshManagedData();
     } catch (error) {
       setIupError(error.message || t("errorUnknown"));
     } finally {
