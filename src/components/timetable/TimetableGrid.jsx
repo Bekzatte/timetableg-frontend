@@ -1,6 +1,16 @@
 import { useTranslation } from "../../hooks/useTranslation";
 import { formatLessonTimeRange, scheduleHours } from "../../utils/timeSlots";
 
+const LESSON_TYPE_STYLES = {
+  lecture: "border-amber-500 bg-amber-100 text-amber-950",
+  practical: "border-blue-500 bg-blue-100 text-blue-950",
+  lab: "border-emerald-500 bg-emerald-100 text-emerald-950",
+};
+
+const getLessonTypeStyle = (lessonType) =>
+  LESSON_TYPE_STYLES[String(lessonType || "").trim().toLowerCase()] ||
+  "border-gray-400 bg-gray-100 text-gray-900";
+
 export const TimetableGrid = ({ schedule = [] }) => {
   const { t } = useTranslation();
 
@@ -59,11 +69,11 @@ export const TimetableGrid = ({ schedule = [] }) => {
                     className="min-h-12 overflow-hidden border-r border-gray-200 px-2 py-2 text-sm align-top sm:px-3"
                   >
                     <div className="space-y-2">
-                      {items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded border-l-4 border-blue-500 bg-blue-100 p-2 text-xs text-blue-900"
-                        >
+	                      {items.map((item) => (
+	                        <div
+	                          key={item.id}
+	                          className={`rounded border-l-4 p-2 text-xs ${getLessonTypeStyle(item.lesson_type)}`}
+	                        >
                           <div className="font-semibold">{item.course_name}</div>
                           <div>
                             {item.group_name}

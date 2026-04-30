@@ -782,7 +782,7 @@ export const SchedulePage = () => {
         className="rounded-lg bg-white p-4 shadow-md sm:p-6"
       >
         {schedule.length > 0 ? (
-          <TimetableGrid schedule={schedule} />
+          <TimetableGrid schedule={filteredSchedule} />
         ) : (
           <div className="py-12 text-center text-gray-500">
             <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
