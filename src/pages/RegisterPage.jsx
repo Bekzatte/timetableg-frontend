@@ -59,15 +59,16 @@ export const RegisterPage = () => {
     { value: ROLES.STUDENT, label: t("student") },
     { value: ROLES.TEACHER, label: t("teacher") },
   ];
-  const filteredStudentGroups = useMemo(
-    () =>
-      groups.filter((group) => {
-        const matchesEducationGroup = !educationGroup || group.programme === educationGroup;
-        const matchesSpecialty = !specialtyCode || group.specialty_code === specialtyCode;
-        return matchesEducationGroup && matchesSpecialty;
-      }),
-    [groups, educationGroup, specialtyCode],
-  );
+  const canSelectStudentGroup = Boolean(educationGroup && specialtyCode);
+  const filteredStudentGroups = useMemo(() => {
+    if (!canSelectStudentGroup) {
+      return [];
+    }
+
+    return groups.filter(
+      (group) => group.programme === educationGroup && group.specialty_code === specialtyCode,
+    );
+  }, [groups, educationGroup, specialtyCode, canSelectStudentGroup]);
   const selectedGroup = groups.find((group) => String(group.id) === String(groupId));
   const requiresSubgroup = Boolean(
     selectedGroup?.auto_has_subgroups || selectedGroup?.has_subgroups,
@@ -668,9 +669,16 @@ export const RegisterPage = () => {
                       setSubgroup("");
                     }
                   }}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  disabled={!canSelectStudentGroup}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                 >
-                  <option value="">{t("selectGroup")}</option>
+                  <option value="">
+                    {!educationGroup
+                      ? t("selectEducationalProgrammeGroup")
+                      : !specialtyCode
+                        ? t("selectSpecialty")
+                        : t("selectGroup")}
+                  </option>
                   {filteredStudentGroups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name} •{" "}

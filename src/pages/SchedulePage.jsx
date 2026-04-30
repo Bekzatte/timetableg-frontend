@@ -30,6 +30,12 @@ const SCHEDULE_SEMESTER_OPTIONS = [
   { value: 2, labelKey: "springScheduleSemester" },
 ];
 
+const SCHEDULE_ALGORITHM_OPTIONS = [
+  { value: "greedy", labelKey: "greedyAlgorithm" },
+  { value: "cpsat", label: "CP-SAT" },
+  { value: "hybrid", label: "CP-SAT + Greedy" },
+];
+
 const EMPTY_SCHEDULE_FILTERS = {
   group: "",
   teacher: "",
@@ -610,6 +616,17 @@ export const SchedulePage = () => {
       placeholder: "2026",
       required: true,
     },
+    {
+      name: "algorithm",
+      label: t("algorithm"),
+      type: "select",
+      placeholder: t("algorithm"),
+      options: SCHEDULE_ALGORITHM_OPTIONS.map((item) => ({
+        value: item.value,
+        label: item.label || t(item.labelKey),
+      })),
+      required: true,
+    },
   ];
 
   const entryFields = [
@@ -1038,6 +1055,7 @@ export const SchedulePage = () => {
           initialValues={{
             semester: scheduleSemester,
             year: scheduleYear,
+            algorithm: "greedy",
           }}
         />
       </Modal>
