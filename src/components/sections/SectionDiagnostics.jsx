@@ -32,7 +32,10 @@ export const SectionDiagnostics = ({
     if (totalSections === 0) {
       return 0;
     }
-    return Math.max(0, Math.min(100, 100 - errors * 12 - warnings * 2));
+    const checkedItems = Math.max(totalSections, errors + warnings, 1);
+    const errorPenalty = (errors / checkedItems) * 100;
+    const warningPenalty = (warnings / checkedItems) * 25;
+    return Math.round(Math.max(0, Math.min(100, 100 - errorPenalty - warningPenalty)));
   }, [sectionsCount, summary.errors, summary.sections, summary.warnings]);
   const qualityTone =
     qualityScore >= 90
