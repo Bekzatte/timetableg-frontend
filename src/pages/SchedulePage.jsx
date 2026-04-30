@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, Plus, RotateCw } from "lucide-react";
+import { ChevronDown, Download, Plus, RotateCw } from "lucide-react";
 import TimetableGrid from "../components/timetable/TimetableGrid";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
@@ -240,6 +240,10 @@ export const SchedulePage = () => {
   const [draftFiltersBySemester, setDraftFiltersBySemester] = useState(
     createEmptyScheduleFiltersBySemester,
   );
+  const [expandedSemesters, setExpandedSemesters] = useState({
+    1: true,
+    2: true,
+  });
 
   const { data, execute } = useFetch(scheduleAPI.getAll);
   const { data: sectionsData, execute: executeSections } = useFetch(
@@ -365,6 +369,13 @@ export const SchedulePage = () => {
     setFiltersBySemester((current) => ({
       ...current,
       [semester]: { ...EMPTY_SCHEDULE_FILTERS },
+    }));
+  };
+
+  const toggleSemesterExpanded = (semester) => {
+    setExpandedSemesters((current) => ({
+      ...current,
+      [semester]: !current[semester],
     }));
   };
 
@@ -929,61 +940,77 @@ export const SchedulePage = () => {
           const semester = semesterOption.value;
           const semesterSchedule = schedulesBySemester[semester] || [];
           const filteredSemesterSchedule = filteredSchedulesBySemester[semester] || [];
+          const isExpanded = expandedSemesters[semester] !== false;
 
           return (
             <section key={semester} className="rounded-lg bg-white p-4 shadow-md sm:p-6">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold text-gray-900">
+              <button
+                type="button"
+                onClick={() => toggleSemesterExpanded(semester)}
+                className="flex w-full items-center justify-between gap-3 text-left"
+                aria-expanded={isExpanded}
+              >
+                <span className="text-xl font-semibold text-gray-900">
                   {t(semesterOption.labelKey)}
-                </h2>
-                <span className="text-sm text-gray-500">
-                  {filteredSemesterSchedule.length}/{semesterSchedule.length}
                 </span>
-              </div>
+                <span className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500">
+                    {filteredSemesterSchedule.length}/{semesterSchedule.length}
+                  </span>
+                  <ChevronDown
+                    size={20}
+                    className={`text-gray-500 transition ${isExpanded ? "rotate-180" : ""}`}
+                  />
+                </span>
+              </button>
 
-              {semesterSchedule.length > 0 ? (
-                <TimetableGrid schedule={filteredSemesterSchedule} />
-              ) : (
-                <div className="py-12 text-center text-gray-500">
-                  <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>{t("scheduleNotCreated")}</p>
+              {isExpanded ? (
+                <div className="mt-4">
+                  {semesterSchedule.length > 0 ? (
+                    <TimetableGrid schedule={filteredSemesterSchedule} />
+                  ) : (
+                    <div className="py-12 text-center text-gray-500">
+                      <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
+                      <p>{t("scheduleNotCreated")}</p>
+
+                      {isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setScheduleSemester(semester);
+                            setIsGenerateOpen(true);
+                          }}
+                          className="mx-auto mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                        >
+                          <RotateCw size={18} /> {t("generateSchedule")}
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
 
                   {isAdmin ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setScheduleSemester(semester);
-                        setIsGenerateOpen(true);
-                      }}
-                      className="mx-auto mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-                    >
-                      <RotateCw size={18} /> {t("generateSchedule")}
-                    </button>
+                    <div className="mt-6">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {t("manageScheduleEntries")}
+                        </h3>
+                      </div>
+
+                      <DataTable
+                        columns={scheduleColumns}
+                        data={filteredSemesterSchedule}
+                        onEdit={handleEditEntry}
+                        onDelete={handleDeleteEntry}
+                        isLoading={false}
+                        enableSearch
+                        hasActiveFilters={hasActiveEntryFilters(semester)}
+                        filterDialogTitle={t("filter")}
+                        onApplyFilters={() => applyFilters(semester)}
+                        onResetFilters={() => resetFilters(semester)}
+                        filterControls={renderFilterControls(semester, semesterSchedule)}
+                      />
+                    </div>
                   ) : null}
-                </div>
-              )}
-
-              {isAdmin ? (
-                <div className="mt-6">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {t("manageScheduleEntries")}
-                    </h3>
-                  </div>
-
-                  <DataTable
-                    columns={scheduleColumns}
-                    data={filteredSemesterSchedule}
-                    onEdit={handleEditEntry}
-                    onDelete={handleDeleteEntry}
-                    isLoading={false}
-                    enableSearch
-                    hasActiveFilters={hasActiveEntryFilters(semester)}
-                    filterDialogTitle={t("filter")}
-                    onApplyFilters={() => applyFilters(semester)}
-                    onResetFilters={() => resetFilters(semester)}
-                    filterControls={renderFilterControls(semester, semesterSchedule)}
-                  />
                 </div>
               ) : null}
             </section>
