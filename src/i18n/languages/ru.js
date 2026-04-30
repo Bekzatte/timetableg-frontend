@@ -67,6 +67,7 @@ export default {
     selectProgrammeName: "Выберите название программы",
     selectSpecialty: "Выберите специальность",
     selectFaculty: "Выберите факультет",
+    allFaculties: "Все факультеты",
     description: "Описание",
 
     // Teachers

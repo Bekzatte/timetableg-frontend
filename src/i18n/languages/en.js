@@ -66,6 +66,7 @@ export default {
     selectProgrammeName: "Select programme name",
     selectSpecialty: "Select specialty",
     selectFaculty: "Select faculty",
+    allFaculties: "All faculties",
     description: "Description",
 
     // Teachers

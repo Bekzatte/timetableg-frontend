@@ -15,6 +15,12 @@ import {
 } from "../../constants/programmes";
 import { formatHour, scheduleBoundaryHours, scheduleHours } from "../../utils/timeSlots";
 
+const ALL_FACULTIES_VALUE = "Все факультеты";
+const ORLENOK_ROOM_NAME = "орленок";
+
+const isOrlenokRoomNumber = (value) =>
+  String(value || "").trim().toLowerCase().includes(ORLENOK_ROOM_NAME);
+
 export const RoomManager = () => {
   const { t, language } = useTranslation();
   const { withGlobalLoader } = useGlobalLoader();
@@ -155,8 +161,14 @@ export const RoomManager = () => {
   const handleSubmit = async (formData, setErrors) => {
     try {
       setIsSubmitting(true);
+      const isOrlenokRoom = isOrlenokRoomNumber(formData.number);
       const payload = {
         ...formData,
+        programme: isOrlenokRoom
+          ? ALL_FACULTIES_VALUE
+          : formData.programme === ALL_FACULTIES_VALUE
+            ? ""
+            : formData.programme,
         available: formData.available ? 1 : 0,
       };
       await withGlobalLoader(
@@ -270,6 +282,15 @@ export const RoomManager = () => {
       label: t("roomNumber"),
       placeholder: "101",
       required: true,
+      onChange: (value, next) => {
+        if (isOrlenokRoomNumber(value)) {
+          return { programme: ALL_FACULTIES_VALUE };
+        }
+        if (next.programme === ALL_FACULTIES_VALUE) {
+          return { programme: "" };
+        }
+        return {};
+      },
     },
     {
       name: "capacity",
@@ -293,10 +314,15 @@ export const RoomManager = () => {
       label: t("faculty"),
       type: "select",
       placeholder: t("selectFaculty"),
-      options: PROGRAMMES.map((programme) => ({
-        value: getCanonicalProgrammeName(programme),
-        label: getProgrammeLabel(programme, language),
-      })),
+      options: (formData) => [
+        ...(isOrlenokRoomNumber(formData.number)
+          ? [{ value: ALL_FACULTIES_VALUE, label: t("allFaculties") }]
+          : []),
+        ...PROGRAMMES.map((programme) => ({
+          value: getCanonicalProgrammeName(programme),
+          label: getProgrammeLabel(programme, language),
+        })),
+      ],
       required: true,
     },
     {
@@ -440,7 +466,16 @@ export const RoomManager = () => {
           fields={formFields}
           onSubmit={handleSubmit}
           resetKey={editingRoom ? `room-${editingRoom.id}` : "room-new"}
-          initialValues={editingRoom ? { ...editingRoom } : { computer_count: 0, available: 1 }}
+          initialValues={
+            editingRoom
+              ? {
+                  ...editingRoom,
+                  programme: isOrlenokRoomNumber(editingRoom.number)
+                    ? ALL_FACULTIES_VALUE
+                    : editingRoom.programme || "",
+                }
+              : { computer_count: 0, available: 1 }
+          }
           submitText={editingRoom ? t("save") : t("add")}
           isLoading={isSubmitting}
         />

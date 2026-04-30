@@ -67,6 +67,7 @@ export default {
     selectProgrammeName: "Бағдарлама атауын таңдаңыз",
     selectSpecialty: "Мамандықты таңдаңыз",
     selectFaculty: "Факультетті таңдаңыз",
+    allFaculties: "Барлық факультеттер",
     description: "Сипаттама",
 
     // Teachers
