@@ -954,9 +954,6 @@ export const SchedulePage = () => {
                   {t(semesterOption.labelKey)}
                 </span>
                 <span className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500">
-                    {filteredSemesterSchedule.length}/{semesterSchedule.length}
-                  </span>
                   <ChevronDown
                     size={20}
                     className={`text-gray-500 transition ${isExpanded ? "rotate-180" : ""}`}
