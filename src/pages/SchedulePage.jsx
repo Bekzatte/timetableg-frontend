@@ -30,6 +30,18 @@ const SCHEDULE_SEMESTER_OPTIONS = [
   { value: 2, labelKey: "springScheduleSemester" },
 ];
 
+const EMPTY_SCHEDULE_FILTERS = {
+  group: "",
+  teacher: "",
+  room: "",
+  day: "",
+};
+
+const createEmptyScheduleFiltersBySemester = () => ({
+  1: { ...EMPTY_SCHEDULE_FILTERS },
+  2: { ...EMPTY_SCHEDULE_FILTERS },
+});
+
 const JOB_ERROR_CODE_TRANSLATION_KEYS = {
   optimizer_dependency_missing: "errorOptimizerDependencyMissing",
   optimizer_requires_teachers: "errorOptimizerRequiresTeachers",
@@ -193,6 +205,16 @@ const formatGenerationError = (job, t) => {
   return error;
 };
 
+const filterScheduleEntries = (entries, filters) =>
+  entries.filter((entry) => {
+    const matchesGroup = !filters.group || String(entry.group_id) === filters.group;
+    const matchesTeacher = !filters.teacher || String(entry.teacher_id) === filters.teacher;
+    const matchesRoom = !filters.room || String(entry.room_id) === filters.room;
+    const matchesDay = !filters.day || getWeekdayValue(entry.day) === filters.day;
+
+    return matchesGroup && matchesTeacher && matchesRoom && matchesDay;
+  });
+
 export const SchedulePage = () => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
@@ -212,15 +234,12 @@ export const SchedulePage = () => {
   const [generationError, setGenerationError] = useState(null);
   const [pageError, setPageError] = useState("");
 
-  const [groupFilter, setGroupFilter] = useState("");
-  const [teacherFilter, setTeacherFilter] = useState("");
-  const [roomFilter, setRoomFilter] = useState("");
-  const [dayFilter, setDayFilter] = useState("");
-
-  const [draftGroupFilter, setDraftGroupFilter] = useState("");
-  const [draftTeacherFilter, setDraftTeacherFilter] = useState("");
-  const [draftRoomFilter, setDraftRoomFilter] = useState("");
-  const [draftDayFilter, setDraftDayFilter] = useState("");
+  const [filtersBySemester, setFiltersBySemester] = useState(
+    createEmptyScheduleFiltersBySemester,
+  );
+  const [draftFiltersBySemester, setDraftFiltersBySemester] = useState(
+    createEmptyScheduleFiltersBySemester,
+  );
 
   const { data, execute } = useFetch(scheduleAPI.getAll);
   const { data: sectionsData, execute: executeSections } = useFetch(
@@ -243,7 +262,7 @@ export const SchedulePage = () => {
   }, [data]);
 
   useEffect(() => {
-    execute({ semester: scheduleSemester, year: scheduleYear });
+    execute({ year: scheduleYear });
 
     if (isAdmin) {
       executeSections();
@@ -258,7 +277,6 @@ export const SchedulePage = () => {
     executeSections,
     executeTeachers,
     isAdmin,
-    scheduleSemester,
     scheduleYear,
   ]);
 
@@ -289,24 +307,66 @@ export const SchedulePage = () => {
             ? t("scheduleEntriesNeedAssignedTeachers")
             : "";
 
-  const filteredSchedule = useMemo(
-    () =>
-      schedule.filter((entry) => {
-        const matchesGroup =
-          !groupFilter || String(entry.group_id) === groupFilter;
-        const matchesTeacher =
-          !teacherFilter || String(entry.teacher_id) === teacherFilter;
-        const matchesRoom = !roomFilter || String(entry.room_id) === roomFilter;
-        const matchesDay = !dayFilter || getWeekdayValue(entry.day) === dayFilter;
-
-        return matchesGroup && matchesTeacher && matchesRoom && matchesDay;
-      }),
-    [schedule, groupFilter, teacherFilter, roomFilter, dayFilter],
+  const schedulesBySemester = useMemo(
+    () => ({
+      1: schedule.filter((entry) => Number(entry.semester) === 1),
+      2: schedule.filter((entry) => Number(entry.semester) === 2),
+    }),
+    [schedule],
   );
 
-  const hasActiveEntryFilters = Boolean(
-    groupFilter || teacherFilter || roomFilter || dayFilter,
+  const filteredSchedulesBySemester = useMemo(
+    () => ({
+      1: filterScheduleEntries(
+        schedulesBySemester[1],
+        filtersBySemester[1] || EMPTY_SCHEDULE_FILTERS,
+      ),
+      2: filterScheduleEntries(
+        schedulesBySemester[2],
+        filtersBySemester[2] || EMPTY_SCHEDULE_FILTERS,
+      ),
+    }),
+    [schedulesBySemester, filtersBySemester],
   );
+
+  const selectedSemesterSchedule = schedulesBySemester[scheduleSemester] || [];
+
+  const hasActiveEntryFilters = (semester) => {
+    const filters = filtersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
+    return Boolean(filters.group || filters.teacher || filters.room || filters.day);
+  };
+
+  const updateDraftFilter = (semester, field, value) => {
+    setDraftFiltersBySemester((current) => ({
+      ...current,
+      [semester]: {
+        ...EMPTY_SCHEDULE_FILTERS,
+        ...(current[semester] || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  const applyFilters = (semester) => {
+    setFiltersBySemester((current) => ({
+      ...current,
+      [semester]: {
+        ...EMPTY_SCHEDULE_FILTERS,
+        ...(draftFiltersBySemester[semester] || {}),
+      },
+    }));
+  };
+
+  const resetFilters = (semester) => {
+    setDraftFiltersBySemester((current) => ({
+      ...current,
+      [semester]: { ...EMPTY_SCHEDULE_FILTERS },
+    }));
+    setFiltersBySemester((current) => ({
+      ...current,
+      [semester]: { ...EMPTY_SCHEDULE_FILTERS },
+    }));
+  };
 
   const waitForGenerationJob = async (jobId) => {
     while (true) {
@@ -326,7 +386,6 @@ export const SchedulePage = () => {
 
   const refreshSchedule = async () => {
     const nextSchedule = await execute({
-      semester: scheduleSemester,
       year: scheduleYear,
     });
 
@@ -665,9 +724,97 @@ export const SchedulePage = () => {
   ];
 
   const scheduleActionLabel =
-    schedule.length > 0 ? t("regenerateSchedule") : t("generateNewSchedule");
+    selectedSemesterSchedule.length > 0 ? t("regenerateSchedule") : t("generateNewSchedule");
 
-  const displayedScheduleCount = filteredSchedule.length;
+  const renderFilterControls = (semester, semesterSchedule) => {
+    const draftFilters = draftFiltersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
+
+    return (
+      <>
+        <select
+          value={draftFilters.group}
+          onChange={(event) => updateDraftFilter(semester, "group", event.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+        >
+          <option value="">
+            {t("all")} {t("groups").toLowerCase()}
+          </option>
+
+          {Array.from(
+            new Map(
+              semesterSchedule
+                .filter((entry) => entry.group_id)
+                .map((entry) => [entry.group_id, entry.group_name]),
+            ).entries(),
+          ).map(([id, name]) => (
+            <option key={id} value={id}>
+              {name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={draftFilters.teacher}
+          onChange={(event) => updateDraftFilter(semester, "teacher", event.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+        >
+          <option value="">
+            {t("all")} {t("teachers").toLowerCase()}
+          </option>
+
+          {Array.from(
+            new Map(
+              semesterSchedule
+                .filter((entry) => entry.teacher_id)
+                .map((entry) => [entry.teacher_id, entry.teacher_name]),
+            ).entries(),
+          ).map(([id, name]) => (
+            <option key={id} value={id}>
+              {name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={draftFilters.room}
+          onChange={(event) => updateDraftFilter(semester, "room", event.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+        >
+          <option value="">
+            {t("all")} {t("rooms").toLowerCase()}
+          </option>
+
+          {Array.from(
+            new Map(
+              semesterSchedule
+                .filter((entry) => entry.room_id)
+                .map((entry) => [entry.room_id, entry.room_number]),
+            ).entries(),
+          ).map(([id, number]) => (
+            <option key={id} value={id}>
+              {number}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={draftFilters.day}
+          onChange={(event) => updateDraftFilter(semester, "day", event.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
+        >
+          <option value="">
+            {t("all")} {t("day").toLowerCase()}
+          </option>
+
+          {WEEKDAY_OPTIONS.map((day) => (
+            <option key={day.value} value={day.value}>
+              {t(day.labelKey)}
+            </option>
+          ))}
+        </select>
+      </>
+    );
+  };
 
   return (
     <div className="relative w-full px-0 py-2 sm:py-4">
@@ -736,7 +883,7 @@ export const SchedulePage = () => {
                 <Plus size={20} /> {t("addScheduleEntry")}
               </button>
 
-              {schedule.length > 0 ? (
+              {selectedSemesterSchedule.length > 0 ? (
                 <button
                   onClick={handleExportSchedule}
                   disabled={isExporting || isLoading}
@@ -748,7 +895,7 @@ export const SchedulePage = () => {
 
               <button
                 onClick={handleResetSchedule}
-                disabled={isResetting || isLoading || schedule.length === 0}
+                disabled={isResetting || isLoading || selectedSemesterSchedule.length === 0}
                 className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {t("resetSchedule")}
@@ -777,162 +924,72 @@ export const SchedulePage = () => {
           .replace("${year}", String(scheduleYear))}
       </div>
 
-      <div
-        data-testid="schedule-content"
-        className="rounded-lg bg-white p-4 shadow-md sm:p-6"
-      >
-        {schedule.length > 0 ? (
-          <TimetableGrid schedule={filteredSchedule} />
-        ) : (
-          <div className="py-12 text-center text-gray-500">
-            <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
-            <p>{t("scheduleNotCreated")}</p>
+      <div className="space-y-6">
+        {SCHEDULE_SEMESTER_OPTIONS.map((semesterOption) => {
+          const semester = semesterOption.value;
+          const semesterSchedule = schedulesBySemester[semester] || [];
+          const filteredSemesterSchedule = filteredSchedulesBySemester[semester] || [];
 
-            {isAdmin ? (
-              <button
-                type="button"
-                onClick={() => setIsGenerateOpen(true)}
-                className="mx-auto mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-              >
-                <RotateCw size={18} /> {scheduleActionLabel}
-              </button>
-            ) : null}
-          </div>
-        )}
+          return (
+            <section key={semester} className="rounded-lg bg-white p-4 shadow-md sm:p-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {t(semesterOption.labelKey)}
+                </h2>
+                <span className="text-sm text-gray-500">
+                  {filteredSemesterSchedule.length}/{semesterSchedule.length}
+                </span>
+              </div>
+
+              {semesterSchedule.length > 0 ? (
+                <TimetableGrid schedule={filteredSemesterSchedule} />
+              ) : (
+                <div className="py-12 text-center text-gray-500">
+                  <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
+                  <p>{t("scheduleNotCreated")}</p>
+
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScheduleSemester(semester);
+                        setIsGenerateOpen(true);
+                      }}
+                      className="mx-auto mt-5 inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                    >
+                      <RotateCw size={18} /> {t("generateSchedule")}
+                    </button>
+                  ) : null}
+                </div>
+              )}
+
+              {isAdmin ? (
+                <div className="mt-6">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {t("manageScheduleEntries")}
+                    </h3>
+                  </div>
+
+                  <DataTable
+                    columns={scheduleColumns}
+                    data={filteredSemesterSchedule}
+                    onEdit={handleEditEntry}
+                    onDelete={handleDeleteEntry}
+                    isLoading={false}
+                    enableSearch
+                    hasActiveFilters={hasActiveEntryFilters(semester)}
+                    filterDialogTitle={t("filter")}
+                    onApplyFilters={() => applyFilters(semester)}
+                    onResetFilters={() => resetFilters(semester)}
+                    filterControls={renderFilterControls(semester, semesterSchedule)}
+                  />
+                </div>
+              ) : null}
+            </section>
+          );
+        })}
       </div>
-
-      {isAdmin && (
-        <div className="mt-6 rounded-lg bg-white p-4 shadow-md sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {t("manageScheduleEntries")}
-            </h2>
-
-            <span className="text-sm text-gray-500">
-              {displayedScheduleCount}/{schedule.length}
-            </span>
-          </div>
-
-          <DataTable
-            columns={scheduleColumns}
-            data={filteredSchedule}
-            onEdit={handleEditEntry}
-            onDelete={handleDeleteEntry}
-            isLoading={false}
-            enableSearch
-            hasActiveFilters={hasActiveEntryFilters}
-            filterDialogTitle={t("filter")}
-            onApplyFilters={() => {
-              setGroupFilter(draftGroupFilter);
-              setTeacherFilter(draftTeacherFilter);
-              setRoomFilter(draftRoomFilter);
-              setDayFilter(draftDayFilter);
-            }}
-            onResetFilters={() => {
-              setDraftGroupFilter("");
-              setDraftTeacherFilter("");
-              setDraftRoomFilter("");
-              setDraftDayFilter("");
-              setGroupFilter("");
-              setTeacherFilter("");
-              setRoomFilter("");
-              setDayFilter("");
-            }}
-            filterControls={
-              <>
-                <select
-                  value={draftGroupFilter}
-                  onChange={(event) =>
-                    setDraftGroupFilter(event.target.value)
-                  }
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-                >
-                  <option value="">
-                    {t("all")} {t("groups").toLowerCase()}
-                  </option>
-
-                  {Array.from(
-                    new Map(
-                      schedule
-                        .filter((entry) => entry.group_id)
-                        .map((entry) => [entry.group_id, entry.group_name]),
-                    ).entries(),
-                  ).map(([id, name]) => (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={draftTeacherFilter}
-                  onChange={(event) =>
-                    setDraftTeacherFilter(event.target.value)
-                  }
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-                >
-                  <option value="">
-                    {t("all")} {t("teachers").toLowerCase()}
-                  </option>
-
-                  {Array.from(
-                    new Map(
-                      schedule
-                        .filter((entry) => entry.teacher_id)
-                        .map((entry) => [
-                          entry.teacher_id,
-                          entry.teacher_name,
-                        ]),
-                    ).entries(),
-                  ).map(([id, name]) => (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={draftRoomFilter}
-                  onChange={(event) => setDraftRoomFilter(event.target.value)}
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-                >
-                  <option value="">
-                    {t("all")} {t("rooms").toLowerCase()}
-                  </option>
-
-                  {Array.from(
-                    new Map(
-                      schedule
-                        .filter((entry) => entry.room_id)
-                        .map((entry) => [entry.room_id, entry.room_number]),
-                    ).entries(),
-                  ).map(([id, number]) => (
-                    <option key={id} value={id}>
-                      {number}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={draftDayFilter}
-                  onChange={(event) => setDraftDayFilter(event.target.value)}
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-                >
-                  <option value="">
-                    {t("all")} {t("day").toLowerCase()}
-                  </option>
-
-                  {WEEKDAY_OPTIONS.map((day) => (
-                    <option key={day.value} value={day.value}>
-                      {t(day.labelKey)}
-                    </option>
-                  ))}
-                </select>
-              </>
-            }
-          />
-        </div>
-      )}
 
       <Modal
         isOpen={isGenerateOpen}
@@ -948,10 +1005,10 @@ export const SchedulePage = () => {
           fields={formFields}
           onSubmit={handleGenerateSchedule}
           resetKey={`schedule-generate-${
-            schedule.length > 0 ? "regenerate" : "new"
+            selectedSemesterSchedule.length > 0 ? "regenerate" : "new"
           }`}
           submitText={
-            schedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule")
+            selectedSemesterSchedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule")
           }
           isLoading={isLoading}
           initialValues={{
