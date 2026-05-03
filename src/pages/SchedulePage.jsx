@@ -318,6 +318,7 @@ export const SchedulePage = () => {
   const [exportSemester, setExportSemester] = useState(1);
   const [exportYear, setExportYear] = useState(currentYear);
   const [exportLanguage, setExportLanguage] = useState(language || "ru");
+  const [exportGroupId, setExportGroupId] = useState("");
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -443,6 +444,32 @@ export const SchedulePage = () => {
     const filters = filtersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
     return Boolean(filters.group || filters.teacher || filters.room || filters.day);
   };
+
+  const exportGroupOptions = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          schedule
+            .filter(
+              (entry) =>
+                Number(entry.semester) === Number(exportSemester) &&
+                Number(entry.year) === Number(exportYear) &&
+                entry.group_id,
+            )
+            .map((entry) => [String(entry.group_id), entry.group_name]),
+        ).entries(),
+      ).sort((left, right) => String(left[1] || "").localeCompare(String(right[1] || ""))),
+    [exportSemester, exportYear, schedule],
+  );
+
+  useEffect(() => {
+    if (
+      exportGroupId &&
+      !exportGroupOptions.some(([groupId]) => String(groupId) === String(exportGroupId))
+    ) {
+      setExportGroupId("");
+    }
+  }, [exportGroupId, exportGroupOptions]);
 
   const updateDraftFilter = (semester, field, value) => {
     setDraftFiltersBySemester((current) => ({
@@ -582,6 +609,7 @@ export const SchedulePage = () => {
     setExportSemester(scheduleSemester);
     setExportYear(scheduleYear);
     setExportLanguage(language || "ru");
+    setExportGroupId("");
     setIsExportModalOpen(true);
   };
 
@@ -594,13 +622,16 @@ export const SchedulePage = () => {
         semester: exportSemester,
         year: exportYear,
         language: exportLanguage,
+        ...(exportGroupId ? { group_id: exportGroupId } : {}),
       });
 
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
 
       link.href = downloadUrl;
-      link.download = `schedule-${exportYear}-semester-${exportSemester}.xlsx`;
+      link.download = exportGroupId
+        ? `schedule-${exportYear}-semester-${exportSemester}-group-${exportGroupId}.xlsx`
+        : `schedule-${exportYear}-semester-${exportSemester}.xlsx`;
 
       document.body.appendChild(link);
       link.click();
@@ -1549,6 +1580,27 @@ export const SchedulePage = () => {
               <option value="ru">{t("languageRussian")}</option>
               <option value="kk">{t("languageKazakh")}</option>
               <option value="en">{t("languageEnglish")}</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t("selectGroup")}
+            </label>
+            <select
+              value={exportGroupId}
+              onChange={(event) => setExportGroupId(event.target.value)}
+              disabled={isExporting}
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+            >
+              <option value="">
+                {t("all")} {t("groups").toLowerCase()}
+              </option>
+              {exportGroupOptions.map(([groupId, groupName]) => (
+                <option key={groupId} value={groupId}>
+                  {groupName}
+                </option>
+              ))}
             </select>
           </div>
 
