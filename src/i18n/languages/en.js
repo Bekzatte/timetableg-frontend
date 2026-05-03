@@ -159,6 +159,17 @@ export default {
     regenerateSchedule: "Regenerate Schedule",
     viewSchedule: "View Schedule",
     algorithm: "Algorithm",
+    scheduleGenerationInfoTitle: "How the schedule is generated",
+    scheduleGenerationInfoIntro:
+      "Before starting, the system uses the selected semester sections, teachers, available rooms, room blocks, subgroups, and approved teacher preferences. Occupied slots from earlier batches are passed forward as restrictions.",
+    scheduleGenerationGreedyInfo:
+      "Greedy is the fast mode. It places lessons one by one: lectures first, then practical and lab classes, while checking teacher, group, subgroup, and room availability. After the first pass it tries to rebalance overloaded days.",
+    scheduleGenerationCpSatInfo:
+      "CP-SAT is the more precise mode. It builds a mathematical model and searches for the best feasible schedule while respecting capacity, room type, computers, group language, lecture-before-practice/lab order, room blocks, teacher limits, and preferences.",
+    scheduleGenerationHybridInfo:
+      "Hybrid tries CP-SAT first. If no solution is found or the optimizer is unavailable, the system switches to Greedy.",
+    scheduleGenerationInfoNote:
+      "CP-SAT can take longer, but usually gives a better schedule. Greedy is faster and useful when you need a result without waiting too long.",
     day: "Day",
     startTime: "Start Time",
     endTime: "End Time",
