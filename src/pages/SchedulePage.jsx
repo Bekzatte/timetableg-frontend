@@ -6,6 +6,7 @@ import Modal from "../components/ui/Modal";
 import Form from "../components/ui/Form";
 import {
   courseAPI,
+  groupAPI,
   roomBlockAPI,
   roomAPI,
   scheduleAPI,
@@ -342,6 +343,7 @@ export const SchedulePage = () => {
     sectionAPI.getAll,
   );
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
+  const { data: groupsData, execute: executeGroups } = useFetch(groupAPI.getAll);
   const { data: roomBlocksData, execute: executeRoomBlocks } = useFetch(
     roomBlockAPI.getAll,
   );
@@ -365,6 +367,7 @@ export const SchedulePage = () => {
 
     if (isAdmin) {
       executeSections();
+      executeGroups();
       executeRooms();
       executeRoomBlocks();
       executeCourses();
@@ -373,6 +376,7 @@ export const SchedulePage = () => {
   }, [
     execute,
     executeCourses,
+    executeGroups,
     executeRoomBlocks,
     executeRooms,
     executeSections,
@@ -383,6 +387,7 @@ export const SchedulePage = () => {
 
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
   const rooms = Array.isArray(roomsData) ? roomsData : [];
+  const groups = Array.isArray(groupsData) ? groupsData : [];
   const roomBlocks = Array.isArray(roomBlocksData) ? roomBlocksData : [];
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const teachers = Array.isArray(teachersData) ? teachersData : [];
@@ -647,6 +652,9 @@ export const SchedulePage = () => {
   const getSelectedEntryCourse = (section) =>
     courses.find((course) => String(course.id) === String(section?.course_id));
 
+  const getSelectedEntryGroup = (section) =>
+    groups.find((group) => String(group.id) === String(section?.group_id));
+
   const hasGroupSlotConflict = (entry, selectedSection, subgroup) => {
     if (String(entry.group_id) !== String(selectedSection.group_id)) {
       return false;
@@ -698,23 +706,54 @@ export const SchedulePage = () => {
       return Number(hour) >= startHour && Number(hour) < endHour;
     });
 
-  const getAvailableStartHourOptions = (formData) => {
+  const isRoomCompatibleWithSection = (room, selectedSection) => {
+    if (!room || !selectedSection || !Number(room.available ?? 1)) {
+      return false;
+    }
+
+    const lessonType = String(selectedSection.lesson_type || "").toLowerCase();
+    const roomType = String(room.type || "").toLowerCase();
+    const selectedGroup = getSelectedEntryGroup(selectedSection);
+    const studentCount = Number(selectedGroup?.student_count || 0);
+    const capacity = Number(room.capacity || 0);
+
+    if (studentCount && capacity && capacity < studentCount) {
+      return false;
+    }
+
+    if (lessonType === "lecture" && roomType && roomType !== "lecture") {
+      return false;
+    }
+
+    if (lessonType === "practical" && roomType && !["practical", "lecture"].includes(roomType)) {
+      return false;
+    }
+
+    if (lessonType === "lab" && roomType && roomType !== "practical") {
+      return false;
+    }
+
+    if (
+      (lessonType === "lab" || Number(selectedSection.requires_computers || 0)) &&
+      Number(room.computer_count || 0) < 10
+    ) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const hasTeacherOrGroupConflictAtSlot = (formData, hour) => {
     const selectedSection = getSelectedEntrySection(formData);
     const selectedCourse = getSelectedEntryCourse(selectedSection);
-    const selectedRoom = rooms.find(
-      (room) => String(room.id) === String(formData.room_id),
-    );
 
     if (
       !selectedSection ||
-      !selectedRoom ||
-      !Number(selectedRoom.available ?? 1) ||
-      !formData.room_id ||
       !formData.weekday ||
       !formData.semester ||
       !formData.year
     ) {
-      return [];
+      return true;
     }
 
     const teacherId = selectedSection.teacher_id || selectedCourse?.instructor_id;
@@ -722,42 +761,109 @@ export const SchedulePage = () => {
     const semester = Number(formData.semester);
     const year = Number(formData.year);
 
+    return schedule.some((entry) => {
+      if (editingEntry && String(entry.id) === String(editingEntry.id)) {
+        return false;
+      }
+
+      if (
+        Number(entry.semester) !== semester ||
+        Number(entry.year) !== year ||
+        entry.day !== day ||
+        Number(entry.start_hour) !== Number(hour)
+      ) {
+        return false;
+      }
+
+      return (
+        (teacherId && String(entry.teacher_id) === String(teacherId)) ||
+        hasGroupSlotConflict(entry, selectedSection, formData.subgroup)
+      );
+    });
+  };
+
+  const isRoomAvailableAtSlot = (room, formData, hour) => {
+    const selectedSection = getSelectedEntrySection(formData);
+
+    if (
+      !selectedSection ||
+      !isRoomCompatibleWithSection(room, selectedSection) ||
+      !formData.weekday ||
+      !formData.semester ||
+      !formData.year
+    ) {
+      return false;
+    }
+
+    const semester = Number(formData.semester);
+    const year = Number(formData.year);
+    const day = toIsoDateForWeekday(formData.weekday, year);
+
+    if (isRoomBlockedAtSlot(room.id, formData.weekday, hour, semester, year)) {
+      return false;
+    }
+
+    return !schedule.some((entry) => {
+      if (editingEntry && String(entry.id) === String(editingEntry.id)) {
+        return false;
+      }
+
+      return (
+        Number(entry.semester) === semester &&
+        Number(entry.year) === year &&
+        entry.day === day &&
+        Number(entry.start_hour) === Number(hour) &&
+        String(entry.room_id) === String(room.id)
+      );
+    });
+  };
+
+  const getAvailableRoomOptions = (formData) => {
+    if (
+      !formData.section_id ||
+      !formData.weekday ||
+      !formData.start_hour ||
+      !formData.semester ||
+      !formData.year
+    ) {
+      return [];
+    }
+
+    return rooms
+      .filter((room) => isRoomAvailableAtSlot(room, formData, Number(formData.start_hour)))
+      .map((room) => {
+        const details = [
+          room.type ? t(room.type) : "",
+          room.capacity ? `${room.capacity}` : "",
+          Number(room.computer_count || 0) > 0 ? `PC ${room.computer_count}` : "",
+        ].filter(Boolean);
+
+        return {
+          value: room.id,
+          label: details.length ? `${room.number} (${details.join(", ")})` : room.number,
+        };
+      });
+  };
+
+  const getAvailableStartHourOptions = (formData) => {
+    const selectedSection = getSelectedEntrySection(formData);
+
+    if (
+      !selectedSection ||
+      !formData.weekday ||
+      !formData.semester ||
+      !formData.year
+    ) {
+      return [];
+    }
+
     return scheduleHours
       .filter((hour) => {
-        if (
-          isRoomBlockedAtSlot(
-            formData.room_id,
-            formData.weekday,
-            hour,
-            semester,
-            year,
-          )
-        ) {
+        if (hasTeacherOrGroupConflictAtSlot(formData, hour)) {
           return false;
         }
 
-        const hasConflict = schedule.some((entry) => {
-          if (editingEntry && String(entry.id) === String(editingEntry.id)) {
-            return false;
-          }
-
-          if (
-            Number(entry.semester) !== semester ||
-            Number(entry.year) !== year ||
-            entry.day !== day ||
-            Number(entry.start_hour) !== Number(hour)
-          ) {
-            return false;
-          }
-
-          return (
-            String(entry.room_id) === String(formData.room_id) ||
-            (teacherId && String(entry.teacher_id) === String(teacherId)) ||
-            hasGroupSlotConflict(entry, selectedSection, formData.subgroup)
-          );
-        });
-
-        return !hasConflict;
+        return rooms.some((room) => isRoomAvailableAtSlot(room, formData, hour));
       })
       .map((hour) => ({
         value: hour,
@@ -768,7 +874,6 @@ export const SchedulePage = () => {
   const getAvailableWeekdayOptions = (formData) => {
     if (
       !formData.section_id ||
-      !formData.room_id ||
       !formData.semester ||
       !formData.year
     ) {
@@ -815,11 +920,22 @@ export const SchedulePage = () => {
       const isSelectedSlotAvailable = getAvailableStartHourOptions(formData).some(
         (option) => String(option.value) === String(formData.start_hour),
       );
+      const isSelectedRoomAvailable = getAvailableRoomOptions(formData).some(
+        (option) => String(option.value) === String(formData.room_id),
+      );
 
       if (!isSelectedSlotAvailable) {
         setErrors((prev) => ({
           ...prev,
           start_hour: t("selectOption"),
+        }));
+        return;
+      }
+
+      if (!isSelectedRoomAvailable) {
+        setErrors((prev) => ({
+          ...prev,
+          room_id: t("selectRoom"),
         }));
         return;
       }
@@ -916,6 +1032,7 @@ export const SchedulePage = () => {
         label: `${section.course_name} - ${section.group_name}`,
       })),
       onChange: () => ({
+        room_id: "",
         weekday: "",
         start_hour: "",
         subgroup: "",
@@ -938,21 +1055,6 @@ export const SchedulePage = () => {
       },
     },
     {
-      name: "room_id",
-      label: t("roomNumber"),
-      type: "select",
-      placeholder: t("selectRoom"),
-      options: rooms.map((room) => ({
-        value: room.id,
-        label: room.number,
-      })),
-      onChange: () => ({
-        weekday: "",
-        start_hour: "",
-      }),
-      required: true,
-    },
-    {
       name: "subgroup",
       label: t("subgroupMode"),
       type: "select",
@@ -963,6 +1065,7 @@ export const SchedulePage = () => {
         { value: "B", label: "B" },
       ],
       onChange: () => ({
+        room_id: "",
         weekday: "",
         start_hour: "",
       }),
@@ -977,6 +1080,7 @@ export const SchedulePage = () => {
         label: t(item.labelKey),
       })),
       onChange: () => ({
+        room_id: "",
         weekday: "",
         start_hour: "",
       }),
@@ -988,6 +1092,7 @@ export const SchedulePage = () => {
       type: "number",
       placeholder: String(new Date().getFullYear()),
       onChange: () => ({
+        room_id: "",
         weekday: "",
         start_hour: "",
       }),
@@ -1000,11 +1105,11 @@ export const SchedulePage = () => {
       placeholder: t("selectDay"),
       options: getAvailableWeekdayOptions,
       onChange: () => ({
+        room_id: "",
         start_hour: "",
       }),
       disabled: (formData) =>
         !formData.section_id ||
-        !formData.room_id ||
         !formData.semester ||
         !formData.year ||
         getAvailableWeekdayOptions(formData).length === 0,
@@ -1016,11 +1121,26 @@ export const SchedulePage = () => {
       type: "select",
       placeholder: t("startTime"),
       options: getAvailableStartHourOptions,
+      onChange: () => ({
+        room_id: "",
+      }),
       disabled: (formData) =>
         !formData.section_id ||
-        !formData.room_id ||
         !formData.weekday ||
         getAvailableStartHourOptions(formData).length === 0,
+      required: true,
+    },
+    {
+      name: "room_id",
+      label: t("roomNumber"),
+      type: "select",
+      placeholder: t("selectRoom"),
+      options: getAvailableRoomOptions,
+      disabled: (formData) =>
+        !formData.section_id ||
+        !formData.weekday ||
+        !formData.start_hour ||
+        getAvailableRoomOptions(formData).length === 0,
       required: true,
     },
   ];
