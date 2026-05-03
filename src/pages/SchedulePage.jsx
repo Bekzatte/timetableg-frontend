@@ -6,6 +6,7 @@ import Modal from "../components/ui/Modal";
 import Form from "../components/ui/Form";
 import {
   courseAPI,
+  roomBlockAPI,
   roomAPI,
   scheduleAPI,
   sectionAPI,
@@ -71,6 +72,32 @@ const getWeekdayValue = (isoDate) => {
   const weekdayIndex = jsDay === 0 ? 6 : jsDay - 1;
 
   return WEEKDAY_OPTIONS[weekdayIndex]?.value || "monday";
+};
+
+const normalizeWeekdayValue = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (WEEKDAY_OPTIONS.some((item) => item.value === normalized)) {
+    return normalized;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(normalized)) {
+    return getWeekdayValue(normalized.slice(0, 10));
+  }
+
+  const weekdayAliases = {
+    monday: "monday",
+    tuesday: "tuesday",
+    wednesday: "wednesday",
+    thursday: "thursday",
+    friday: "friday",
+  };
+
+  return weekdayAliases[normalized] || "";
 };
 
 const toIsoDateForWeekday = (weekday, year) => {
@@ -228,8 +255,8 @@ export const SchedulePage = () => {
   const currentYear = new Date().getFullYear();
 
   const [schedule, setSchedule] = useState([]);
-  const [scheduleSemester, setScheduleSemester] = useState(1);
-  const [scheduleYear, setScheduleYear] = useState(currentYear);
+  const [scheduleSemester] = useState(1);
+  const [scheduleYear] = useState(currentYear);
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -263,6 +290,9 @@ export const SchedulePage = () => {
     sectionAPI.getAll,
   );
   const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
+  const { data: roomBlocksData, execute: executeRoomBlocks } = useFetch(
+    roomBlockAPI.getAll,
+  );
   const { data: coursesData, execute: executeCourses } = useFetch(
     courseAPI.getAll,
   );
@@ -284,12 +314,14 @@ export const SchedulePage = () => {
     if (isAdmin) {
       executeSections();
       executeRooms();
+      executeRoomBlocks();
       executeCourses();
       executeTeachers();
     }
   }, [
     execute,
     executeCourses,
+    executeRoomBlocks,
     executeRooms,
     executeSections,
     executeTeachers,
@@ -299,6 +331,7 @@ export const SchedulePage = () => {
 
   const sections = Array.isArray(sectionsData) ? sectionsData : [];
   const rooms = Array.isArray(roomsData) ? roomsData : [];
+  const roomBlocks = Array.isArray(roomBlocksData) ? roomBlocksData : [];
   const courses = Array.isArray(coursesData) ? coursesData : [];
   const teachers = Array.isArray(teachersData) ? teachersData : [];
 
@@ -346,7 +379,6 @@ export const SchedulePage = () => {
     [schedulesBySemester, filtersBySemester],
   );
 
-  const selectedSemesterSchedule = schedulesBySemester[scheduleSemester] || [];
   const hasAnyScheduleForYear =
     schedulesBySemester[1].length > 0 || schedulesBySemester[2].length > 0;
 
@@ -450,7 +482,14 @@ export const SchedulePage = () => {
   };
 
   const openResetScheduleModal = () => {
-    setResetSemester(scheduleSemester);
+    const semesterWithSchedule =
+      schedulesBySemester[1].length > 0
+        ? 1
+        : schedulesBySemester[2].length > 0
+          ? 2
+          : scheduleSemester;
+
+    setResetSemester(semesterWithSchedule);
     setResetYear(scheduleYear);
     setIsResetModalOpen(true);
   };
@@ -567,12 +606,57 @@ export const SchedulePage = () => {
     return !existingSubgroup || !nextSubgroup || existingSubgroup === nextSubgroup;
   };
 
+  const isRoomBlockedAtSlot = (roomId, weekday, hour, semester, year) =>
+    roomBlocks.some((block) => {
+      if (String(block.room_id) !== String(roomId)) {
+        return false;
+      }
+
+      const blockSemester = block.semester;
+      const blockYear = block.year;
+
+      if (
+        blockSemester !== null &&
+        blockSemester !== undefined &&
+        blockSemester !== "" &&
+        Number(blockSemester) !== Number(semester)
+      ) {
+        return false;
+      }
+
+      if (
+        blockYear !== null &&
+        blockYear !== undefined &&
+        blockYear !== "" &&
+        Number(blockYear) !== Number(year)
+      ) {
+        return false;
+      }
+
+      if (normalizeWeekdayValue(block.day) !== weekday) {
+        return false;
+      }
+
+      const startHour = Number(block.start_hour);
+      const endHour =
+        block.end_hour !== null && block.end_hour !== undefined && block.end_hour !== ""
+          ? Number(block.end_hour)
+          : startHour + 1;
+
+      return Number(hour) >= startHour && Number(hour) < endHour;
+    });
+
   const getAvailableStartHourOptions = (formData) => {
     const selectedSection = getSelectedEntrySection(formData);
     const selectedCourse = getSelectedEntryCourse(selectedSection);
+    const selectedRoom = rooms.find(
+      (room) => String(room.id) === String(formData.room_id),
+    );
 
     if (
       !selectedSection ||
+      !selectedRoom ||
+      !Number(selectedRoom.available ?? 1) ||
       !formData.room_id ||
       !formData.weekday ||
       !formData.semester ||
@@ -588,6 +672,18 @@ export const SchedulePage = () => {
 
     return scheduleHours
       .filter((hour) => {
+        if (
+          isRoomBlockedAtSlot(
+            formData.room_id,
+            formData.weekday,
+            hour,
+            semester,
+            year,
+          )
+        ) {
+          return false;
+        }
+
         const hasConflict = schedule.some((entry) => {
           if (editingEntry && String(entry.id) === String(editingEntry.id)) {
             return false;
@@ -617,6 +713,28 @@ export const SchedulePage = () => {
       }));
   };
 
+  const getAvailableWeekdayOptions = (formData) => {
+    if (
+      !formData.section_id ||
+      !formData.room_id ||
+      !formData.semester ||
+      !formData.year
+    ) {
+      return [];
+    }
+
+    return WEEKDAY_OPTIONS.filter(
+      (item) =>
+        getAvailableStartHourOptions({
+          ...formData,
+          weekday: item.value,
+        }).length > 0,
+    ).map((item) => ({
+      value: item.value,
+      label: t(item.labelKey),
+    }));
+  };
+
   const handleEntrySubmit = async (formData, setErrors) => {
     const selectedSection = sections.find(
       (section) => String(section.id) === String(formData.section_id),
@@ -641,6 +759,18 @@ export const SchedulePage = () => {
 
     try {
       setIsEntrySaving(true);
+
+      const isSelectedSlotAvailable = getAvailableStartHourOptions(formData).some(
+        (option) => String(option.value) === String(formData.start_hour),
+      );
+
+      if (!isSelectedSlotAvailable) {
+        setErrors((prev) => ({
+          ...prev,
+          start_hour: t("selectOption"),
+        }));
+        return;
+      }
 
       const normalizedYear = Number(formData.year);
 
@@ -734,6 +864,7 @@ export const SchedulePage = () => {
         label: `${section.course_name} - ${section.group_name}`,
       })),
       onChange: () => ({
+        weekday: "",
         start_hour: "",
         subgroup: "",
       }),
@@ -764,35 +895,9 @@ export const SchedulePage = () => {
         label: room.number,
       })),
       onChange: () => ({
+        weekday: "",
         start_hour: "",
       }),
-      required: true,
-    },
-    {
-      name: "weekday",
-      label: t("day"),
-      type: "select",
-      placeholder: t("selectDay"),
-      options: WEEKDAY_OPTIONS.map((item) => ({
-        value: item.value,
-        label: t(item.labelKey),
-      })),
-      onChange: () => ({
-        start_hour: "",
-      }),
-      required: true,
-    },
-    {
-      name: "start_hour",
-      label: t("startTime"),
-      type: "select",
-      placeholder: t("startTime"),
-      options: getAvailableStartHourOptions,
-      disabled: (formData) =>
-        !formData.section_id ||
-        !formData.room_id ||
-        !formData.weekday ||
-        getAvailableStartHourOptions(formData).length === 0,
       required: true,
     },
     {
@@ -806,6 +911,7 @@ export const SchedulePage = () => {
         { value: "B", label: "B" },
       ],
       onChange: () => ({
+        weekday: "",
         start_hour: "",
       }),
     },
@@ -819,6 +925,7 @@ export const SchedulePage = () => {
         label: t(item.labelKey),
       })),
       onChange: () => ({
+        weekday: "",
         start_hour: "",
       }),
       required: true,
@@ -829,8 +936,39 @@ export const SchedulePage = () => {
       type: "number",
       placeholder: String(new Date().getFullYear()),
       onChange: () => ({
+        weekday: "",
         start_hour: "",
       }),
+      required: true,
+    },
+    {
+      name: "weekday",
+      label: t("day"),
+      type: "select",
+      placeholder: t("selectDay"),
+      options: getAvailableWeekdayOptions,
+      onChange: () => ({
+        start_hour: "",
+      }),
+      disabled: (formData) =>
+        !formData.section_id ||
+        !formData.room_id ||
+        !formData.semester ||
+        !formData.year ||
+        getAvailableWeekdayOptions(formData).length === 0,
+      required: true,
+    },
+    {
+      name: "start_hour",
+      label: t("startTime"),
+      type: "select",
+      placeholder: t("startTime"),
+      options: getAvailableStartHourOptions,
+      disabled: (formData) =>
+        !formData.section_id ||
+        !formData.room_id ||
+        !formData.weekday ||
+        getAvailableStartHourOptions(formData).length === 0,
       required: true,
     },
   ];
@@ -882,7 +1020,7 @@ export const SchedulePage = () => {
   ];
 
   const scheduleActionLabel =
-    selectedSemesterSchedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule");
+    hasAnyScheduleForYear ? t("regenerateSchedule") : t("generateSchedule");
 
   const renderFilterControls = (semester, semesterSchedule) => {
     const draftFilters = draftFiltersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
@@ -1000,29 +1138,6 @@ export const SchedulePage = () => {
         </h1>
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-          <select
-            value={scheduleSemester}
-            onChange={(event) =>
-              setScheduleSemester(Number(event.target.value))
-            }
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 sm:w-auto"
-          >
-            {SCHEDULE_SEMESTER_OPTIONS.map((item) => (
-              <option key={item.value} value={item.value}>
-                {t(item.labelKey)}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="number"
-            value={scheduleYear}
-            onChange={(event) =>
-              setScheduleYear(Number(event.target.value) || currentYear)
-            }
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 sm:w-28"
-          />
-
           {isAdmin ? (
             <>
               <button
@@ -1053,7 +1168,7 @@ export const SchedulePage = () => {
 
               <button
                 onClick={openResetScheduleModal}
-                disabled={isResetting || isLoading || selectedSemesterSchedule.length === 0}
+                disabled={isResetting || isLoading || !hasAnyScheduleForYear}
                 className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {t("resetSchedule")}
@@ -1150,10 +1265,10 @@ export const SchedulePage = () => {
           fields={formFields}
           onSubmit={handleGenerateSchedule}
           resetKey={`schedule-generate-${
-            selectedSemesterSchedule.length > 0 ? "regenerate" : "new"
+            hasAnyScheduleForYear ? "regenerate" : "new"
           }`}
           submitText={
-            selectedSemesterSchedule.length > 0 ? t("regenerateSchedule") : t("generateSchedule")
+            hasAnyScheduleForYear ? t("regenerateSchedule") : t("generateSchedule")
           }
           isLoading={isLoading}
           initialValues={{
@@ -1384,7 +1499,7 @@ export const SchedulePage = () => {
                   semester: scheduleSemester,
                   year: scheduleYear,
                   subgroup: "",
-                  weekday: "monday",
+                  weekday: "",
                 }
           }
         />
