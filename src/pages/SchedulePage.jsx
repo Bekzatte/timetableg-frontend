@@ -131,12 +131,64 @@ const GENERATION_REASON_TRANSLATION_KEYS = {
     "errorGenerationInsufficientSlotsReason",
 };
 
+const formatPreflightIssue = (issue, t) => {
+  const course = issue.courseCode
+    ? `${issue.courseName || "-"} (${issue.courseCode})`
+    : issue.courseName || "-";
+  const group = issue.groupName || "-";
+  const teacher = issue.teacherName || "-";
+  const teacherLanguages = Array.isArray(issue.teacherLanguages)
+    ? issue.teacherLanguages.join(", ")
+    : issue.teacherLanguages || "-";
+
+  if (issue.type === "teacher_language_mismatch") {
+    return t("schedulePreflightTeacherLanguageMismatch")
+      .replace("${course}", course)
+      .replace("${group}", group)
+      .replace("${teacher}", teacher)
+      .replace("${groupLanguage}", issue.groupLanguage || "-")
+      .replace("${teacherLanguages}", teacherLanguages);
+  }
+
+  if (issue.type === "teacher_missing") {
+    return t("schedulePreflightTeacherMissing")
+      .replace("${course}", course)
+      .replace("${group}", group);
+  }
+
+  if (issue.type === "study_course_missing") {
+    return t("schedulePreflightStudyCourseMissing")
+      .replace("${course}", course)
+      .replace("${group}", group);
+  }
+
+  if (issue.type === "study_course_mismatch") {
+    return t("schedulePreflightStudyCourseMismatch")
+      .replace("${course}", course)
+      .replace("${group}", group)
+      .replace("${courseYear}", issue.courseYear || "-")
+      .replace("${groupCourse}", issue.groupStudyCourse || "-");
+  }
+
+  return issue.reason || t("errorBadRequest");
+};
+
 const formatGenerationError = (job, t) => {
   const translationKey = job?.errorCode
     ? JOB_ERROR_CODE_TRANSLATION_KEYS[job.errorCode]
     : null;
 
-  const firstIssue = job.details?.issues?.[0];
+  const issues = Array.isArray(job.details?.issues) ? job.details.issues : [];
+  const preflightIssues = issues.filter((issue) => issue?.type);
+
+  if (job.errorCode === "schedule_preflight_failed" || preflightIssues.length) {
+    const error = new Error(t("schedulePreflightFailed"));
+    error.items = preflightIssues.map((issue) => formatPreflightIssue(issue, t));
+
+    return error;
+  }
+
+  const firstIssue = issues[0];
 
   if (firstIssue?.reason) {
     const reason = String(firstIssue.reason);
