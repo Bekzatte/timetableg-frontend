@@ -483,7 +483,7 @@ export default {
     errorGenerateSchedule: "Ошибка при генерировании расписания",
     scheduleGenerationInProgress:
       "Расписание генерируется. Это может занять дольше времени.",
-    greedyAlgorithm: "Жадный алгоритм",
+    greedyAlgorithm: "Greedy",
     geneticAlgorithm: "Генетический алгоритм",
     simulatedAnnealing: "Имитация отжига",
     scheduleNotCreated:

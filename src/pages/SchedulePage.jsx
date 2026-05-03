@@ -1019,8 +1019,7 @@ export const SchedulePage = () => {
     },
   ];
 
-  const scheduleActionLabel =
-    hasAnyScheduleForYear ? t("regenerateSchedule") : t("generateSchedule");
+  const scheduleActionLabel = t("generateSchedule");
 
   const renderFilterControls = (semester, semesterSchedule) => {
     const draftFilters = draftFiltersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
@@ -1264,12 +1263,8 @@ export const SchedulePage = () => {
         <Form
           fields={formFields}
           onSubmit={handleGenerateSchedule}
-          resetKey={`schedule-generate-${
-            hasAnyScheduleForYear ? "regenerate" : "new"
-          }`}
-          submitText={
-            hasAnyScheduleForYear ? t("regenerateSchedule") : t("generateSchedule")
-          }
+          resetKey="schedule-generate"
+          submitText={t("generateSchedule")}
           isLoading={isLoading}
           initialValues={{
             semester: scheduleSemester,
