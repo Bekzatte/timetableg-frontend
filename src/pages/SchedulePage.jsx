@@ -1,5 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Download, Plus, RotateCw } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  Download,
+  Loader2,
+  Plus,
+  RotateCw,
+} from "lucide-react";
 import TimetableGrid from "../components/timetable/TimetableGrid";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
@@ -37,6 +45,8 @@ const SCHEDULE_ALGORITHM_OPTIONS = [
   { value: "cpsat", label: "CP-SAT" },
   { value: "hybrid", label: "CP-SAT + Greedy" },
 ];
+
+const GENERATION_POLL_INTERVAL_MS = 10000;
 
 const EMPTY_SCHEDULE_FILTERS = {
   group: "",
@@ -322,11 +332,14 @@ export const SchedulePage = () => {
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeGenerationJob, setActiveGenerationJob] = useState(null);
+  const [isGenerationStatusOpen, setIsGenerationStatusOpen] = useState(false);
   const [isEntrySaving, setIsEntrySaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [generationError, setGenerationError] = useState(null);
   const [pageError, setPageError] = useState("");
+  const generationPollTimeoutRef = useRef(null);
 
   const [filtersBySemester, setFiltersBySemester] = useState(
     createEmptyScheduleFiltersBySemester,
@@ -356,6 +369,20 @@ export const SchedulePage = () => {
   );
 
   useAutoDismiss(pageError, setPageError);
+
+  const clearGenerationPollTimeout = () => {
+    if (generationPollTimeoutRef.current) {
+      window.clearTimeout(generationPollTimeoutRef.current);
+      generationPollTimeoutRef.current = null;
+    }
+  };
+
+  useEffect(
+    () => () => {
+      clearGenerationPollTimeout();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (data) {
@@ -510,19 +537,74 @@ export const SchedulePage = () => {
     }));
   };
 
-  const waitForGenerationJob = async (jobId) => {
-    while (true) {
+  const waitForNextGenerationPoll = () =>
+    new Promise((resolve) => {
+      clearGenerationPollTimeout();
+
+      generationPollTimeoutRef.current = window.setTimeout(() => {
+        generationPollTimeoutRef.current = null;
+        resolve();
+      }, GENERATION_POLL_INTERVAL_MS);
+    });
+
+  const pollGenerationJob = async (jobId, metadata) => {
+    try {
       const job = await scheduleAPI.getGenerationJob(jobId);
 
       if (job.status === "completed") {
-        return job;
+        setActiveGenerationJob((current) => ({
+          ...(current || metadata),
+          ...metadata,
+          jobId,
+          status: "completed",
+          result: job.result || null,
+          error: null,
+          items: [],
+        }));
+        setIsLoading(false);
+        await refreshSchedule();
+        return;
       }
 
       if (job.status === "failed") {
-        throw formatGenerationError(job, t);
+        const formattedError = formatGenerationError(job, t);
+        setActiveGenerationJob((current) => ({
+          ...(current || metadata),
+          ...metadata,
+          jobId,
+          status: "failed",
+          error: formattedError.message || t("errorGenerateSchedule"),
+          items: Array.isArray(formattedError.items) ? formattedError.items : [],
+        }));
+        setGenerationError({
+          title: t("errorGenerateSchedule"),
+          message: formattedError.message || t("errorUnknown"),
+          items: Array.isArray(formattedError.items) ? formattedError.items : [],
+        });
+        setIsLoading(false);
+        return;
       }
 
-      await new Promise((resolve) => window.setTimeout(resolve, 2500));
+      setActiveGenerationJob((current) => ({
+        ...(current || metadata),
+        ...metadata,
+        jobId,
+        status: job.status || "running",
+        error: null,
+      }));
+      await waitForNextGenerationPoll();
+      await pollGenerationJob(jobId, metadata);
+    } catch (error) {
+      console.error(t("errorGenerateSchedule"), error);
+      setActiveGenerationJob((current) => ({
+        ...(current || metadata),
+        ...metadata,
+        jobId,
+        status: "running",
+        error: error.message || t("errorUnknown"),
+      }));
+      await waitForNextGenerationPoll();
+      await pollGenerationJob(jobId, metadata);
     }
   };
 
@@ -538,17 +620,30 @@ export const SchedulePage = () => {
 
   const handleGenerateSchedule = async (formData, setErrors) => {
     try {
+      clearGenerationPollTimeout();
       setGenerationError(null);
       setPageError("");
       setIsGenerateOpen(false);
+      setIsGenerationStatusOpen(true);
       setIsLoading(true);
 
       const job = await scheduleAPI.generate(formData);
+      const metadata = {
+        jobId: job.jobId,
+        status: "running",
+        semester: Number(formData.semester),
+        year: Number(formData.year),
+        algorithm: formData.algorithm,
+        startedAt: Date.now(),
+        error: null,
+        items: [],
+      };
 
-      await waitForGenerationJob(job.jobId);
-      await refreshSchedule();
+      setActiveGenerationJob(metadata);
+      pollGenerationJob(job.jobId, metadata);
     } catch (error) {
       console.error(t("errorGenerateSchedule"), error);
+      setIsGenerationStatusOpen(false);
 
       setGenerationError({
         title: t("errorGenerateSchedule"),
@@ -560,7 +655,6 @@ export const SchedulePage = () => {
         ...prev,
         error: error.message,
       }));
-    } finally {
       setIsLoading(false);
     }
   };
@@ -1223,6 +1317,51 @@ export const SchedulePage = () => {
   ];
 
   const scheduleActionLabel = t("generateSchedule");
+  const activeGenerationSemester = Number(activeGenerationJob?.semester || 0);
+  const generationStatusLabel =
+    activeGenerationJob?.status === "completed"
+      ? t("scheduleGenerationCompleted")
+      : activeGenerationJob?.status === "failed"
+        ? t("scheduleGenerationFailed")
+        : t("scheduleGenerationInProgress");
+
+  const renderGenerationStatusButton = (semester) => {
+    if (!activeGenerationJob || activeGenerationSemester !== Number(semester)) {
+      return null;
+    }
+
+    const status = activeGenerationJob.status || "running";
+    const Icon =
+      status === "completed"
+        ? CheckCircle2
+        : status === "failed"
+          ? AlertCircle
+          : Loader2;
+    const className =
+      status === "completed"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+        : status === "failed"
+          ? "border-red-200 bg-red-50 text-red-700"
+          : "border-amber-200 bg-amber-50 text-amber-700";
+
+    return (
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          setIsGenerationStatusOpen(true);
+        }}
+        className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-medium transition hover:bg-white ${className}`}
+        title={generationStatusLabel}
+      >
+        <Icon
+          size={16}
+          className={status === "completed" || status === "failed" ? "" : "animate-spin"}
+        />
+        <span className="hidden sm:inline">{generationStatusLabel}</span>
+      </button>
+    );
+  };
 
   const renderFilterControls = (semester, semesterSchedule) => {
     const draftFilters = draftFiltersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
@@ -1316,17 +1455,61 @@ export const SchedulePage = () => {
 
   return (
     <div className="relative w-full px-0 py-2 sm:py-4">
-      {isLoading ? (
+      {isGenerationStatusOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm">
-          <div className="rounded-2xl border border-blue-100 bg-white px-6 py-5 text-center shadow-xl">
-            <RotateCw
-              size={28}
-              className="mx-auto animate-spin text-[#014531]"
-            />
-            <p className="mt-3 text-sm font-medium text-gray-900">
-              {t("scheduleGenerationInProgress")}
+          <div className="w-[min(92vw,420px)] rounded-2xl border border-blue-100 bg-white px-6 py-5 text-center shadow-xl">
+            {activeGenerationJob?.status === "completed" ? (
+              <CheckCircle2 size={32} className="mx-auto text-emerald-600" />
+            ) : activeGenerationJob?.status === "failed" ? (
+              <AlertCircle size={32} className="mx-auto text-red-600" />
+            ) : (
+              <Loader2
+                size={32}
+                className="mx-auto animate-spin text-[#014531]"
+              />
+            )}
+            <p className="mt-3 text-sm font-semibold text-gray-900">
+              {generationStatusLabel}
             </p>
-            <p className="mt-1 text-xs text-gray-500">{t("loading")}</p>
+            {activeGenerationJob ? (
+              <p className="mt-1 text-xs text-gray-500">
+                {t("semester")}: {activeGenerationJob.semester}. {t("year")}:{" "}
+                {activeGenerationJob.year}. {t("algorithm")}:{" "}
+                {activeGenerationJob.algorithm || "-"}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-gray-500">{t("loading")}</p>
+            )}
+            {activeGenerationJob?.result?.scheduleCount !== undefined ? (
+              <p className="mt-2 text-sm text-emerald-700">
+                {t("scheduleEntries")}: {activeGenerationJob.result.scheduleCount}
+              </p>
+            ) : null}
+            {activeGenerationJob?.error ? (
+              <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-left text-sm text-red-700">
+                {activeGenerationJob.error}
+              </div>
+            ) : null}
+            {activeGenerationJob?.items?.length ? (
+              <ul className="mt-3 max-h-40 list-disc space-y-1 overflow-y-auto pl-5 text-left text-xs text-gray-700">
+                {activeGenerationJob.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+            {activeGenerationJob?.status !== "completed" &&
+            activeGenerationJob?.status !== "failed" ? (
+              <p className="mt-3 text-xs text-gray-500">
+                {t("scheduleGenerationBackgroundHint")}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setIsGenerationStatusOpen(false)}
+              className="mt-4 w-full rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#013726]"
+            >
+              {t("close")}
+            </button>
           </div>
         </div>
       ) : null}
@@ -1405,6 +1588,7 @@ export const SchedulePage = () => {
                   {t(semesterOption.labelKey)}
                 </span>
                 <span className="flex items-center gap-3">
+                  {renderGenerationStatusButton(semester)}
                   <ChevronDown
                     size={20}
                     className={`text-gray-500 transition ${isExpanded ? "rotate-180" : ""}`}
