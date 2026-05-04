@@ -46,9 +46,11 @@ const SCHEDULE_ALGORITHM_OPTIONS = [
   { value: "greedy", labelKey: "greedyAlgorithm" },
   { value: "cpsat", label: "CP-SAT" },
   { value: "hybrid", label: "CP-SAT + Greedy" },
+  { value: "cpsat_fast", label: "CP-SAT (Fast)" },
 ];
 
 const GENERATION_POLL_INTERVAL_MS = 10000;
+const GENERATION_POLL_TIMEOUT_MS = 15 * 60 * 1000;
 
 const EMPTY_SCHEDULE_FILTERS = {
   group: "",
@@ -551,6 +553,19 @@ export const SchedulePage = () => {
 
   const pollGenerationJob = async (jobId, metadata) => {
     try {
+      if (Date.now() - Number(metadata.startedAt || Date.now()) > GENERATION_POLL_TIMEOUT_MS) {
+        setActiveGenerationJob((current) => ({
+          ...(current || metadata),
+          ...metadata,
+          jobId,
+          status: "failed",
+          error: t("scheduleGenerationPollingTimeout"),
+          items: [],
+        }));
+        setIsLoading(false);
+        return;
+      }
+
       const job = await scheduleAPI.getGenerationJob(jobId);
 
       if (job.status === "completed") {
@@ -1687,6 +1702,7 @@ export const SchedulePage = () => {
             <li>{t("scheduleGenerationGreedyInfo")}</li>
             <li>{t("scheduleGenerationCpSatInfo")}</li>
             <li>{t("scheduleGenerationHybridInfo")}</li>
+            <li>{t("scheduleGenerationCpSatFastInfo")}</li>
           </ul>
           <p className="mt-3 font-medium">{t("scheduleGenerationInfoNote")}</p>
         </div>
