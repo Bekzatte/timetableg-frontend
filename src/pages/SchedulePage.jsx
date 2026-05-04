@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
+  BadgeCheck,
   CheckCircle2,
   ChevronDown,
   Download,
   Loader2,
   Plus,
   RotateCw,
+  Sparkles,
 } from "lucide-react";
 import TimetableGrid from "../components/timetable/TimetableGrid";
 import DataTable from "../components/ui/DataTable";
@@ -1318,47 +1320,76 @@ export const SchedulePage = () => {
 
   const scheduleActionLabel = t("generateSchedule");
   const activeGenerationSemester = Number(activeGenerationJob?.semester || 0);
-  const generationStatusLabel =
-    activeGenerationJob?.status === "completed"
+  const hasGeneratedScheduleForSemester = (semester) =>
+    (schedulesBySemester[semester] || []).length > 0;
+  const getSemesterGenerationStatus = (semester) => {
+    if (activeGenerationJob && activeGenerationSemester === Number(semester)) {
+      return activeGenerationJob.status || "running";
+    }
+
+    return hasGeneratedScheduleForSemester(semester) ? "completed" : "";
+  };
+  const getGenerationStatusLabel = (status) =>
+    status === "completed"
       ? t("scheduleGenerationCompleted")
-      : activeGenerationJob?.status === "failed"
+      : status === "failed"
         ? t("scheduleGenerationFailed")
         : t("scheduleGenerationInProgress");
+  const generationStatusLabel = getGenerationStatusLabel(
+    activeGenerationJob?.status || "running",
+  );
 
   const renderGenerationStatusButton = (semester) => {
-    if (!activeGenerationJob || activeGenerationSemester !== Number(semester)) {
+    const status = getSemesterGenerationStatus(semester);
+
+    if (!status) {
       return null;
     }
 
-    const status = activeGenerationJob.status || "running";
     const Icon =
       status === "completed"
-        ? CheckCircle2
+        ? BadgeCheck
         : status === "failed"
           ? AlertCircle
-          : Loader2;
+          : Sparkles;
     const className =
       status === "completed"
-        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
         : status === "failed"
-          ? "border-red-200 bg-red-50 text-red-700"
-          : "border-amber-200 bg-amber-50 text-amber-700";
+          ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+          : "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100";
+    const label = getGenerationStatusLabel(status);
 
     return (
       <button
         type="button"
         onClick={(event) => {
           event.stopPropagation();
+          if (
+            !activeGenerationJob ||
+            activeGenerationSemester !== Number(semester)
+          ) {
+            setActiveGenerationJob({
+              semester,
+              year: scheduleYear,
+              status: "completed",
+              result: {
+                scheduleCount: (schedulesBySemester[semester] || []).length,
+              },
+              error: null,
+              items: [],
+            });
+          }
           setIsGenerationStatusOpen(true);
         }}
-        className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-medium transition hover:bg-white ${className}`}
-        title={generationStatusLabel}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium shadow-sm transition ${className}`}
+        title={label}
+        aria-label={label}
       >
         <Icon
-          size={16}
+          size={18}
           className={status === "completed" || status === "failed" ? "" : "animate-spin"}
         />
-        <span className="hidden sm:inline">{generationStatusLabel}</span>
       </button>
     );
   };
