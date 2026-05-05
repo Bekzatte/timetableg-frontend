@@ -1,99 +1,136 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notificationsAPI } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
+import { queryKeys } from "../api/queryKeys";
 import { NotificationsContext } from "./NotificationsContextValue";
 
 const NOTIFICATION_POLL_INTERVAL_MS = 30000;
 
 export const NotificationsProvider = ({ children }) => {
   const { user } = useAuth();
-  const [items, setItems] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const queryClient = useQueryClient();
   const isEnabled = user?.role === "teacher" || user?.role === "student";
+  const queryKey = useMemo(() => queryKeys.notifications.all(user), [user]);
+
+  const notificationsQuery = useQuery({
+    queryKey,
+    queryFn: notificationsAPI.getAll,
+    enabled: isEnabled,
+    refetchInterval: isEnabled ? NOTIFICATION_POLL_INTERVAL_MS : false,
+    refetchIntervalInBackground: false,
+    initialData: { items: [], unreadCount: 0 },
+  });
+
+  const { items, unreadCount } = useMemo(() => {
+    const normalizedData = notificationsQuery.data || {
+      items: [],
+      unreadCount: 0,
+    };
+
+    return {
+      items:
+        isEnabled && Array.isArray(normalizedData.items)
+          ? normalizedData.items
+          : [],
+      unreadCount: isEnabled ? Number(normalizedData.unreadCount || 0) : 0,
+    };
+  }, [isEnabled, notificationsQuery.data]);
+  const isLoading = notificationsQuery.isLoading || notificationsQuery.isFetching;
+
+  const setNotificationCache = useCallback(
+    (updater) => {
+      queryClient.setQueryData(queryKey, (current) =>
+        updater(current || { items: [], unreadCount: 0 }),
+      );
+    },
+    [queryClient, queryKey],
+  );
 
   const loadNotifications = useCallback(async () => {
     if (!isEnabled) {
-      setItems([]);
-      setUnreadCount(0);
       return { items: [], unreadCount: 0 };
     }
 
-    setIsLoading(true);
-    try {
-      const payload = await notificationsAPI.getAll();
-      const nextItems = Array.isArray(payload?.items) ? payload.items : [];
-      setItems(nextItems);
-      setUnreadCount(Number(payload?.unreadCount || 0));
-      return { items: nextItems, unreadCount: Number(payload?.unreadCount || 0) };
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isEnabled]);
+    const result = await notificationsQuery.refetch();
+    return result.data || { items: [], unreadCount: 0 };
+  }, [isEnabled, notificationsQuery]);
 
-  useEffect(() => {
-    loadNotifications().catch(() => {});
-  }, [loadNotifications]);
+  const markReadMutation = useMutation({
+    mutationFn: notificationsAPI.markRead,
+    onSuccess: (updated, notificationId) => {
+      setNotificationCache((current) => {
+        let decremented = false;
+        const nextItems = (current.items || []).map((item) => {
+          if (item.id !== notificationId) {
+            return item;
+          }
+          if (!Number(item.is_read || 0)) {
+            decremented = true;
+          }
+          return updated;
+        });
 
-  useEffect(() => {
-    if (!isEnabled) {
-      return undefined;
-    }
+        return {
+          items: nextItems,
+          unreadCount: decremented
+            ? Math.max(0, Number(current.unreadCount || 0) - 1)
+            : Number(current.unreadCount || 0),
+        };
+      });
+    },
+  });
 
-    const intervalId = window.setInterval(() => {
-      loadNotifications().catch(() => {});
-    }, NOTIFICATION_POLL_INTERVAL_MS);
+  const markAllReadMutation = useMutation({
+    mutationFn: notificationsAPI.markAllRead,
+    onSuccess: (payload) => {
+      setNotificationCache((current) => ({
+        items: (current.items || []).map((item) => ({
+          ...item,
+          is_read: 1,
+          read_at: item.read_at || new Date().toISOString(),
+        })),
+        unreadCount: Number(payload?.unreadCount || 0),
+      }));
+    },
+  });
 
-    return () => window.clearInterval(intervalId);
-  }, [isEnabled, loadNotifications]);
+  const deleteOneMutation = useMutation({
+    mutationFn: notificationsAPI.deleteOne,
+    onSuccess: (payload, notificationId) => {
+      setNotificationCache((current) => ({
+        items: (current.items || []).filter((item) => item.id !== notificationId),
+        unreadCount: Number(payload?.unreadCount || 0),
+      }));
+    },
+  });
 
-  const markAsRead = useCallback(async (notificationId) => {
-    const updated = await notificationsAPI.markRead(notificationId);
-    let decremented = false;
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== notificationId) {
-          return item;
-        }
-        if (!Number(item.is_read || 0)) {
-          decremented = true;
-        }
-        return updated;
-      }),
-    );
-    if (decremented) {
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    }
-    return updated;
-  }, []);
+  const deleteAllMutation = useMutation({
+    mutationFn: notificationsAPI.deleteAll,
+    onSuccess: (payload) => {
+      setNotificationCache(() => ({
+        items: [],
+        unreadCount: Number(payload?.unreadCount || 0),
+      }));
+    },
+  });
 
-  const markAllAsRead = useCallback(async () => {
-    const payload = await notificationsAPI.markAllRead();
-    setItems((prev) =>
-      prev.map((item) => ({
-        ...item,
-        is_read: 1,
-        read_at: item.read_at || new Date().toISOString(),
-      })),
-    );
-    setUnreadCount(Number(payload?.unreadCount || 0));
-    return payload;
-  }, []);
-
-  const deleteOne = useCallback(async (notificationId) => {
-    const payload = await notificationsAPI.deleteOne(notificationId);
-    setItems((prev) => prev.filter((item) => item.id !== notificationId));
-    setUnreadCount(Number(payload?.unreadCount || 0));
-    return payload;
-  }, []);
-
-  const deleteAll = useCallback(async () => {
-    const payload = await notificationsAPI.deleteAll();
-    setItems([]);
-    setUnreadCount(Number(payload?.unreadCount || 0));
-    return payload;
-  }, []);
+  const markAsRead = useCallback(
+    (notificationId) => markReadMutation.mutateAsync(notificationId),
+    [markReadMutation],
+  );
+  const markAllAsRead = useCallback(
+    () => markAllReadMutation.mutateAsync(),
+    [markAllReadMutation],
+  );
+  const deleteOne = useCallback(
+    (notificationId) => deleteOneMutation.mutateAsync(notificationId),
+    [deleteOneMutation],
+  );
+  const deleteAll = useCallback(
+    () => deleteAllMutation.mutateAsync(),
+    [deleteAllMutation],
+  );
 
   const value = useMemo(
     () => ({
@@ -107,7 +144,17 @@ export const NotificationsProvider = ({ children }) => {
       deleteOne,
       deleteAll,
     }),
-    [items, unreadCount, isLoading, isEnabled, loadNotifications, markAsRead, markAllAsRead, deleteOne, deleteAll],
+    [
+      items,
+      unreadCount,
+      isLoading,
+      isEnabled,
+      loadNotifications,
+      markAsRead,
+      markAllAsRead,
+      deleteOne,
+      deleteAll,
+    ],
   );
 
   return (

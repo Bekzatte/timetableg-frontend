@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRoomBlocksQuery, useRoomsQuery } from "../../api/collectionQueries";
+import { queryKeys } from "../../api/queryKeys";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, roomAPI, roomBlockAPI } from "../../services/api";
-import { useFetch } from "../../hooks/useAPI";
 import { useGlobalLoader } from "../../hooks/useGlobalLoader";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 import { useTranslation } from "../../hooks/useTranslation";
 import {
   PROGRAMMES,
@@ -23,7 +26,9 @@ const isSharedFacultyRoomCapacity = (value) => Number(value) > SHARED_FACULTY_MI
 export const RoomManager = () => {
   const { t, language } = useTranslation();
   const { withGlobalLoader } = useGlobalLoader();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBlocksModalOpen, setIsBlocksModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
@@ -44,20 +49,17 @@ export const RoomManager = () => {
   const [draftProgrammeFilter, setDraftProgrammeFilter] = useState("");
   const [draftTypeFilter, setDraftTypeFilter] = useState("");
   const [draftAvailabilityFilter, setDraftAvailabilityFilter] = useState("");
-  const { data, isLoading, execute } = useFetch(roomAPI.getAll);
-  const {
-    data: roomBlocksData,
-    isLoading: isRoomBlocksLoading,
-    execute: executeRoomBlocks,
-  } = useFetch(roomBlockAPI.getAll);
+  const roomsQuery = useRoomsQuery();
+  const roomBlocksQuery = useRoomBlocksQuery();
 
-  useEffect(() => {
-    execute();
-    executeRoomBlocks();
-  }, [execute, executeRoomBlocks]);
-
-  const rooms = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  const roomBlocks = useMemo(() => (Array.isArray(roomBlocksData) ? roomBlocksData : []), [roomBlocksData]);
+  const rooms = useMemo(
+    () => (Array.isArray(roomsQuery.data) ? roomsQuery.data : []),
+    [roomsQuery.data],
+  );
+  const roomBlocks = useMemo(
+    () => (Array.isArray(roomBlocksQuery.data) ? roomBlocksQuery.data : []),
+    [roomBlocksQuery.data],
+  );
   const selectedRoomBlocks = useMemo(
     () =>
       roomBlocks.filter((block) => Number(block.room_id) === Number(selectedRoom?.id)),
@@ -123,23 +125,31 @@ export const RoomManager = () => {
   };
 
   const handleDeleteRoom = async (room) => {
-    if (
-      window.confirm(t("confirmDeleteRoom").replace("${number}", room.number))
-    ) {
-      try {
-        await withGlobalLoader(() => roomAPI.delete(room.id), {
-          title: t("delete"),
-          description: t("globalLoaderDeleteDescription"),
-        });
-        await execute();
-      } catch (error) {
-        console.error(t("errorDeleteRoom"), error);
-      }
+    const confirmed = await confirm({
+      message: t("confirmDeleteRoom").replace("${number}", room.number),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await withGlobalLoader(() => roomAPI.delete(room.id), {
+        title: t("delete"),
+        description: t("globalLoaderDeleteDescription"),
+      });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
+    } catch (error) {
+      console.error(t("errorDeleteRoom"), error);
     }
   };
 
   const handleClearRooms = async () => {
-    if (!window.confirm(t("confirmClearRooms"))) {
+    const confirmed = await confirm({
+      message: t("confirmClearRooms"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -149,7 +159,7 @@ export const RoomManager = () => {
         title: t("clearRooms"),
         description: t("globalLoaderClearDescription"),
       });
-      await execute();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
     } catch (error) {
       console.error("Error clearing rooms:", error);
     } finally {
@@ -177,7 +187,7 @@ export const RoomManager = () => {
           description: t("globalLoaderSaveDescription"),
         },
       );
-      await execute();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
       setIsModalOpen(false);
     } catch (error) {
       setErrors((prev) => ({
@@ -211,7 +221,7 @@ export const RoomManager = () => {
           description: t("globalLoaderSaveDescription"),
         },
       );
-      await executeRoomBlocks();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.rooms.blocks });
       setBlockFormData((current) => ({
         ...current,
         reason: "",
@@ -224,14 +234,18 @@ export const RoomManager = () => {
   };
 
   const handleDeleteBlock = async (block) => {
-    if (!window.confirm(t("confirmDeleteRoomBlock"))) {
+    const confirmed = await confirm({
+      message: t("confirmDeleteRoomBlock"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
     await withGlobalLoader(() => roomBlockAPI.delete(block.id), {
       title: t("delete"),
       description: t("globalLoaderDeleteDescription"),
     });
-    await executeRoomBlocks();
+    await queryClient.invalidateQueries({ queryKey: queryKeys.rooms.blocks });
   };
 
   if (!isAdmin) {
@@ -349,6 +363,7 @@ export const RoomManager = () => {
 
   return (
     <div className="p-6 bg-white">
+      <ConfirmDialog />
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">
@@ -400,7 +415,7 @@ export const RoomManager = () => {
         data={filteredRooms}
         onEdit={handleEditRoom}
         onDelete={handleDeleteRoom}
-        isLoading={isLoading}
+        isLoading={roomsQuery.isLoading}
         enableSearch
         hasActiveFilters={hasActiveFilters}
         filterDialogTitle={t("filter")}
@@ -580,7 +595,7 @@ export const RoomManager = () => {
           </form>
 
           <div className="space-y-3">
-            {isRoomBlocksLoading ? (
+            {roomBlocksQuery.isLoading ? (
               <div className="rounded-xl bg-gray-50 px-4 py-6 text-center text-gray-500">
                 {t("loading")}
               </div>

@@ -1,11 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useCourseComponentsQuery,
+  useCoursesQuery,
+  useTeachersQuery,
+} from "../../api/collectionQueries";
+import { queryKeys } from "../../api/queryKeys";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import { useAuth } from "../../hooks/useAuth";
-import { adminAPI, courseAPI, courseComponentAPI, importAPI, teacherAPI } from "../../services/api";
-import { useFetch } from "../../hooks/useAPI";
+import { adminAPI, courseAPI, courseComponentAPI, importAPI } from "../../services/api";
 import { useGlobalLoader } from "../../hooks/useGlobalLoader";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 import { useTranslation } from "../../hooks/useTranslation";
 import { EDUCATIONAL_PROGRAMME_GROUPS } from "../../constants/educationGroups";
 import {
@@ -39,7 +46,9 @@ const emptyComponentDrafts = () =>
 export const CourseManager = () => {
   const { t, language } = useTranslation();
   const { withGlobalLoader } = useGlobalLoader();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const ropFileInputRef = useRef(null);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -68,25 +77,18 @@ export const CourseManager = () => {
   const [courseFormData, setCourseFormData] = useState(emptyCourseForm);
   const [componentDrafts, setComponentDrafts] = useState(() => emptyComponentDrafts());
   const [courseFormErrors, setCourseFormErrors] = useState({});
-  const { data, isLoading, execute } = useFetch(courseAPI.getAll);
-  const {
-    data: teachersData,
-    isLoading: isTeachersLoading,
-    execute: executeTeachers,
-  } = useFetch(teacherAPI.getAll);
-  const { data: courseComponentsData, execute: executeCourseComponents } = useFetch(courseComponentAPI.getAll);
-
-  useEffect(() => {
-    execute();
-    executeTeachers();
-    executeCourseComponents();
-  }, [execute, executeTeachers, executeCourseComponents]);
+  const coursesQuery = useCoursesQuery();
+  const teachersQuery = useTeachersQuery();
+  const courseComponentsQuery = useCourseComponentsQuery();
 
   const refreshImportedData = async () => {
     const results = await Promise.allSettled([
-      execute(),
-      executeTeachers(),
-      executeCourseComponents(),
+      queryClient.invalidateQueries({ queryKey: queryKeys.courses.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.courses.components }),
+      coursesQuery.refetch(),
+      teachersQuery.refetch(),
+      courseComponentsQuery.refetch(),
     ]);
     const failed = results.filter((result) => result.status === "rejected");
     if (failed.length > 0) {
@@ -94,11 +96,14 @@ export const CourseManager = () => {
     }
   };
 
-  const courses = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  const teachers = Array.isArray(teachersData) ? teachersData : [];
+  const courses = useMemo(
+    () => (Array.isArray(coursesQuery.data) ? coursesQuery.data : []),
+    [coursesQuery.data],
+  );
+  const teachers = Array.isArray(teachersQuery.data) ? teachersQuery.data : [];
   const courseComponents = useMemo(
-    () => (Array.isArray(courseComponentsData) ? courseComponentsData : []),
-    [courseComponentsData],
+    () => (Array.isArray(courseComponentsQuery.data) ? courseComponentsQuery.data : []),
+    [courseComponentsQuery.data],
   );
   const componentsByCourseId = useMemo(() => {
     const grouped = new Map();
@@ -201,21 +206,31 @@ export const CourseManager = () => {
   };
 
   const handleDeleteCourse = async (course) => {
-    if (window.confirm(`${t("deleteCourse")}?`)) {
-      try {
-        await withGlobalLoader(() => courseAPI.delete(course.id), {
-          title: t("delete"),
-          description: t("globalLoaderDeleteDescription"),
-        });
-        await execute();
-      } catch (error) {
-        console.error("Error deleting course:", error);
-      }
+    const confirmed = await confirm({
+      message: `${t("deleteCourse")}?`,
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await withGlobalLoader(() => courseAPI.delete(course.id), {
+        title: t("delete"),
+        description: t("globalLoaderDeleteDescription"),
+      });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.courses.all });
+    } catch (error) {
+      console.error("Error deleting course:", error);
     }
   };
 
   const handleClearCourses = async () => {
-    if (!window.confirm(t("confirmClearCourses"))) {
+    const confirmed = await confirm({
+      message: t("confirmClearCourses"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -225,7 +240,7 @@ export const CourseManager = () => {
         title: t("clearCourses"),
         description: t("globalLoaderClearDescription"),
       });
-      await execute();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.courses.all });
     } catch (error) {
       console.error("Error clearing courses:", error);
     } finally {
@@ -445,8 +460,8 @@ export const CourseManager = () => {
       );
       const savedCourse = response.data || response;
       await saveCourseComponents(savedCourse);
-      await execute();
-      await executeCourseComponents();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.courses.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.courses.components });
       setIsModalOpen(false);
     } catch (error) {
       setCourseFormErrors((prev) => ({
@@ -533,6 +548,7 @@ export const CourseManager = () => {
 
   return (
     <div className="p-4 sm:p-6 w-full bg-white">
+      <ConfirmDialog />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">
@@ -627,7 +643,7 @@ export const CourseManager = () => {
         data={filteredCourses}
         onEdit={handleEditCourse}
         onDelete={handleDeleteCourse}
-        isLoading={isLoading}
+        isLoading={coursesQuery.isLoading}
         enableSearch
         hasActiveFilters={hasActiveFilters}
         filterDialogTitle={t("filter")}
@@ -850,10 +866,10 @@ export const CourseManager = () => {
                         <select
                           value={draft.teacherId}
                           onChange={(event) => updateComponentDraft(draft.lessonType, "teacherId", event.target.value)}
-                          disabled={isTeachersLoading}
+                          disabled={teachersQuery.isLoading}
                           className="w-full min-w-[220px] rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
                         >
-                          <option value="">{isTeachersLoading ? t("loading") : t("selectInstructor")}</option>
+                          <option value="">{teachersQuery.isLoading ? t("loading") : t("selectInstructor")}</option>
                           {teachers.map((teacher) => (
                             <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
                           ))}

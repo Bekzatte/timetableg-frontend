@@ -1,5 +1,5 @@
-import { useTranslation } from "../../hooks/useTranslation";
-import { formatLessonTimeRange, scheduleHours } from "../../utils/timeSlots";
+import { useTranslation } from "../../../hooks/useTranslation";
+import { formatLessonTimeRange, scheduleHours } from "../../../utils/timeSlots";
 
 const LESSON_TYPE_STYLES = {
   lecture: "border-amber-500 bg-amber-100 text-amber-950",

@@ -1,23 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, FileSpreadsheet, FileText, Users, Home, Zap, UsersRound } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { dashboardQueryKeys, useDashboardQueries } from "../api/dashboardQueries";
 import { useAuth } from "../hooks/useAuth";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { useGlobalLoader } from "../hooks/useGlobalLoader";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useTranslation } from "../hooks/useTranslation";
 import Modal from "../components/ui/Modal";
 import {
   adminAPI,
-  courseAPI,
-  courseComponentAPI,
   importAPI,
-  groupAPI,
-  roomAPI,
-  scheduleAPI,
-  sectionAPI,
-  teacherAPI,
 } from "../services/api";
-import { useFetch } from "../hooks/useAPI";
 
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
@@ -30,7 +25,9 @@ const readFileAsDataUrl = (file) =>
 export const Dashboard = () => {
   const { t } = useTranslation();
   const { withGlobalLoader } = useGlobalLoader();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const ropFileInputRef = useRef(null);
   const iupFileInputRef = useRef(null);
   const [isRopImporting, setIsRopImporting] = useState(false);
@@ -53,25 +50,28 @@ export const Dashboard = () => {
   const [importResult, setImportResult] = useState(null);
   useAutoDismiss(importError, setImportError);
   useAutoDismiss(importResult, setImportResult, 30000, null);
-  const { data: coursesData, execute: executeCourses } = useFetch(courseAPI.getAll);
-  const { data: courseComponentsData, execute: executeCourseComponents } =
-    useFetch(courseComponentAPI.getAll);
-  const { data: teachersData, execute: executeTeachers } = useFetch(teacherAPI.getAll);
-  const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
-  const { data: groupsData, execute: executeGroups } = useFetch(groupAPI.getAll);
-  const { data: sectionsData, execute: executeSections } = useFetch(sectionAPI.getAll);
-  const { execute: executeSchedules } = useFetch(scheduleAPI.getAll);
+  const {
+    coursesQuery,
+    courseComponentsQuery,
+    teachersQuery,
+    roomsQuery,
+    groupsQuery,
+    sectionsQuery,
+    schedulesQuery,
+  } = useDashboardQueries();
   const actionButtonClass =
     "inline-flex h-[46px] w-full items-center justify-center rounded-md px-4 text-sm text-center font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
   const solidActionButtonClass = `${actionButtonClass} bg-[#014531] text-white hover:bg-[#02704e]`;
   const slateActionButtonClass = `${actionButtonClass} bg-slate-600 text-white hover:bg-slate-700`;
   const dangerActionButtonClass = `${actionButtonClass} bg-red-600 text-white hover:bg-red-700`;
-  const courses = Array.isArray(coursesData) ? coursesData : [];
-  const courseComponents = Array.isArray(courseComponentsData) ? courseComponentsData : [];
-  const teachers = Array.isArray(teachersData) ? teachersData : [];
-  const rooms = Array.isArray(roomsData) ? roomsData : [];
-  const groups = Array.isArray(groupsData) ? groupsData : [];
-  const sections = Array.isArray(sectionsData) ? sectionsData : [];
+  const courses = Array.isArray(coursesQuery.data) ? coursesQuery.data : [];
+  const courseComponents = Array.isArray(courseComponentsQuery.data)
+    ? courseComponentsQuery.data
+    : [];
+  const teachers = Array.isArray(teachersQuery.data) ? teachersQuery.data : [];
+  const rooms = Array.isArray(roomsQuery.data) ? roomsQuery.data : [];
+  const groups = Array.isArray(groupsQuery.data) ? groupsQuery.data : [];
+  const sections = Array.isArray(sectionsQuery.data) ? sectionsQuery.data : [];
   const totalManagedRecords =
     courses.length +
     courseComponents.length +
@@ -79,24 +79,6 @@ export const Dashboard = () => {
     rooms.length +
     groups.length +
     sections.length;
-
-  useEffect(() => {
-    executeCourses();
-    executeCourseComponents();
-    executeTeachers();
-    executeRooms();
-    executeGroups();
-    executeSections();
-    executeSchedules();
-  }, [
-    executeCourses,
-    executeCourseComponents,
-    executeTeachers,
-    executeRooms,
-    executeGroups,
-    executeSections,
-    executeSchedules,
-  ]);
 
   const features = [
     {
@@ -168,13 +150,16 @@ export const Dashboard = () => {
 
   const refreshManagedData = async () => {
     const results = await Promise.allSettled([
-      executeCourses(),
-      executeCourseComponents(),
-      executeTeachers(),
-      executeRooms(),
-      executeGroups(),
-      executeSections(),
-      executeSchedules(),
+      ...dashboardQueryKeys.map((queryKey) =>
+        queryClient.invalidateQueries({ queryKey }),
+      ),
+      coursesQuery.refetch(),
+      courseComponentsQuery.refetch(),
+      teachersQuery.refetch(),
+      roomsQuery.refetch(),
+      groupsQuery.refetch(),
+      sectionsQuery.refetch(),
+      schedulesQuery.refetch(),
     ]);
     const failed = results.filter((result) => result.status === "rejected");
     if (failed.length > 0) {
@@ -330,7 +315,11 @@ export const Dashboard = () => {
   };
 
   const handleClearAllData = async () => {
-    if (!window.confirm(t("confirmClearAllData"))) {
+    const confirmed = await confirm({
+      message: t("confirmClearAllData"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -384,6 +373,7 @@ export const Dashboard = () => {
 
   return (
     <div className="w-full from-blue-50 to-indigo-100">
+      <ConfirmDialog />
       <div className="mx-auto w-full max-w-[1440px] px-0 py-2 sm:py-4">
         <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-gray-900">
           {t("dashboard")}

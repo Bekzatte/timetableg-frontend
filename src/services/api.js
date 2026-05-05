@@ -1,4 +1,5 @@
 import axios from "axios";
+import { captureAppError } from "../app/monitoring";
 import { getTranslation } from "../i18n/translations";
 import { clearStoredUser, getStoredUser } from "./browserSession";
 
@@ -24,6 +25,26 @@ const resolveApiBaseUrl = () => {
 
 const API_BASE_URL = resolveApiBaseUrl();
 const API_TIMEOUT_MS = 120000;
+
+export const getApiBaseUrl = () => API_BASE_URL;
+
+export const getCurrentAuthToken = () => getStoredUser()?.token || "";
+
+export const buildScheduleGenerationEventsUrl = (jobId) => {
+  if (!API_BASE_URL || !jobId) {
+    return "";
+  }
+
+  const baseUrl = API_BASE_URL.replace(/\/$/, "");
+  const token = getCurrentAuthToken();
+  const params = new URLSearchParams();
+
+  if (token) {
+    params.set("token", token);
+  }
+
+  return `${baseUrl}/schedules/generate/${encodeURIComponent(jobId)}/events?${params.toString()}`;
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL || undefined,
@@ -488,6 +509,20 @@ api.interceptors.response.use(
     const status = error?.response?.status;
     const message =
       transportMessage || getApiErrorMessage(responseData, status);
-    return Promise.reject(new Error(message));
+    const normalizedError = new Error(message);
+    normalizedError.status = status;
+    normalizedError.errorCode = errorCode;
+    normalizedError.details = responseData?.details;
+
+    if (status >= 500 || !status) {
+      captureAppError(normalizedError, {
+        url: error?.config?.url,
+        method: error?.config?.method,
+        status,
+        errorCode,
+      });
+    }
+
+    return Promise.reject(normalizedError);
   },
 );

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,17 +7,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import { Bell, Menu, X } from "lucide-react";
-import Dashboard from "./pages/Dashboard";
-import CoursesPage from "./pages/CoursesPage";
-import TeachersPage from "./pages/TeachersPage";
-import RoomsPage from "./pages/RoomsPage";
-import GroupsPage from "./pages/GroupsPage";
-import SectionsPage from "./pages/SectionsPage";
-import SchedulePage from "./pages/SchedulePage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import NotificationsPage from "./pages/NotificationsPage";
-import ProfilePage from "./pages/ProfilePage";
 import FullScreenLoader from "./components/ui/FullScreenLoader";
 import { useLanguage } from "./hooks/useLanguage";
 import { useTranslation } from "./hooks/useTranslation";
@@ -25,6 +14,18 @@ import { ROLES } from "./constants/roles";
 import { useAuth } from "./hooks/useAuth";
 import { useNotifications } from "./hooks/useNotifications";
 import "./index.css";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const CoursesPage = lazy(() => import("./pages/CoursesPage"));
+const TeachersPage = lazy(() => import("./pages/TeachersPage"));
+const RoomsPage = lazy(() => import("./pages/RoomsPage"));
+const GroupsPage = lazy(() => import("./pages/GroupsPage"));
+const SectionsPage = lazy(() => import("./pages/SectionsPage"));
+const SchedulePage = lazy(() => import("./pages/SchedulePage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 
 const getInitials = (displayName = "") =>
   displayName
@@ -449,107 +450,115 @@ export default function App() {
 
         {/* Main content */}
         <main className="mx-auto flex-1 w-full max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 xl:px-10">
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                <GuestOnly>
-                  <LoginPage />
-                </GuestOnly>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <GuestOnly>
-                  <RegisterPage />
-                </GuestOnly>
-              }
-            />
-            <Route
-                  path="/"
-              element={
-                <RequireAuth
-                  allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
-                >
-                  <RoleHome />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/courses"
-              element={<Navigate to="/disciplines" replace />}
-            />
-            <Route
-              path="/disciplines"
-              element={
-                <RequireAuth allowedRoles={[ROLES.ADMIN]}>
-                  <CoursesPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/teachers"
-              element={
-                <RequireAuth allowedRoles={[ROLES.ADMIN]}>
-                  <TeachersPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/rooms"
-              element={
-                <RequireAuth allowedRoles={[ROLES.ADMIN]}>
-                  <RoomsPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/groups"
-              element={
-                <RequireAuth allowedRoles={[ROLES.ADMIN]}>
-                  <GroupsPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/sections"
-              element={
-                <RequireAuth allowedRoles={[ROLES.ADMIN]}>
-                  <SectionsPage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/schedule"
-              element={
-                <RequireAuth
-                  allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
-                >
-                  <SchedulePage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <RequireAuth
-                  allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
-                >
-                  <ProfilePage />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/notifications"
-              element={
-                <RequireAuth allowedRoles={[ROLES.TEACHER, ROLES.STUDENT]}>
-                  <NotificationsPage />
-                </RequireAuth>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense
+            fallback={
+              <div className="py-20 text-center text-gray-500">
+                {t("loading")}
+              </div>
+            }
+          >
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <GuestOnly>
+                    <LoginPage />
+                  </GuestOnly>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <GuestOnly>
+                    <RegisterPage />
+                  </GuestOnly>
+                }
+              />
+              <Route
+                path="/"
+                element={
+                  <RequireAuth
+                    allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
+                  >
+                    <RoleHome />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/courses"
+                element={<Navigate to="/disciplines" replace />}
+              />
+              <Route
+                path="/disciplines"
+                element={
+                  <RequireAuth allowedRoles={[ROLES.ADMIN]}>
+                    <CoursesPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/teachers"
+                element={
+                  <RequireAuth allowedRoles={[ROLES.ADMIN]}>
+                    <TeachersPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/rooms"
+                element={
+                  <RequireAuth allowedRoles={[ROLES.ADMIN]}>
+                    <RoomsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/groups"
+                element={
+                  <RequireAuth allowedRoles={[ROLES.ADMIN]}>
+                    <GroupsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/sections"
+                element={
+                  <RequireAuth allowedRoles={[ROLES.ADMIN]}>
+                    <SectionsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/schedule"
+                element={
+                  <RequireAuth
+                    allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
+                  >
+                    <SchedulePage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <RequireAuth
+                    allowedRoles={[ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]}
+                  >
+                    <ProfilePage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/notifications"
+                element={
+                  <RequireAuth allowedRoles={[ROLES.TEACHER, ROLES.STUDENT]}>
+                    <NotificationsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </main>
 
         {/* Footer */}

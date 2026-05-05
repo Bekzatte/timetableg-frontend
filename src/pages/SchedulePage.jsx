@@ -1,322 +1,43 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { buildScheduleGenerationEventsUrl, scheduleAPI } from "../services/api";
 import {
-  AlertCircle,
-  BadgeCheck,
-  CheckCircle2,
-  ChevronDown,
-  Download,
-  Loader2,
-  Plus,
-  RotateCw,
-  Sparkles,
-} from "lucide-react";
-import TimetableGrid from "../components/timetable/TimetableGrid";
-import DataTable from "../components/ui/DataTable";
-import Modal from "../components/ui/Modal";
-import Form from "../components/ui/Form";
-import {
-  courseAPI,
-  groupAPI,
-  roomBlockAPI,
-  roomAPI,
-  scheduleAPI,
-  sectionAPI,
-  teacherAPI,
-} from "../services/api";
-import { useFetch } from "../hooks/useAPI";
+  useScheduleGenerationJobQuery,
+  useSchedulePageQueries,
+} from "../api/scheduleQueries";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
-import { formatLessonTimeRange, scheduleHours } from "../utils/timeSlots";
-
-const WEEKDAY_OPTIONS = [
-  { value: "monday", labelKey: "monday" },
-  { value: "tuesday", labelKey: "tuesday" },
-  { value: "wednesday", labelKey: "wednesday" },
-  { value: "thursday", labelKey: "thursday" },
-  { value: "friday", labelKey: "friday" },
-];
-
-const SCHEDULE_SEMESTER_OPTIONS = [
-  { value: 1, labelKey: "fallScheduleSemester" },
-  { value: 2, labelKey: "springScheduleSemester" },
-];
-
-const SCHEDULE_ALGORITHM_OPTIONS = [
-  { value: "greedy", labelKey: "greedyAlgorithm" },
-  { value: "cpsat", label: "CP-SAT" },
-  { value: "hybrid", label: "CP-SAT + Greedy" },
-  { value: "cpsat_fast", label: "CP-SAT (Fast)" },
-];
-
-const GENERATION_POLL_INTERVAL_MS = 10000;
-const GENERATION_POLL_TIMEOUT_MS = 15 * 60 * 1000;
-
-const EMPTY_SCHEDULE_FILTERS = {
-  group: "",
-  teacher: "",
-  room: "",
-  day: "",
-};
-
-const createEmptyScheduleFiltersBySemester = () => ({
-  1: { ...EMPTY_SCHEDULE_FILTERS },
-  2: { ...EMPTY_SCHEDULE_FILTERS },
-});
-
-const JOB_ERROR_CODE_TRANSLATION_KEYS = {
-  optimizer_dependency_missing: "errorOptimizerDependencyMissing",
-  optimizer_requires_teachers: "errorOptimizerRequiresTeachers",
-  optimizer_requires_rooms: "errorOptimizerRequiresRooms",
-  optimizer_requires_plan_items: "errorOptimizerRequiresPlanItems",
-  optimizer_requires_slots: "errorOptimizerRequiresSlots",
-  optimizer_no_solution: "errorOptimizerNoSolution",
-  invalid_time_slot: "errorInvalidTimeSlot",
-  invalid_teacher: "errorInvalidTeacher",
-  invalid_room: "errorInvalidRoom",
-  unknown_teacher: "errorUnknownTeacher",
-  schedule_generation_requires_data: "errorScheduleGenerationRequiresData",
-};
-
-const getWeekdayValue = (isoDate) => {
-  if (!isoDate) {
-    return "monday";
-  }
-
-  const jsDay = new Date(`${isoDate}T12:00:00`).getDay();
-  const weekdayIndex = jsDay === 0 ? 6 : jsDay - 1;
-
-  return WEEKDAY_OPTIONS[weekdayIndex]?.value || "monday";
-};
-
-const normalizeWeekdayValue = (value) => {
-  const normalized = String(value || "").trim().toLowerCase();
-
-  if (!normalized) {
-    return "";
-  }
-
-  if (WEEKDAY_OPTIONS.some((item) => item.value === normalized)) {
-    return normalized;
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}/.test(normalized)) {
-    return getWeekdayValue(normalized.slice(0, 10));
-  }
-
-  const weekdayAliases = {
-    monday: "monday",
-    tuesday: "tuesday",
-    wednesday: "wednesday",
-    thursday: "thursday",
-    friday: "friday",
-  };
-
-  return weekdayAliases[normalized] || "";
-};
-
-const toIsoDateForWeekday = (weekday, year) => {
-  const today = new Date();
-  const anchor = new Date(year, today.getMonth(), today.getDate());
-  const monday = new Date(anchor);
-
-  monday.setDate(anchor.getDate() - ((anchor.getDay() + 6) % 7));
-
-  const weekdayIndex = WEEKDAY_OPTIONS.findIndex(
-    (item) => item.value === weekday,
-  );
-
-  monday.setDate(monday.getDate() + (weekdayIndex >= 0 ? weekdayIndex : 0));
-
-  const month = `${monday.getMonth() + 1}`.padStart(2, "0");
-  const day = `${monday.getDate()}`.padStart(2, "0");
-
-  return `${monday.getFullYear()}-${month}-${day}`;
-};
-
-const GROUP_LANGUAGE_UNSUPPORTED_PATTERN =
-  /Преподаватель курса '(.+)' не поддерживает язык группы '(.+)'\.?/i;
-
-const TEACHER_NOT_FOUND_PATTERN = /не найден преподаватель/i;
-
-const GENERATION_REASON_TRANSLATION_KEYS = {
-  "Для дисциплины не найдено подходящих аудиторий по типу, вместимости или PCCount.":
-    "errorGenerationNoSuitableRoomsReason",
-  "Недостаточно доступных временных слотов для заданных ограничений.":
-    "errorGenerationInsufficientSlotsReason",
-};
-
-const formatPreflightIssue = (issue, t) => {
-  const course = issue.courseCode
-    ? `${issue.courseName || "-"} (${issue.courseCode})`
-    : issue.courseName || "-";
-  const group = issue.groupName || "-";
-  const teacher = issue.teacherName || "-";
-  const teacherLanguages = Array.isArray(issue.teacherLanguages)
-    ? issue.teacherLanguages.join(", ")
-    : issue.teacherLanguages || "-";
-
-  if (issue.type === "teacher_language_mismatch") {
-    return t("schedulePreflightTeacherLanguageMismatch")
-      .replace("${course}", course)
-      .replace("${group}", group)
-      .replace("${teacher}", teacher)
-      .replace("${groupLanguage}", issue.groupLanguage || "-")
-      .replace("${teacherLanguages}", teacherLanguages);
-  }
-
-  if (issue.type === "teacher_missing") {
-    return t("schedulePreflightTeacherMissing")
-      .replace("${course}", course)
-      .replace("${group}", group);
-  }
-
-  if (issue.type === "study_course_missing") {
-    return t("schedulePreflightStudyCourseMissing")
-      .replace("${course}", course)
-      .replace("${group}", group);
-  }
-
-  if (issue.type === "study_course_mismatch") {
-    return t("schedulePreflightStudyCourseMismatch")
-      .replace("${course}", course)
-      .replace("${group}", group)
-      .replace("${courseYear}", issue.courseYear || "-")
-      .replace("${groupCourse}", issue.groupStudyCourse || "-");
-  }
-
-  return issue.reason || t("errorBadRequest");
-};
-
-const formatGenerationError = (job, t) => {
-  const translationKey = job?.errorCode
-    ? JOB_ERROR_CODE_TRANSLATION_KEYS[job.errorCode]
-    : null;
-
-  const issues = Array.isArray(job.details?.issues) ? job.details.issues : [];
-  const preflightIssues = issues.filter((issue) => issue?.type);
-
-  if (job.errorCode === "schedule_preflight_failed" || preflightIssues.length) {
-    const error = new Error(t("schedulePreflightFailed"));
-    error.items = preflightIssues.map((issue) => formatPreflightIssue(issue, t));
-
-    return error;
-  }
-
-  const firstIssue = issues[0];
-
-  if (firstIssue?.reason) {
-    const reason = String(firstIssue.reason);
-    const normalizedReason = reason.toLowerCase();
-    const items = [t(GENERATION_REASON_TRANSLATION_KEYS[reason] || reason)];
-
-    if (normalizedReason.includes("аудитор")) {
-      items.push(t("errorGenerationRoomsAvailableHint"));
-    }
-
-    if (normalizedReason.includes("вместим")) {
-      items.push(t("errorGenerationRoomCapacityHint"));
-    }
-
-    if (
-      normalizedReason.includes("pccount") ||
-      normalizedReason.includes("компьют")
-    ) {
-      items.push(t("errorGenerationComputersHint"));
-    }
-
-    if (
-      normalizedReason.includes("временн") ||
-      normalizedReason.includes("слотов")
-    ) {
-      items.push(t("errorGenerationSlotsHint"));
-    }
-
-    const error = new Error(t("errorGenerateSchedule"));
-    error.items = items;
-
-    return error;
-  }
-
-  if (job.details?.missing?.length) {
-    const details = job.details.missing.map((item) => {
-      const normalized = String(item).toLowerCase();
-
-      if (normalized.includes("секции")) {
-        return `${item}. ${t("errorGenerationMissingSectionsHint")}`;
-      }
-
-      if (normalized.includes("преподавател")) {
-        return `${item}. ${t("errorGenerationMissingTeachersHint")}`;
-      }
-
-      if (normalized.includes("аудит")) {
-        return `${item}. ${t("errorGenerationMissingRoomsHint")}`;
-      }
-
-      if (normalized.includes("групп")) {
-        return `${item}. ${t("errorGenerationMissingGroupsHint")}`;
-      }
-
-      return item;
-    });
-
-    const error = new Error(t("errorScheduleGenerationRequiresData"));
-    error.items = details;
-
-    return error;
-  }
-
-  if (translationKey) {
-    const error = new Error(t(translationKey));
-    error.items = [];
-
-    return error;
-  }
-
-  const rawError = String(job.error || t("errorUnknown"));
-  const normalizedError = rawError.toLowerCase();
-  const items = [];
-
-  if (normalizedError.includes("не поддерживает язык группы")) {
-    const match = rawError.match(GROUP_LANGUAGE_UNSUPPORTED_PATTERN);
-
-    if (match) {
-      items.push(
-        t("errorTeacherDoesNotSupportGroupLanguage")
-          .replace("${course}", match[1])
-          .replace("${language}", match[2]),
-      );
-    } else {
-      items.push(t("errorTeacherDoesNotSupportGroupLanguageFallback"));
-    }
-
-    items.push(t("errorTeacherDoesNotSupportGroupLanguageHint"));
-  } else if (TEACHER_NOT_FOUND_PATTERN.test(normalizedError)) {
-    items.push(t("errorTeacherNotAssigned"));
-    items.push(t("errorTeacherNotAssignedHint"));
-  } else {
-    items.push(rawError);
-  }
-
-  const error = new Error(t("errorGenerateSchedule"));
-  error.items = items;
-
-  return error;
-};
-
-const filterScheduleEntries = (entries, filters) =>
-  entries.filter((entry) => {
-    const matchesGroup = !filters.group || String(entry.group_id) === filters.group;
-    const matchesTeacher = !filters.teacher || String(entry.teacher_id) === filters.teacher;
-    const matchesRoom = !filters.room || String(entry.room_id) === filters.room;
-    const matchesDay = !filters.day || getWeekdayValue(entry.day) === filters.day;
-
-    return matchesGroup && matchesTeacher && matchesRoom && matchesDay;
-  });
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
+import { useScheduleGenerationStore } from "../stores/scheduleGenerationStore";
+import { formatLessonTimeRange } from "../utils/timeSlots";
+import { formatGenerationError } from "../features/schedule/generationErrors";
+import { GenerationStatusButton } from "../features/schedule/components/GenerationStatusButton";
+import { GenerationStatusModal } from "../features/schedule/components/GenerationStatusModal";
+import { GenerateScheduleModal } from "../features/schedule/components/GenerateScheduleModal";
+import { GenerationErrorModal } from "../features/schedule/components/GenerationErrorModal";
+import { ExportScheduleModal } from "../features/schedule/components/ExportScheduleModal";
+import { ResetScheduleModal } from "../features/schedule/components/ResetScheduleModal";
+import { ScheduleFilterControls } from "../features/schedule/components/ScheduleFilterControls";
+import { ScheduleToolbar } from "../features/schedule/components/ScheduleToolbar";
+import { ScheduleEntryModal } from "../features/schedule/components/ScheduleEntryModal";
+import { ScheduleSemesterSection } from "../features/schedule/components/ScheduleSemesterSection";
+import {
+  getWeekdayValue,
+  toIsoDateForWeekday,
+} from "../features/schedule/dateUtils";
+import { createScheduleEntryAvailability } from "../features/schedule/entryAvailability";
+import { filterScheduleEntries } from "../features/schedule/scheduleFilters";
+import {
+  EMPTY_SCHEDULE_FILTERS,
+  GENERATION_POLL_TIMEOUT_MS,
+  SCHEDULE_ALGORITHM_OPTIONS,
+  SCHEDULE_SEMESTER_OPTIONS,
+  createEmptyScheduleFiltersBySemester,
+} from "../features/schedule/constants";
 
 export const SchedulePage = () => {
   const { t, language } = useTranslation();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const { isAdmin } = useAuth();
 
   const currentYear = new Date().getFullYear();
@@ -336,14 +57,21 @@ export const SchedulePage = () => {
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeGenerationJob, setActiveGenerationJob] = useState(null);
-  const [isGenerationStatusOpen, setIsGenerationStatusOpen] = useState(false);
+  const activeGenerationJob = useScheduleGenerationStore((state) => state.activeJob);
+  const setActiveGenerationJob = useScheduleGenerationStore((state) => state.setActiveJob);
+  const isGenerationStatusOpen = useScheduleGenerationStore((state) => state.isStatusOpen);
+  const setIsGenerationStatusOpen = useScheduleGenerationStore(
+    (state) => state.setStatusOpen,
+  );
   const [isEntrySaving, setIsEntrySaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [generationError, setGenerationError] = useState(null);
   const [pageError, setPageError] = useState("");
-  const generationPollTimeoutRef = useRef(null);
+  const [isGenerationEventsConnected, setIsGenerationEventsConnected] =
+    useState(false);
+  const activeGenerationJobRef = useRef(null);
+  const completedGenerationJobRef = useRef(null);
 
   const [filtersBySemester, setFiltersBySemester] = useState(
     createEmptyScheduleFiltersBySemester,
@@ -356,73 +84,41 @@ export const SchedulePage = () => {
     2: true,
   });
 
-  const { data, execute } = useFetch(scheduleAPI.getAll);
-  const { data: sectionsData, execute: executeSections } = useFetch(
-    sectionAPI.getAll,
-  );
-  const { data: roomsData, execute: executeRooms } = useFetch(roomAPI.getAll);
-  const { data: groupsData, execute: executeGroups } = useFetch(groupAPI.getAll);
-  const { data: roomBlocksData, execute: executeRoomBlocks } = useFetch(
-    roomBlockAPI.getAll,
-  );
-  const { data: coursesData, execute: executeCourses } = useFetch(
-    courseAPI.getAll,
-  );
-  const { data: teachersData, execute: executeTeachers } = useFetch(
-    teacherAPI.getAll,
+  const {
+    schedulesQuery,
+    sectionsQuery,
+    roomsQuery,
+    groupsQuery,
+    roomBlocksQuery,
+    coursesQuery,
+    teachersQuery,
+  } = useSchedulePageQueries(scheduleYear, isAdmin);
+  const isActiveGenerationJobPolling =
+    activeGenerationJob?.jobId &&
+    !["completed", "failed"].includes(activeGenerationJob?.status);
+  const generationJobQuery = useScheduleGenerationJobQuery(
+    activeGenerationJob?.jobId,
+    isActiveGenerationJobPolling && !isGenerationEventsConnected,
   );
 
   useAutoDismiss(pageError, setPageError);
 
-  const clearGenerationPollTimeout = () => {
-    if (generationPollTimeoutRef.current) {
-      window.clearTimeout(generationPollTimeoutRef.current);
-      generationPollTimeoutRef.current = null;
-    }
-  };
-
-  useEffect(
-    () => () => {
-      clearGenerationPollTimeout();
-    },
-    [],
-  );
+  useEffect(() => {
+    activeGenerationJobRef.current = activeGenerationJob;
+  }, [activeGenerationJob]);
 
   useEffect(() => {
-    if (data) {
-      setSchedule(data);
+    if (schedulesQuery.data) {
+      setSchedule(schedulesQuery.data);
     }
-  }, [data]);
+  }, [schedulesQuery.data]);
 
-  useEffect(() => {
-    execute({ year: scheduleYear });
-
-    if (isAdmin) {
-      executeSections();
-      executeGroups();
-      executeRooms();
-      executeRoomBlocks();
-      executeCourses();
-      executeTeachers();
-    }
-  }, [
-    execute,
-    executeCourses,
-    executeGroups,
-    executeRoomBlocks,
-    executeRooms,
-    executeSections,
-    executeTeachers,
-    isAdmin,
-    scheduleYear,
-  ]);
-
-  const sections = Array.isArray(sectionsData) ? sectionsData : [];
-  const rooms = Array.isArray(roomsData) ? roomsData : [];
-  const groups = Array.isArray(groupsData) ? groupsData : [];
-  const roomBlocks = Array.isArray(roomBlocksData) ? roomBlocksData : [];
-  const courses = Array.isArray(coursesData) ? coursesData : [];
-  const teachers = Array.isArray(teachersData) ? teachersData : [];
+  const sections = Array.isArray(sectionsQuery.data) ? sectionsQuery.data : [];
+  const rooms = Array.isArray(roomsQuery.data) ? roomsQuery.data : [];
+  const groups = Array.isArray(groupsQuery.data) ? groupsQuery.data : [];
+  const roomBlocks = Array.isArray(roomBlocksQuery.data) ? roomBlocksQuery.data : [];
+  const courses = Array.isArray(coursesQuery.data) ? coursesQuery.data : [];
+  const teachers = Array.isArray(teachersQuery.data) ? teachersQuery.data : [];
 
   const hasAssignedTeacher =
     sections.some((section) => section.teacher_id) ||
@@ -541,55 +237,90 @@ export const SchedulePage = () => {
     }));
   };
 
-  const waitForNextGenerationPoll = () =>
-    new Promise((resolve) => {
-      clearGenerationPollTimeout();
+  const refreshSchedule = useCallback(async () => {
+    const result = await schedulesQuery.refetch();
+    const nextSchedule = result.data || [];
 
-      generationPollTimeoutRef.current = window.setTimeout(() => {
-        generationPollTimeoutRef.current = null;
-        resolve();
-      }, GENERATION_POLL_INTERVAL_MS);
-    });
+    setSchedule(nextSchedule || []);
 
-  const pollGenerationJob = async (jobId, metadata) => {
-    try {
-      if (Date.now() - Number(metadata.startedAt || Date.now()) > GENERATION_POLL_TIMEOUT_MS) {
-        setActiveGenerationJob((current) => ({
-          ...(current || metadata),
-          ...metadata,
-          jobId,
-          status: "failed",
-          error: t("scheduleGenerationPollingTimeout"),
-          items: [],
-        }));
-        setIsLoading(false);
-        return;
-      }
+    return nextSchedule || [];
+  }, [schedulesQuery]);
 
-      const job = await scheduleAPI.getGenerationJob(jobId);
+  useEffect(() => {
+    if (!isActiveGenerationJobPolling || !activeGenerationJob?.startedAt) {
+      return;
+    }
+
+    if (
+      Date.now() - Number(activeGenerationJob.startedAt) <=
+      GENERATION_POLL_TIMEOUT_MS
+    ) {
+      return;
+    }
+
+    setActiveGenerationJob((current) => ({
+      ...(current || activeGenerationJob),
+      status: "failed",
+      progress: null,
+      error: t("scheduleGenerationPollingTimeout"),
+      items: [],
+    }));
+    setIsLoading(false);
+  }, [
+    activeGenerationJob,
+    isActiveGenerationJobPolling,
+    setActiveGenerationJob,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!isActiveGenerationJobPolling || !activeGenerationJob?.jobId) {
+      setIsGenerationEventsConnected(false);
+      return undefined;
+    }
+
+    const eventsUrl = buildScheduleGenerationEventsUrl(activeGenerationJob.jobId);
+    if (!eventsUrl) {
+      setIsGenerationEventsConnected(false);
+      return undefined;
+    }
+
+    const events = new EventSource(eventsUrl);
+    events.onopen = () => setIsGenerationEventsConnected(true);
+    events.onerror = () => {
+      setIsGenerationEventsConnected(false);
+      events.close();
+    };
+    events.addEventListener("status", (event) => {
+      const job = JSON.parse(event.data || "{}");
+      const currentJob = activeGenerationJobRef.current;
 
       if (job.status === "completed") {
         setActiveGenerationJob((current) => ({
-          ...(current || metadata),
-          ...metadata,
-          jobId,
+          ...(current || currentJob),
           status: "completed",
           result: job.result || null,
+          progress: job.progress || null,
           error: null,
           items: [],
         }));
         setIsLoading(false);
-        await refreshSchedule();
+
+        if (completedGenerationJobRef.current !== job.jobId) {
+          completedGenerationJobRef.current = job.jobId;
+          refreshSchedule();
+        }
+        events.close();
+        setIsGenerationEventsConnected(false);
         return;
       }
 
       if (job.status === "failed") {
         const formattedError = formatGenerationError(job, t);
         setActiveGenerationJob((current) => ({
-          ...(current || metadata),
-          ...metadata,
-          jobId,
+          ...(current || currentJob),
           status: "failed",
+          progress: job.progress || null,
           error: formattedError.message || t("errorGenerateSchedule"),
           items: Array.isArray(formattedError.items) ? formattedError.items : [],
         }));
@@ -599,45 +330,110 @@ export const SchedulePage = () => {
           items: Array.isArray(formattedError.items) ? formattedError.items : [],
         });
         setIsLoading(false);
+        events.close();
+        setIsGenerationEventsConnected(false);
         return;
       }
 
       setActiveGenerationJob((current) => ({
-        ...(current || metadata),
-        ...metadata,
-        jobId,
+        ...(current || currentJob),
         status: job.status || "running",
+        progress: job.progress || null,
         error: null,
       }));
-      await waitForNextGenerationPoll();
-      await pollGenerationJob(jobId, metadata);
-    } catch (error) {
-      console.error(t("errorGenerateSchedule"), error);
-      setActiveGenerationJob((current) => ({
-        ...(current || metadata),
-        ...metadata,
-        jobId,
-        status: "running",
-        error: error.message || t("errorUnknown"),
-      }));
-      await waitForNextGenerationPoll();
-      await pollGenerationJob(jobId, metadata);
-    }
-  };
-
-  const refreshSchedule = async () => {
-    const nextSchedule = await execute({
-      year: scheduleYear,
     });
 
-    setSchedule(nextSchedule || []);
+    return () => {
+      events.close();
+      setIsGenerationEventsConnected(false);
+    };
+  }, [
+    activeGenerationJob?.jobId,
+    isActiveGenerationJobPolling,
+    refreshSchedule,
+    setActiveGenerationJob,
+    t,
+  ]);
 
-    return nextSchedule || [];
-  };
+  useEffect(() => {
+    const job = generationJobQuery.data;
+
+    if (!job || !activeGenerationJob?.jobId) {
+      return;
+    }
+
+    if (job.status === "completed") {
+      setActiveGenerationJob((current) => ({
+        ...(current || activeGenerationJob),
+        status: "completed",
+        result: job.result || null,
+        progress: job.progress || null,
+        error: null,
+        items: [],
+      }));
+      setIsLoading(false);
+
+      if (completedGenerationJobRef.current !== job.jobId) {
+        completedGenerationJobRef.current = job.jobId;
+        refreshSchedule();
+      }
+      return;
+    }
+
+    if (job.status === "failed") {
+      const formattedError = formatGenerationError(job, t);
+      setActiveGenerationJob((current) => ({
+        ...(current || activeGenerationJob),
+        status: "failed",
+        progress: job.progress || null,
+        error: formattedError.message || t("errorGenerateSchedule"),
+        items: Array.isArray(formattedError.items) ? formattedError.items : [],
+      }));
+      setGenerationError({
+        title: t("errorGenerateSchedule"),
+        message: formattedError.message || t("errorUnknown"),
+        items: Array.isArray(formattedError.items) ? formattedError.items : [],
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    setActiveGenerationJob((current) => ({
+      ...(current || activeGenerationJob),
+      status: job.status || "running",
+      progress: job.progress || null,
+      error: null,
+    }));
+  }, [
+    activeGenerationJob,
+    generationJobQuery.data,
+    refreshSchedule,
+    setActiveGenerationJob,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!generationJobQuery.error || !isActiveGenerationJobPolling) {
+      return;
+    }
+
+    console.error(t("errorGenerateSchedule"), generationJobQuery.error);
+    setActiveGenerationJob((current) => ({
+      ...(current || activeGenerationJob),
+      status: "running",
+      progress: null,
+      error: generationJobQuery.error.message || t("errorUnknown"),
+    }));
+  }, [
+    activeGenerationJob,
+    generationJobQuery.error,
+    isActiveGenerationJobPolling,
+    setActiveGenerationJob,
+    t,
+  ]);
 
   const handleGenerateSchedule = async (formData, setErrors) => {
     try {
-      clearGenerationPollTimeout();
       setGenerationError(null);
       setPageError("");
       setIsGenerateOpen(false);
@@ -653,11 +449,11 @@ export const SchedulePage = () => {
         algorithm: formData.algorithm,
         startedAt: Date.now(),
         error: null,
+        progress: null,
         items: [],
       };
 
       setActiveGenerationJob(metadata);
-      pollGenerationJob(job.jobId, metadata);
     } catch (error) {
       console.error(t("errorGenerateSchedule"), error);
       setIsGenerationStatusOpen(false);
@@ -773,7 +569,11 @@ export const SchedulePage = () => {
   };
 
   const handleDeleteEntry = async (entry) => {
-    if (!window.confirm(t("confirmDeleteScheduleEntry"))) {
+    const confirmed = await confirm({
+      message: t("confirmDeleteScheduleEntry"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -788,251 +588,21 @@ export const SchedulePage = () => {
     }
   };
 
-  const getSelectedEntrySection = (formData) =>
-    sections.find((section) => String(section.id) === String(formData.section_id));
-
-  const getSelectedEntryCourse = (section) =>
-    courses.find((course) => String(course.id) === String(section?.course_id));
-
-  const getSelectedEntryGroup = (section) =>
-    groups.find((group) => String(group.id) === String(section?.group_id));
-
-  const hasGroupSlotConflict = (entry, selectedSection, subgroup) => {
-    if (String(entry.group_id) !== String(selectedSection.group_id)) {
-      return false;
-    }
-
-    const existingSubgroup = String(entry.subgroup || "").toUpperCase();
-    const nextSubgroup = String(subgroup || "").toUpperCase();
-
-    return !existingSubgroup || !nextSubgroup || existingSubgroup === nextSubgroup;
-  };
-
-  const isRoomBlockedAtSlot = (roomId, weekday, hour, semester, year) =>
-    roomBlocks.some((block) => {
-      if (String(block.room_id) !== String(roomId)) {
-        return false;
-      }
-
-      const blockSemester = block.semester;
-      const blockYear = block.year;
-
-      if (
-        blockSemester !== null &&
-        blockSemester !== undefined &&
-        blockSemester !== "" &&
-        Number(blockSemester) !== Number(semester)
-      ) {
-        return false;
-      }
-
-      if (
-        blockYear !== null &&
-        blockYear !== undefined &&
-        blockYear !== "" &&
-        Number(blockYear) !== Number(year)
-      ) {
-        return false;
-      }
-
-      if (normalizeWeekdayValue(block.day) !== weekday) {
-        return false;
-      }
-
-      const startHour = Number(block.start_hour);
-      const endHour =
-        block.end_hour !== null && block.end_hour !== undefined && block.end_hour !== ""
-          ? Number(block.end_hour)
-          : startHour + 1;
-
-      return Number(hour) >= startHour && Number(hour) < endHour;
-    });
-
-  const isRoomCompatibleWithSection = (room, selectedSection) => {
-    if (!room || !selectedSection || !Number(room.available ?? 1)) {
-      return false;
-    }
-
-    const lessonType = String(selectedSection.lesson_type || "").toLowerCase();
-    const roomType = String(room.type || "").toLowerCase();
-    const selectedGroup = getSelectedEntryGroup(selectedSection);
-    const studentCount = Number(selectedGroup?.student_count || 0);
-    const capacity = Number(room.capacity || 0);
-
-    if (studentCount && capacity && capacity < studentCount) {
-      return false;
-    }
-
-    if (lessonType === "lecture" && roomType && roomType !== "lecture") {
-      return false;
-    }
-
-    if (lessonType === "practical" && roomType && !["practical", "lecture"].includes(roomType)) {
-      return false;
-    }
-
-    if (lessonType === "lab" && roomType && roomType !== "practical") {
-      return false;
-    }
-
-    if (
-      (lessonType === "lab" || Number(selectedSection.requires_computers || 0)) &&
-      Number(room.computer_count || 0) < 10
-    ) {
-      return false;
-    }
-
-    return true;
-  };
-
-  const hasTeacherOrGroupConflictAtSlot = (formData, hour) => {
-    const selectedSection = getSelectedEntrySection(formData);
-    const selectedCourse = getSelectedEntryCourse(selectedSection);
-
-    if (
-      !selectedSection ||
-      !formData.weekday ||
-      !formData.semester ||
-      !formData.year
-    ) {
-      return true;
-    }
-
-    const teacherId = selectedSection.teacher_id || selectedCourse?.instructor_id;
-    const day = toIsoDateForWeekday(formData.weekday, Number(formData.year));
-    const semester = Number(formData.semester);
-    const year = Number(formData.year);
-
-    return schedule.some((entry) => {
-      if (editingEntry && String(entry.id) === String(editingEntry.id)) {
-        return false;
-      }
-
-      if (
-        Number(entry.semester) !== semester ||
-        Number(entry.year) !== year ||
-        entry.day !== day ||
-        Number(entry.start_hour) !== Number(hour)
-      ) {
-        return false;
-      }
-
-      return (
-        (teacherId && String(entry.teacher_id) === String(teacherId)) ||
-        hasGroupSlotConflict(entry, selectedSection, formData.subgroup)
-      );
-    });
-  };
-
-  const isRoomAvailableAtSlot = (room, formData, hour) => {
-    const selectedSection = getSelectedEntrySection(formData);
-
-    if (
-      !selectedSection ||
-      !isRoomCompatibleWithSection(room, selectedSection) ||
-      !formData.weekday ||
-      !formData.semester ||
-      !formData.year
-    ) {
-      return false;
-    }
-
-    const semester = Number(formData.semester);
-    const year = Number(formData.year);
-    const day = toIsoDateForWeekday(formData.weekday, year);
-
-    if (isRoomBlockedAtSlot(room.id, formData.weekday, hour, semester, year)) {
-      return false;
-    }
-
-    return !schedule.some((entry) => {
-      if (editingEntry && String(entry.id) === String(editingEntry.id)) {
-        return false;
-      }
-
-      return (
-        Number(entry.semester) === semester &&
-        Number(entry.year) === year &&
-        entry.day === day &&
-        Number(entry.start_hour) === Number(hour) &&
-        String(entry.room_id) === String(room.id)
-      );
-    });
-  };
-
-  const getAvailableRoomOptions = (formData) => {
-    if (
-      !formData.section_id ||
-      !formData.weekday ||
-      !formData.start_hour ||
-      !formData.semester ||
-      !formData.year
-    ) {
-      return [];
-    }
-
-    return rooms
-      .filter((room) => isRoomAvailableAtSlot(room, formData, Number(formData.start_hour)))
-      .map((room) => {
-        const details = [
-          room.type ? t(room.type) : "",
-          room.capacity ? `${room.capacity}` : "",
-          Number(room.computer_count || 0) > 0 ? `PC ${room.computer_count}` : "",
-        ].filter(Boolean);
-
-        return {
-          value: room.id,
-          label: details.length ? `${room.number} (${details.join(", ")})` : room.number,
-        };
-      });
-  };
-
-  const getAvailableStartHourOptions = (formData) => {
-    const selectedSection = getSelectedEntrySection(formData);
-
-    if (
-      !selectedSection ||
-      !formData.weekday ||
-      !formData.semester ||
-      !formData.year
-    ) {
-      return [];
-    }
-
-    return scheduleHours
-      .filter((hour) => {
-        if (hasTeacherOrGroupConflictAtSlot(formData, hour)) {
-          return false;
-        }
-
-        return rooms.some((room) => isRoomAvailableAtSlot(room, formData, hour));
-      })
-      .map((hour) => ({
-        value: hour,
-        label: formatLessonTimeRange(hour),
-      }));
-  };
-
-  const getAvailableWeekdayOptions = (formData) => {
-    if (
-      !formData.section_id ||
-      !formData.semester ||
-      !formData.year
-    ) {
-      return [];
-    }
-
-    return WEEKDAY_OPTIONS.filter(
-      (item) =>
-        getAvailableStartHourOptions({
-          ...formData,
-          weekday: item.value,
-        }).length > 0,
-    ).map((item) => ({
-      value: item.value,
-      label: t(item.labelKey),
-    }));
-  };
+  const {
+    getAvailableRoomOptions,
+    getAvailableStartHourOptions,
+    getAvailableWeekdayOptions,
+    getSelectedEntrySection,
+  } = createScheduleEntryAvailability({
+    sections,
+    courses,
+    groups,
+    rooms,
+    roomBlocks,
+    schedule,
+    editingEntry,
+    t,
+  });
 
   const handleEntrySubmit = async (formData, setErrors) => {
     const selectedSection = sections.find(
@@ -1357,27 +927,10 @@ export const SchedulePage = () => {
   const renderGenerationStatusButton = (semester) => {
     const status = getSemesterGenerationStatus(semester);
 
-    if (!status) {
-      return null;
-    }
-
-    const Icon =
-      status === "completed"
-        ? BadgeCheck
-        : status === "failed"
-          ? AlertCircle
-          : Sparkles;
-    const className =
-      status === "completed"
-        ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-        : status === "failed"
-          ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-          : "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100";
-    const label = getGenerationStatusLabel(status);
-
     return (
-      <button
-        type="button"
+      <GenerationStatusButton
+        status={status}
+        label={getGenerationStatusLabel(status)}
         onClick={(event) => {
           event.stopPropagation();
           if (
@@ -1397,217 +950,47 @@ export const SchedulePage = () => {
           }
           setIsGenerationStatusOpen(true);
         }}
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium shadow-sm transition ${className}`}
-        title={label}
-        aria-label={label}
-      >
-        <Icon
-          size={18}
-          className={status === "completed" || status === "failed" ? "" : "animate-spin"}
-        />
-      </button>
+      />
     );
   };
 
   const renderFilterControls = (semester, semesterSchedule) => {
-    const draftFilters = draftFiltersBySemester[semester] || EMPTY_SCHEDULE_FILTERS;
-
     return (
-      <>
-        <select
-          value={draftFilters.group}
-          onChange={(event) => updateDraftFilter(semester, "group", event.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-        >
-          <option value="">
-            {t("all")} {t("groups").toLowerCase()}
-          </option>
-
-          {Array.from(
-            new Map(
-              semesterSchedule
-                .filter((entry) => entry.group_id)
-                .map((entry) => [entry.group_id, entry.group_name]),
-            ).entries(),
-          ).map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={draftFilters.teacher}
-          onChange={(event) => updateDraftFilter(semester, "teacher", event.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-        >
-          <option value="">
-            {t("all")} {t("teachers").toLowerCase()}
-          </option>
-
-          {Array.from(
-            new Map(
-              semesterSchedule
-                .filter((entry) => entry.teacher_id)
-                .map((entry) => [entry.teacher_id, entry.teacher_name]),
-            ).entries(),
-          ).map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={draftFilters.room}
-          onChange={(event) => updateDraftFilter(semester, "room", event.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-        >
-          <option value="">
-            {t("all")} {t("rooms").toLowerCase()}
-          </option>
-
-          {Array.from(
-            new Map(
-              semesterSchedule
-                .filter((entry) => entry.room_id)
-                .map((entry) => [entry.room_id, entry.room_number]),
-            ).entries(),
-          ).map(([id, number]) => (
-            <option key={id} value={id}>
-              {number}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={draftFilters.day}
-          onChange={(event) => updateDraftFilter(semester, "day", event.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900"
-        >
-          <option value="">
-            {t("all")} {t("day").toLowerCase()}
-          </option>
-
-          {WEEKDAY_OPTIONS.map((day) => (
-            <option key={day.value} value={day.value}>
-              {t(day.labelKey)}
-            </option>
-          ))}
-        </select>
-      </>
+      <ScheduleFilterControls
+        t={t}
+        semester={semester}
+        semesterSchedule={semesterSchedule}
+        draftFilters={draftFiltersBySemester[semester]}
+        onChange={updateDraftFilter}
+      />
     );
   };
 
   return (
     <div className="relative w-full px-0 py-2 sm:py-4">
+      <ConfirmDialog />
       {isGenerationStatusOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm">
-          <div className="w-[min(92vw,420px)] rounded-2xl border border-blue-100 bg-white px-6 py-5 text-center shadow-xl">
-            {activeGenerationJob?.status === "completed" ? (
-              <CheckCircle2 size={32} className="mx-auto text-emerald-600" />
-            ) : activeGenerationJob?.status === "failed" ? (
-              <AlertCircle size={32} className="mx-auto text-red-600" />
-            ) : (
-              <Loader2
-                size={32}
-                className="mx-auto animate-spin text-[#014531]"
-              />
-            )}
-            <p className="mt-3 text-sm font-semibold text-gray-900">
-              {generationStatusLabel}
-            </p>
-            {activeGenerationJob ? (
-              <p className="mt-1 text-xs text-gray-500">
-                {t("semester")}: {activeGenerationJob.semester}. {t("year")}:{" "}
-                {activeGenerationJob.year}. {t("algorithm")}:{" "}
-                {activeGenerationJob.algorithm || "-"}
-              </p>
-            ) : (
-              <p className="mt-1 text-xs text-gray-500">{t("loading")}</p>
-            )}
-            {activeGenerationJob?.result?.scheduleCount !== undefined ? (
-              <p className="mt-2 text-sm text-emerald-700">
-                {t("scheduleEntries")}: {activeGenerationJob.result.scheduleCount}
-              </p>
-            ) : null}
-            {activeGenerationJob?.error ? (
-              <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-left text-sm text-red-700">
-                {activeGenerationJob.error}
-              </div>
-            ) : null}
-            {activeGenerationJob?.items?.length ? (
-              <ul className="mt-3 max-h-40 list-disc space-y-1 overflow-y-auto pl-5 text-left text-xs text-gray-700">
-                {activeGenerationJob.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            ) : null}
-            {activeGenerationJob?.status !== "completed" &&
-            activeGenerationJob?.status !== "failed" ? (
-              <p className="mt-3 text-xs text-gray-500">
-                {t("scheduleGenerationBackgroundHint")}
-              </p>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setIsGenerationStatusOpen(false)}
-              className="mt-4 w-full rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#013726]"
-            >
-              {t("close")}
-            </button>
-          </div>
-        </div>
+        <GenerationStatusModal
+          job={activeGenerationJob}
+          label={generationStatusLabel}
+          t={t}
+          onClose={() => setIsGenerationStatusOpen(false)}
+        />
       ) : null}
 
-      <div
-        data-testid="schedule-toolbar"
-        className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-          {t("scheduleMgmt")}
-        </h1>
-
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-          {isAdmin ? (
-            <>
-              <button
-                onClick={() => setIsGenerateOpen(true)}
-                disabled={isLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-              >
-                <RotateCw size={20} /> {scheduleActionLabel}
-              </button>
-
-              <button
-                onClick={handleAddEntry}
-                disabled={isLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 sm:w-auto"
-              >
-                <Plus size={20} /> {t("addScheduleEntry")}
-              </button>
-
-              {hasAnyScheduleForYear ? (
-                <button
-                  onClick={openExportScheduleModal}
-                  disabled={isExporting || isLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-md bg-[#014531] px-4 py-2 text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
-                  <Download size={20} /> {t("exportSchedule")}
-                </button>
-              ) : null}
-
-              <button
-                onClick={openResetScheduleModal}
-                disabled={isResetting || isLoading || !hasAnyScheduleForYear}
-                className="w-full rounded-md bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-              >
-                {t("resetSchedule")}
-              </button>
-            </>
-          ) : null}
-        </div>
-      </div>
+      <ScheduleToolbar
+        t={t}
+        isAdmin={isAdmin}
+        isLoading={isLoading}
+        isExporting={isExporting}
+        isResetting={isResetting}
+        hasAnyScheduleForYear={hasAnyScheduleForYear}
+        scheduleActionLabel={scheduleActionLabel}
+        onGenerate={() => setIsGenerateOpen(true)}
+        onAddEntry={handleAddEntry}
+        onExport={openExportScheduleModal}
+        onReset={openResetScheduleModal}
+      />
 
       {pageError ? (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -1623,350 +1006,94 @@ export const SchedulePage = () => {
           const isExpanded = expandedSemesters[semester] !== false;
 
           return (
-            <section key={semester} className="rounded-lg bg-white p-4 shadow-md sm:p-6">
-              <button
-                type="button"
-                onClick={() => toggleSemesterExpanded(semester)}
-                className="flex w-full items-center justify-between gap-3 text-left"
-                aria-expanded={isExpanded}
-              >
-                <span className="text-xl font-semibold text-gray-900">
-                  {t(semesterOption.labelKey)}
-                </span>
-                <span className="flex items-center gap-3">
-                  {renderGenerationStatusButton(semester)}
-                  <ChevronDown
-                    size={20}
-                    className={`text-gray-500 transition ${isExpanded ? "rotate-180" : ""}`}
-                  />
-                </span>
-              </button>
-
-              {isExpanded ? (
-                <div className="mt-4">
-                  {semesterSchedule.length > 0 ? (
-                    <TimetableGrid schedule={filteredSemesterSchedule} />
-                  ) : (
-                    <div className="py-12 text-center text-gray-500">
-                      <RotateCw size={48} className="mx-auto mb-4 opacity-50" />
-                      <p>{t("scheduleNotCreated")}</p>
-                    </div>
-                  )}
-
-                  {isAdmin ? (
-                    <div className="mt-6">
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {t("manageScheduleEntries")}
-                        </h3>
-                      </div>
-
-                      <DataTable
-                        columns={scheduleColumns}
-                        data={filteredSemesterSchedule}
-                        onEdit={handleEditEntry}
-                        onDelete={handleDeleteEntry}
-                        isLoading={false}
-                        enableSearch
-                        hasActiveFilters={hasActiveEntryFilters(semester)}
-                        filterDialogTitle={t("filter")}
-                        onApplyFilters={() => applyFilters(semester)}
-                        onResetFilters={() => resetFilters(semester)}
-                        filterControls={renderFilterControls(semester, semesterSchedule)}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </section>
+            <ScheduleSemesterSection
+              key={semester}
+              t={t}
+              isAdmin={isAdmin}
+              title={t(semesterOption.labelKey)}
+              isExpanded={isExpanded}
+              semesterSchedule={semesterSchedule}
+              filteredSemesterSchedule={filteredSemesterSchedule}
+              scheduleColumns={scheduleColumns}
+              hasActiveFilters={hasActiveEntryFilters(semester)}
+              filterControls={renderFilterControls(semester, semesterSchedule)}
+              generationStatusButton={renderGenerationStatusButton(semester)}
+              onToggleExpanded={() => toggleSemesterExpanded(semester)}
+              onEditEntry={handleEditEntry}
+              onDeleteEntry={handleDeleteEntry}
+              onApplyFilters={() => applyFilters(semester)}
+              onResetFilters={() => resetFilters(semester)}
+            />
           );
         })}
       </div>
 
-      <Modal
+      <GenerateScheduleModal
         isOpen={isGenerateOpen}
-        onClose={() => {
-          if (!isLoading) {
-            setIsGenerateOpen(false);
-          }
-        }}
+        isLoading={isLoading}
         title={scheduleActionLabel}
-        size="md"
-      >
-        <div className="mb-4 rounded-md border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-          <h3 className="font-semibold text-emerald-950">
-            {t("scheduleGenerationInfoTitle")}
-          </h3>
-          <p className="mt-2">{t("scheduleGenerationInfoIntro")}</p>
-          <ul className="mt-3 list-disc space-y-2 pl-5">
-            <li>{t("scheduleGenerationGreedyInfo")}</li>
-            <li>{t("scheduleGenerationCpSatInfo")}</li>
-            <li>{t("scheduleGenerationHybridInfo")}</li>
-            <li>{t("scheduleGenerationCpSatFastInfo")}</li>
-          </ul>
-          <p className="mt-3 font-medium">{t("scheduleGenerationInfoNote")}</p>
-        </div>
+        t={t}
+        fields={formFields}
+        initialValues={{
+          semester: scheduleSemester,
+          year: scheduleYear,
+          algorithm: "greedy",
+        }}
+        onClose={() => setIsGenerateOpen(false)}
+        onSubmit={handleGenerateSchedule}
+      />
 
-        <Form
-          fields={formFields}
-          onSubmit={handleGenerateSchedule}
-          resetKey="schedule-generate"
-          submitText={t("generateSchedule")}
-          isLoading={isLoading}
-          initialValues={{
-            semester: scheduleSemester,
-            year: scheduleYear,
-            algorithm: "greedy",
-          }}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={Boolean(generationError)}
+      <GenerationErrorModal
+        error={generationError}
+        t={t}
         onClose={() => setGenerationError(null)}
-        title={generationError?.title || t("errorGenerateSchedule")}
-        size="md"
-      >
-        <div className="space-y-4">
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {generationError?.message}
-          </div>
+      />
 
-          {generationError?.items?.length ? (
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-900">
-                {t("description")}
-              </p>
-
-              <ul className="list-disc space-y-2 pl-5 text-sm text-gray-700">
-                {generationError.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={() => setGenerationError(null)}
-            className="w-full rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#013726]"
-          >
-            {t("close")}
-          </button>
-        </div>
-      </Modal>
-
-      <Modal
+      <ExportScheduleModal
         isOpen={isExportModalOpen}
-        onClose={() => {
-          if (!isExporting) {
-            setIsExportModalOpen(false);
-          }
-        }}
-        title={t("exportSchedule")}
-        size="sm"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              {t("semester")}
-            </label>
-            <select
-              value={exportSemester}
-              onChange={(event) => setExportSemester(Number(event.target.value))}
-              disabled={isExporting}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
-            >
-              {SCHEDULE_SEMESTER_OPTIONS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {t(item.labelKey)}
-                </option>
-              ))}
-            </select>
-          </div>
+        isExporting={isExporting}
+        t={t}
+        currentYear={currentYear}
+        semester={exportSemester}
+        year={exportYear}
+        language={exportLanguage}
+        groupId={exportGroupId}
+        groupOptions={exportGroupOptions}
+        onClose={() => setIsExportModalOpen(false)}
+        onSemesterChange={setExportSemester}
+        onYearChange={setExportYear}
+        onLanguageChange={setExportLanguage}
+        onGroupChange={setExportGroupId}
+        onSubmit={handleExportSchedule}
+      />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              {t("year")}
-            </label>
-            <input
-              type="number"
-              value={exportYear}
-              onChange={(event) => setExportYear(Number(event.target.value) || currentYear)}
-              disabled={isExporting}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              {t("exportLanguage")}
-            </label>
-            <select
-              value={exportLanguage}
-              onChange={(event) => setExportLanguage(event.target.value)}
-              disabled={isExporting}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
-            >
-              <option value="ru">{t("languageRussian")}</option>
-              <option value="kk">{t("languageKazakh")}</option>
-              <option value="en">{t("languageEnglish")}</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              {t("selectGroup")}
-            </label>
-            <select
-              value={exportGroupId}
-              onChange={(event) => setExportGroupId(event.target.value)}
-              disabled={isExporting}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
-            >
-              <option value="">
-                {t("all")} {t("groups").toLowerCase()}
-              </option>
-              {exportGroupOptions.map(([groupId, groupName]) => (
-                <option key={groupId} value={groupId}>
-                  {groupName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={() => setIsExportModalOpen(false)}
-              disabled={isExporting}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {t("cancel")}
-            </button>
-            <button
-              type="button"
-              onClick={handleExportSchedule}
-              disabled={isExporting}
-              className="rounded-md bg-[#014531] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#02704e] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isExporting ? t("loading") : t("exportSchedule")}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
+      <ResetScheduleModal
         isOpen={isResetModalOpen}
-        onClose={() => {
-          if (!isResetting) {
-            setIsResetModalOpen(false);
-          }
-        }}
-        title={t("resetSchedule")}
-        size="sm"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              {t("semester")}
-            </label>
-            <select
-              value={resetSemester}
-              onChange={(event) => setResetSemester(Number(event.target.value))}
-              disabled={isResetting}
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
-            >
-              {SCHEDULE_SEMESTER_OPTIONS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {t(item.labelKey)}
-                </option>
-              ))}
-            </select>
-          </div>
+        isResetting={isResetting}
+        t={t}
+        currentYear={currentYear}
+        semester={resetSemester}
+        year={resetYear}
+        onClose={() => setIsResetModalOpen(false)}
+        onSemesterChange={setResetSemester}
+        onYearChange={setResetYear}
+        onSubmit={handleResetSchedule}
+      />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              {t("year")}
-            </label>
-            <input
-              type="number"
-              value={resetYear}
-              onChange={(event) => setResetYear(Number(event.target.value) || currentYear)}
-              disabled={isResetting}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
-            />
-          </div>
-
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {t("confirmResetSchedule")}
-          </div>
-
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={() => setIsResetModalOpen(false)}
-              disabled={isResetting}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {t("cancel")}
-            </button>
-            <button
-              type="button"
-              onClick={handleResetSchedule}
-              disabled={isResetting}
-              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isResetting ? t("loading") : t("resetSchedule")}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
+      <ScheduleEntryModal
         isOpen={isEntryModalOpen}
-        onClose={() => {
-          if (!isLoading) {
-            setIsEntryModalOpen(false);
-          }
-        }}
-        title={editingEntry ? t("editScheduleEntry") : t("addScheduleEntry")}
-        size="md"
-      >
-        <Form
-          fields={entryFields}
-          onSubmit={handleEntrySubmit}
-          resetKey={
-            editingEntry
-              ? `schedule-entry-${editingEntry.id}`
-              : "schedule-entry-new"
-          }
-          submitText={editingEntry ? t("save") : t("add")}
-          isLoading={isEntrySaving}
-          isSubmitDisabled={isEntryFormBlocked}
-          submitHint={entryFormHint}
-          initialValues={
-            editingEntry
-              ? {
-                  ...editingEntry,
-                  section_id: editingEntry.section_id || "",
-                  room_id: editingEntry.room_id || "",
-                  start_hour: editingEntry.start_hour || "",
-                  semester: editingEntry.semester || 1,
-                  year: editingEntry.year || new Date().getFullYear(),
-                  subgroup: editingEntry.subgroup || "",
-                  weekday: editingEntry.weekday || "monday",
-                }
-              : {
-                  start_hour: "",
-                  semester: scheduleSemester,
-                  year: scheduleYear,
-                  subgroup: "",
-                  weekday: "",
-                }
-          }
-        />
-      </Modal>
+        isLoading={isLoading}
+        isSaving={isEntrySaving}
+        isBlocked={isEntryFormBlocked}
+        hint={entryFormHint}
+        editingEntry={editingEntry}
+        fields={entryFields}
+        scheduleSemester={scheduleSemester}
+        scheduleYear={scheduleYear}
+        t={t}
+        onClose={() => setIsEntryModalOpen(false)}
+        onSubmit={handleEntrySubmit}
+      />
     </div>
   );
 };

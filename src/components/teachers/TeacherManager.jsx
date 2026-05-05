@@ -1,12 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Bell, Plus, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useTeacherPreferenceRequestsQuery,
+  useTeachersQuery,
+} from "../../api/collectionQueries";
+import { queryKeys } from "../../api/queryKeys";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, teacherAPI, teacherPreferenceAPI } from "../../services/api";
-import { useFetch } from "../../hooks/useAPI";
 import { useGlobalLoader } from "../../hooks/useGlobalLoader";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 import { useTranslation } from "../../hooks/useTranslation";
 import { STUDY_LANGUAGES } from "../../constants/languages";
 import { formatLessonTimeRange } from "../../utils/timeSlots";
@@ -14,7 +20,9 @@ import { formatLessonTimeRange } from "../../utils/timeSlots";
 export const TeacherManager = () => {
   const { t } = useTranslation();
   const { withGlobalLoader } = useGlobalLoader();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
@@ -26,20 +34,13 @@ export const TeacherManager = () => {
   const [languageFilter, setLanguageFilter] = useState("");
   const [draftSubjectFilter, setDraftSubjectFilter] = useState("");
   const [draftLanguageFilter, setDraftLanguageFilter] = useState("");
-  const { data, isLoading, execute } = useFetch(teacherAPI.getAll);
-  const {
-    data: preferenceRequestsData,
-    isLoading: isPreferenceRequestsLoading,
-    error: preferenceRequestsError,
-    execute: executePreferenceRequests,
-  } = useFetch(teacherPreferenceAPI.getAll);
+  const teachersQuery = useTeachersQuery();
+  const preferenceRequestsQuery = useTeacherPreferenceRequestsQuery();
 
-  useEffect(() => {
-    execute();
-    executePreferenceRequests();
-  }, [execute, executePreferenceRequests]);
-
-  const teachers = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const teachers = useMemo(
+    () => (Array.isArray(teachersQuery.data) ? teachersQuery.data : []),
+    [teachersQuery.data],
+  );
   const subjectOptions = useMemo(
     () =>
       Array.from(
@@ -81,7 +82,10 @@ export const TeacherManager = () => {
       ).sort((left, right) => left.localeCompare(right, "ru")),
     [filteredTeachers],
   );
-  const preferenceRequests = Array.isArray(preferenceRequestsData) ? preferenceRequestsData : [];
+  const preferenceRequests = Array.isArray(preferenceRequestsQuery.data)
+    ? preferenceRequestsQuery.data
+    : [];
+  const preferenceRequestsError = preferenceRequestsQuery.error?.message || "";
 
   const handleAddTeacher = () => {
     setEditingTeacher(null);
@@ -94,23 +98,31 @@ export const TeacherManager = () => {
   };
 
   const handleDeleteTeacher = async (teacher) => {
-    if (
-      window.confirm(t("confirmDeleteTeacher").replace("${name}", teacher.name))
-    ) {
-      try {
-        await withGlobalLoader(() => teacherAPI.delete(teacher.id), {
-          title: t("delete"),
-          description: t("globalLoaderDeleteDescription"),
-        });
-        await execute();
-      } catch (error) {
-        console.error(t("errorDeleteTeacher"), error);
-      }
+    const confirmed = await confirm({
+      message: t("confirmDeleteTeacher").replace("${name}", teacher.name),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await withGlobalLoader(() => teacherAPI.delete(teacher.id), {
+        title: t("delete"),
+        description: t("globalLoaderDeleteDescription"),
+      });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
+    } catch (error) {
+      console.error(t("errorDeleteTeacher"), error);
     }
   };
 
   const handleClearTeachers = async () => {
-    if (!window.confirm(t("confirmClearTeachers"))) {
+    const confirmed = await confirm({
+      message: t("confirmClearTeachers"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -120,7 +132,7 @@ export const TeacherManager = () => {
         title: t("clearTeachers"),
         description: t("globalLoaderClearDescription"),
       });
-      await execute();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
     } catch (error) {
       console.error("Error clearing teachers:", error);
     } finally {
@@ -159,7 +171,7 @@ export const TeacherManager = () => {
           description: t("globalLoaderSaveDescription"),
         },
       );
-      await execute();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.teachers.all });
       setIsModalOpen(false);
     } catch (error) {
       setErrors((prev) => ({
@@ -184,14 +196,20 @@ export const TeacherManager = () => {
           description: t("globalLoaderSaveDescription"),
         },
       );
-      await executePreferenceRequests();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.teachers.preferenceRequests,
+      });
     } catch (error) {
       console.error(t("errorSaveTeacherPreference"), error);
     }
   };
 
   const handleDeleteRequest = async (request) => {
-    if (!window.confirm(t("confirmDeleteTeacherRequest"))) {
+    const confirmed = await confirm({
+      message: t("confirmDeleteTeacherRequest"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -201,7 +219,9 @@ export const TeacherManager = () => {
         title: t("delete"),
         description: t("globalLoaderDeleteDescription"),
       });
-      await executePreferenceRequests();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.teachers.preferenceRequests,
+      });
     } catch (error) {
       console.error(t("errorDeleteTeacherRequest"), error);
     } finally {
@@ -210,7 +230,11 @@ export const TeacherManager = () => {
   };
 
   const handleClearRequests = async () => {
-    if (!window.confirm(t("confirmClearTeacherRequests"))) {
+    const confirmed = await confirm({
+      message: t("confirmClearTeacherRequests"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -220,7 +244,9 @@ export const TeacherManager = () => {
         title: t("clearTeacherRequests"),
         description: t("globalLoaderClearDescription"),
       });
-      await executePreferenceRequests();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.teachers.preferenceRequests,
+      });
     } catch (error) {
       console.error(t("errorDeleteTeacherRequest"), error);
     } finally {
@@ -289,6 +315,7 @@ export const TeacherManager = () => {
 
   return (
     <div className="p-6 bg-white">
+      <ConfirmDialog />
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">
@@ -349,7 +376,7 @@ export const TeacherManager = () => {
         data={filteredTeachers}
         onEdit={handleEditTeacher}
         onDelete={handleDeleteTeacher}
-        isLoading={isLoading}
+        isLoading={teachersQuery.isLoading}
         enableSearch
         hasActiveFilters={hasActiveFilters}
         filterDialogTitle={t("filter")}
@@ -445,7 +472,7 @@ export const TeacherManager = () => {
             </div>
           </div>
 
-          {isPreferenceRequestsLoading ? (
+          {preferenceRequestsQuery.isLoading ? (
             <div className="rounded-xl bg-gray-50 px-4 py-6 text-center text-gray-500">
               {t("loading")}
             </div>

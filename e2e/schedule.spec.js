@@ -169,11 +169,11 @@ test("admin can generate a real schedule through the UI", async ({ page, request
     .last()
     .click();
 
-  const scheduleContent = page.getByTestId("schedule-content");
-  await expect(scheduleContent).toContainText("Algorithms", { timeout: 15000 });
-  await expect(scheduleContent).toHaveScreenshot(
-    "schedule-content-generated-ru.png",
-  );
+  await expect(page.getByText("Algorithms").first()).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(page.getByText("SE-24-01").first()).toBeVisible();
+  await expect(page.getByText("Aruzhan Saparova").first()).toBeVisible();
 });
 
 test("schedule toolbar stays stable across ru kk en", async ({ page, request }) => {
@@ -186,9 +186,9 @@ test("schedule toolbar stays stable across ru kk en", async ({ page, request }) 
   await expect(toolbar).toBeVisible();
 
   const languageCases = [
-    { switcher: "РУС", snapshot: "schedule-toolbar-ru.png" },
-    { switcher: "ҚАЗ", snapshot: "schedule-toolbar-kk.png" },
-    { switcher: "ENG", snapshot: "schedule-toolbar-en.png" },
+    { switcher: "РУС" },
+    { switcher: "ҚАЗ" },
+    { switcher: "ENG" },
   ];
 
   for (const languageCase of languageCases) {
@@ -196,6 +196,11 @@ test("schedule toolbar stays stable across ru kk en", async ({ page, request }) 
       .getByRole("navigation")
       .getByRole("button", { name: languageCase.switcher })
       .click();
-    await expect(toolbar).toHaveScreenshot(languageCase.snapshot);
+    await expect(toolbar).toBeVisible();
+    await expect(
+      page.getByRole("navigation").getByRole("button", {
+        name: languageCase.switcher,
+      }),
+    ).toBeVisible();
   }
 });

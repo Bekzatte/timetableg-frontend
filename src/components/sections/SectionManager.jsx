@@ -1,19 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Eye, Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useCoursesQuery,
+  useGroupsQuery,
+  useSectionValidationReportQuery,
+  useSectionsQuery,
+  useTeachersQuery,
+} from "../../api/collectionQueries";
+import { queryKeys } from "../../api/queryKeys";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import SectionDiagnostics from "./SectionDiagnostics";
 import { useAuth } from "../../hooks/useAuth";
-import { adminAPI, courseAPI, groupAPI, sectionAPI, teacherAPI } from "../../services/api";
-import { useFetch } from "../../hooks/useAPI";
+import { adminAPI, sectionAPI } from "../../services/api";
 import { useGlobalLoader } from "../../hooks/useGlobalLoader";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 import { useTranslation } from "../../hooks/useTranslation";
 
 export const SectionManager = () => {
   const { t } = useTranslation();
   const { withGlobalLoader } = useGlobalLoader();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
@@ -24,58 +35,34 @@ export const SectionManager = () => {
   const [previewResult, setPreviewResult] = useState(null);
   const [previewError, setPreviewError] = useState("");
   const [isPreviewingSections, setIsPreviewingSections] = useState(false);
-  const [validationReport, setValidationReport] = useState(null);
-  const [validationError, setValidationError] = useState("");
-  const [isValidationLoading, setIsValidationLoading] = useState(false);
   const [activeStudyCourse, setActiveStudyCourse] = useState("all");
   const [lessonTypeFilter, setLessonTypeFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
   const [draftLessonTypeFilter, setDraftLessonTypeFilter] = useState("");
   const [draftGroupFilter, setDraftGroupFilter] = useState("");
-  const { data, isLoading, execute } = useFetch(sectionAPI.getAll);
-  const {
-    data: coursesData,
-    isLoading: isCoursesLoading,
-    execute: executeCourses,
-  } = useFetch(courseAPI.getAll);
-  const {
-    data: groupsData,
-    isLoading: isGroupsLoading,
-    execute: executeGroups,
-  } = useFetch(groupAPI.getAll);
-  const {
-    data: teachersData,
-    isLoading: isTeachersLoading,
-    execute: executeTeachers,
-  } = useFetch(teacherAPI.getAll);
+  const sectionsQuery = useSectionsQuery();
+  const coursesQuery = useCoursesQuery();
+  const groupsQuery = useGroupsQuery();
+  const teachersQuery = useTeachersQuery();
+  const validationReportQuery = useSectionValidationReportQuery();
+  const fetchValidationReport = () => validationReportQuery.refetch();
 
-  const fetchValidationReport = useCallback(async () => {
-    try {
-      setIsValidationLoading(true);
-      setValidationError("");
-      const report = await sectionAPI.getValidationReport();
-      setValidationReport(report);
-      return report;
-    } catch (error) {
-      setValidationError(error.message);
-      return null;
-    } finally {
-      setIsValidationLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    execute();
-    executeCourses();
-    executeGroups();
-    executeTeachers();
-    fetchValidationReport();
-  }, [execute, executeCourses, executeGroups, executeTeachers, fetchValidationReport]);
-
-  const sections = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  const courses = useMemo(() => (Array.isArray(coursesData) ? coursesData : []), [coursesData]);
-  const groups = useMemo(() => (Array.isArray(groupsData) ? groupsData : []), [groupsData]);
-  const teachers = useMemo(() => (Array.isArray(teachersData) ? teachersData : []), [teachersData]);
+  const sections = useMemo(
+    () => (Array.isArray(sectionsQuery.data) ? sectionsQuery.data : []),
+    [sectionsQuery.data],
+  );
+  const courses = useMemo(
+    () => (Array.isArray(coursesQuery.data) ? coursesQuery.data : []),
+    [coursesQuery.data],
+  );
+  const groups = useMemo(
+    () => (Array.isArray(groupsQuery.data) ? groupsQuery.data : []),
+    [groupsQuery.data],
+  );
+  const teachers = useMemo(
+    () => (Array.isArray(teachersQuery.data) ? teachersQuery.data : []),
+    [teachersQuery.data],
+  );
   const courseById = useMemo(
     () => new Map(courses.map((course) => [String(course.id), course])),
     [courses],
@@ -161,8 +148,10 @@ export const SectionManager = () => {
           description: t("globalLoaderGenerateDescription"),
         },
       );
-      await execute();
-      await fetchValidationReport();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.sections.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.sections.validationReport,
+      });
       setGenerateResult(result);
     } catch (error) {
       setGenerateError(error.message);
@@ -177,7 +166,11 @@ export const SectionManager = () => {
   };
 
   const handleClearSections = async () => {
-    if (!window.confirm(t("confirmClearSections"))) {
+    const confirmed = await confirm({
+      message: t("confirmClearSections"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -187,8 +180,10 @@ export const SectionManager = () => {
         title: t("clearSections"),
         description: t("globalLoaderClearDescription"),
       });
-      await execute();
-      await fetchValidationReport();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.sections.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.sections.validationReport,
+      });
     } finally {
       setIsClearing(false);
     }
@@ -224,8 +219,10 @@ export const SectionManager = () => {
           description: t("globalLoaderSaveDescription"),
         },
       );
-      await execute();
-      await fetchValidationReport();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.sections.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.sections.validationReport,
+      });
       setIsModalOpen(false);
     } catch (error) {
       setErrors((prev) => ({
@@ -268,7 +265,7 @@ export const SectionManager = () => {
       name: "course_id",
       label: t("courseName"),
       type: "select",
-      placeholder: isCoursesLoading ? t("loading") : t("selectCourse"),
+      placeholder: coursesQuery.isLoading ? t("loading") : t("selectCourse"),
       options: courses.map((course) => ({
         value: course.id,
         label: `${course.code || course.name} - ${course.name}`,
@@ -279,7 +276,7 @@ export const SectionManager = () => {
       name: "group_id",
       label: t("groupNumber"),
       type: "select",
-      placeholder: isGroupsLoading ? t("loading") : t("selectGroup"),
+      placeholder: groupsQuery.isLoading ? t("loading") : t("selectGroup"),
       options: groups.map((group) => ({
         value: group.id,
         label: group.name,
@@ -309,7 +306,7 @@ export const SectionManager = () => {
       name: "teacher_id",
       label: t("teacherName"),
       type: "select",
-      placeholder: isTeachersLoading ? t("loading") : t("autoTeacherFromIup"),
+      placeholder: teachersQuery.isLoading ? t("loading") : t("autoTeacherFromIup"),
       options: [
         { value: "", label: t("autoTeacherFromIup") },
         ...teachers.map((teacher) => ({
@@ -345,6 +342,7 @@ export const SectionManager = () => {
   ];
   return (
     <div className="p-6 bg-white">
+      <ConfirmDialog />
       <div className="mb-6 grid grid-cols-1 gap-4">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">
@@ -357,9 +355,9 @@ export const SectionManager = () => {
       </div>
 
       <SectionDiagnostics
-        report={validationReport}
-        error={validationError}
-        isLoading={isValidationLoading}
+        report={validationReportQuery.data}
+        error={validationReportQuery.error?.message || ""}
+        isLoading={validationReportQuery.isLoading}
         sectionsCount={sections.length}
         onRefresh={fetchValidationReport}
       />
@@ -476,7 +474,7 @@ export const SectionManager = () => {
         columns={columns}
         data={filteredSections}
         onEdit={handleEditSection}
-        isLoading={isLoading}
+        isLoading={sectionsQuery.isLoading}
         enableSearch
         hasActiveFilters={hasActiveFilters}
         filterDialogTitle={t("filter")}

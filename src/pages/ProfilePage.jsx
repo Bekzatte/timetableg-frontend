@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { teacherPreferenceAPI } from "../services/api";
+import { useTeacherPreferenceQuery } from "../api/profileQueries";
 import { useAuth } from "../hooks/useAuth";
 import { useAutoDismiss } from "../hooks/useAutoDismiss";
 import { useGlobalLoader } from "../hooks/useGlobalLoader";
 import { useTranslation } from "../hooks/useTranslation";
-import { useFetch } from "../hooks/useAPI";
 import { formatLessonTimeRange, scheduleHours } from "../utils/timeSlots";
 
 const MAX_FILE_SIZE = 1024 * 1024;
@@ -37,28 +37,17 @@ export default function ProfilePage() {
   const [preferenceSuccess, setPreferenceSuccess] = useState("");
   const [isSubmittingPreference, setIsSubmittingPreference] = useState(false);
   const fileInputRef = useRef(null);
-  const {
-    data: preferenceData,
-    error: preferenceLoadError,
-    execute: executePreferences,
-  } = useFetch(
-    teacherPreferenceAPI.getMine,
-  );
+  const preferenceQuery = useTeacherPreferenceQuery(user?.role === "teacher");
 
   useAutoDismiss(localError, setLocalError);
   useAutoDismiss(successMessage, setSuccessMessage);
   useAutoDismiss(preferenceError, setPreferenceError);
   useAutoDismiss(preferenceSuccess, setPreferenceSuccess);
 
-  useEffect(() => {
-    if (user?.role === "teacher") {
-      executePreferences().catch((error) => {
-        setPreferenceError(error.message);
-      });
-    }
-  }, [executePreferences, user?.role]);
-
-  const preferenceRequests = Array.isArray(preferenceData) ? preferenceData : [];
+  const preferenceLoadError = preferenceQuery.error?.message || "";
+  const preferenceRequests = Array.isArray(preferenceQuery.data)
+    ? preferenceQuery.data
+    : [];
 
   const handlePreferenceChange = (event) => {
     const { name, value } = event.target;
@@ -141,7 +130,7 @@ export default function ProfilePage() {
         note: "",
       });
       setPreferenceSuccess(t("teacherPreferenceSubmitted"));
-      await executePreferences();
+      await preferenceQuery.refetch();
     } catch (error) {
       setPreferenceError(error.message);
     } finally {

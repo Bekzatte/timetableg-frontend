@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGroupsQuery } from "../../api/collectionQueries";
+import { queryKeys } from "../../api/queryKeys";
 import DataTable from "../ui/DataTable";
 import Modal from "../ui/Modal";
 import Form from "../ui/Form";
 import { useAuth } from "../../hooks/useAuth";
 import { adminAPI, groupAPI } from "../../services/api";
-import { useFetch } from "../../hooks/useAPI";
 import { useGlobalLoader } from "../../hooks/useGlobalLoader";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 import { useTranslation } from "../../hooks/useTranslation";
 import { STUDY_LANGUAGES } from "../../constants/languages";
 import {
@@ -20,7 +23,9 @@ import {
 export const GroupManager = () => {
   const { t } = useTranslation();
   const { withGlobalLoader } = useGlobalLoader();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
@@ -29,13 +34,12 @@ export const GroupManager = () => {
   const [courseFilter, setCourseFilter] = useState("");
   const [draftLanguageFilter, setDraftLanguageFilter] = useState("");
   const [draftCourseFilter, setDraftCourseFilter] = useState("");
-  const { data, isLoading, execute, setData } = useFetch(groupAPI.getAll);
+  const groupsQuery = useGroupsQuery();
 
-  useEffect(() => {
-    execute();
-  }, [execute]);
-
-  const groups = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  const groups = useMemo(
+    () => (Array.isArray(groupsQuery.data) ? groupsQuery.data : []),
+    [groupsQuery.data],
+  );
   const filteredGroups = useMemo(
     () =>
       groups.filter((group) => {
@@ -75,12 +79,12 @@ export const GroupManager = () => {
     return matchedGroup?.value || "";
   };
 
-  const upsertGroup = (savedGroup) => {
+  const upsertGroupInCache = (savedGroup) => {
     if (!savedGroup?.id) {
       return;
     }
 
-    setData((currentData) => {
+    queryClient.setQueryData(queryKeys.groups.all, (currentData) => {
       const currentGroups = Array.isArray(currentData) ? currentData : [];
       const existingIndex = currentGroups.findIndex((group) => group.id === savedGroup.id);
       const normalizedGroup = {
@@ -126,14 +130,14 @@ export const GroupManager = () => {
         },
       );
 
-      upsertGroup(savedGroup);
+      upsertGroupInCache(savedGroup);
       setIsModalOpen(false);
 
       if (editingGroup) {
         setEditingGroup(null);
       }
 
-      execute().catch((refreshError) => {
+      groupsQuery.refetch().catch((refreshError) => {
         console.error("Error refreshing groups after save:", refreshError);
       });
     } catch (error) {
@@ -144,7 +148,11 @@ export const GroupManager = () => {
   };
 
   const handleClearGroups = async () => {
-    if (!window.confirm(t("confirmClearGroups"))) {
+    const confirmed = await confirm({
+      message: t("confirmClearGroups"),
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
     try {
@@ -156,14 +164,18 @@ export const GroupManager = () => {
           description: t("globalLoaderClearDescription"),
         },
       );
-      await execute();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
     } finally {
       setIsClearing(false);
     }
   };
 
   const handleDeleteGroup = async (group) => {
-    if (!window.confirm(`${t("delete")} "${group.name}"?`)) {
+    const confirmed = await confirm({
+      message: `${t("delete")} "${group.name}"?`,
+      confirmLabel: t("delete"),
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -175,7 +187,7 @@ export const GroupManager = () => {
           description: t("globalLoaderDeleteDescription"),
         },
       );
-      await execute();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
     } catch (error) {
       console.error("Error deleting group:", error);
     }
@@ -309,6 +321,7 @@ export const GroupManager = () => {
 
   return (
     <div className="p-6 bg-white">
+      <ConfirmDialog />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
           <p className="text-sm font-medium text-blue-700">{t("groupsCount")}</p>
@@ -345,7 +358,7 @@ export const GroupManager = () => {
       <DataTable
         columns={columns}
         data={filteredGroups}
-        isLoading={isLoading}
+        isLoading={groupsQuery.isLoading}
         onDelete={handleDeleteGroup}
         enableSearch
         hasActiveFilters={hasActiveFilters}
